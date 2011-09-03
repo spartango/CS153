@@ -1,0 +1,14 @@
+Your job for this assignment is to write a Mips assembler that maps a small
+subset of Mips assembly into machine code, and then an interpreter for the 
+machine code. Please note that the beq instruction has been altered to take
+aa offset directly instead of a label. This is done to keep things simple
+- otherwise you would need to keep track of labels and their corresponding 
+offsets! 
+
+Your job for the assem function found in mips_sim.ml is to map a list of 
+Mips assembly instructions into a starting state. A state consists of a 
+register file, memory and program counter. Thus, the job of the assem function
+is to put the 32-bit encodings of each mips assembly instruction in memory,
+start the PC at the beginning of the machine code, and provide an empty
+register file. The interp function can then take this initial state and 
+produce a final state by "executing" the machine code.
