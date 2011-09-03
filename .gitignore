@@ -5,4 +5,12 @@ ps0/.settings/org.eclipse.core.resources.prefs
 
 ps0/.project
 
-ps0/.paths
+ps0/.path
+
+ps0/*.cmo
+
+ps0/*.cmi
+
+ps0/ps0
+
+*.swp
