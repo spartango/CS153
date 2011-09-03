@@ -49,10 +49,12 @@ let reg2ind r =
 type inst =
   Add of reg * reg * reg  
 | Beq of reg * reg * int32 (* should be int16, but ocaml doesn't have these *) 
-| Jr of reg
+| Jr  of reg
 | Jal of reg * reg
-| Li of reg * int32        (* same here *)
-| Lw of reg * reg * int32  (* and here ... *)
-| Sw of reg * reg * int32  (* and here ... *)
+| Li  of reg * int32        (* this is a pseudoinstruction *) 
+| Lw  of reg * reg * int32  (* same here ... *)
+| Sw  of reg * reg * int32  (* and here ... *)
+| Lui of reg * int32        (* and here ... *)
+| Ori of reg * reg * int32  (* and here ... *)
 
 type program = inst list

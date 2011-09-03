@@ -1,3 +1,7 @@
+
+Author: ANAND GUPTA
+Harvard Class of 2014, Mather House
+
 Your job for this assignment is to write a Mips assembler that maps a small
 subset of Mips assembly into machine code, and then an interpreter for the 
 machine code. Please note that the beq instruction has been altered to take
