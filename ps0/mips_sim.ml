@@ -46,6 +46,9 @@ let int32_lower (n : int32) : int32 = (Int32.logand n 0x0000FFFFl)
 (* Utility function to get upper bits of a 32 bit int*)
 let int32_upper (n : int32) : int32 = (Int32.shift_right_logical n 16) 
 
+(* Utility function that wraps reg_to_ind to give int32s *)
+let reg_to_ind (rs : reg) : int32 = (Int32.of_int (reg2ind rs))
+
 (* Copies a 32 bit object into adjacent memory locations *)
 let word_mem_update (word : int32) (offset : int32) (m : memory) : memory = 
   (* Split into parts by shifting *)   
@@ -54,7 +57,6 @@ let word_mem_update (word : int32) (offset : int32) (m : memory) : memory =
   let mem_2 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 16)) mem_1) in
   let mem_3 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 8))  mem_2) in
     (mem_update offset (Byte.mk_byte word) mem_3)
-
 
 (* Performs machine-instruction to binary translation *) 
 let inst_to_bin (target : inst) : int32 = 
@@ -70,14 +72,14 @@ let inst_to_bin (target : inst) : int32 =
     (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
     (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
         
-    | Beq(rs, rt, label)  -> (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 4l 26))  (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16) Int32.logor label )
-    | Jr(rs)              -> (Int32.logor (Int32.logor 0l ((reg2ind rs) Int32.shift_left_logical 21)) 8l )
-    | Jal(ra, target)     -> (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 3l 26)) target )
-    | Lui(rt, imm)        -> (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 0xf  26)) (Int32.shift_left_logical (reg2ind rt) 16)) imm )
-    | Ori(rt, rs, imm)    -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 0xdl  26)) (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16)) imm )
-    | Lw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 0x23l 26)) (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16)) offset )
-    | Sw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 0x2bl 26)) (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16)) offset )
-    | Add(rd, rs, rt)     -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 6l 26)) (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16)) (Int32.shift_left_logical (reg2ind rd) 11)) 0x20l)
+    | Beq(rs, rt, label)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 4l 26))  (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) label )
+    | Jr(rs)              -> (Int32.logor (Int32.logor 0l (Int32.shift_left (reg_to_ind rs) 21)) 8l )
+    | Jal(ra, target)     -> (Int32.logor (Int32.logor 0l (Int32.shift_left 3l 26)) target )
+    | Lui(rt, imm)        -> (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xf  26)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
+    | Ori(rt, rs, imm)    -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xdl  26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
+    | Lw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x23l 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )
+    | Sw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x2bl 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )
+    | Add(rd, rs, rt)     -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 6l 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) (Int32.shift_left (reg_to_ind rd) 11)) 0x20l)
     
 (* Translates an instruction to binary and copies it into memory, resolving pseudoinstructions *)
 let rec inst_update_mem (target : inst) (s : state) : state = 
