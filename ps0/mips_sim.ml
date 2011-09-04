@@ -41,18 +41,18 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
 type state = { r : regfile; pc : int32; m : memory }
 
 (* Utility function to get lower bits of a 32 bit int, shedding the sign *)
-let int32_lower (n : int32) : int32 = (n land 0x0000FFFFl)
+let int32_lower (n : int32) : int32 = (n Int32.logand 0x0000FFFFl)
 
 (* Utility function to get upper bits of a 32 bit int*)
-let int32_upper (n : int32) : int32 = (n lsr 16) 
+let int32_upper (n : int32) : int32 = (n Int32.shift_right_logical 16) 
 
 (* Copies a 32 bit object into adjacent memory locations *)
 let word_mem_update (word : int32) (offset : int32) (m : memory) : memory = 
 	(* Split into parts by shifting *)   
 	(* Insert parts into slots from offset *)
-	let mem_1 = (Int32Map.mem_update offset (Byte.mk_byte (word lsr 24)) m)     in
-	let mem_2 = (Int32Map.mem_update offset (Byte.mk_byte (word lsr 16)) mem_1) in
-	let mem_3 = (Int32Map.mem_update offset (Byte.mk_byte (word lsr 8))  mem_2) in
+	let mem_1 = (Int32Map.mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 24)) m)     in
+	let mem_2 = (Int32Map.mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 16)) mem_1) in
+	let mem_3 = (Int32Map.mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 8))  mem_2) in
 	  (Int32Map.mem_update offset (Byte.mk_byte word) mem_3)
 	
 (* Translates an instruction to binary and copies it into memory, resolving pseudoinstructions *)
@@ -65,29 +65,31 @@ let rec inst_update_mem (target : inst) (s : state) : state =
 				(* Then tack on an Ori for the lower half *)
 				(inst_update_mem Ori(rs, (int32_lower imm)) new_state)
 			(* Do a binary translate & update *)
-			| t_inst      ->   { r = s.r; m = (word_mem_update (inst_to_bin inst) s.pc s.m); pc = s.pc + 32l}			 
+			| t_inst      ->   { r = s.r; m = (word_mem_update (inst_to_bin inst) s.pc s.m); pc = s.pc Int32.add 32l}			 
 
-(* Performs instruction to binary translation *) 
+(* Performs machine-instruction to binary translation *) 
 let inst_to_bin (target : inst) : int32 = 
   match target with 
     (* Registers are 5 bits unless otherwise indicated *) 
-    (* 0(6) rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
-    | Add(rd, rs, rt)     -> ( 0 lor ((reg2ind rs) lsl 21) lor ((reg2ind rt) lsl 16) lor ((reg2ind rd) lsl 11) lor 0x20 )
-    (* 4(6) rs rt offset(16)     -- Branch by offset if rs == rt *)
-    | Beq(rs, rt, label) ->  ( 0 lor (4 lsl 26) lor ((reg2ind rs) lsl 21) lor ((reg2ind rt) lsl 16) lor label )
-    (* 0(6) rs 0(15) 8(6)        -- Jump to the address specified in rs*)
-    | Jr(rs)              -> ( 0 lor ((reg2ind rs) lsl 21) lor 8 )
-    (* 3(6) target(26)           -- Jump to instruction at target, save address in RA*) 
-    | Jal(target)         -> ( 0 lor (3 lsl 26) lor target )
-		(* 0xf(6) 0(5) rt imm(16)    -- Load immediate into upper half of register*) 
-		| Lui(rt, imm)        -> ( 0 lor (0xf lsl 26) lor ((reg2ind rt) lsl 16) lor imm )
-		(* 0xd(6) rt rs imm(16)      -- rs | imm -> rt *) 
-		| Ori(rt, rs, imm)    -> ( 0 lor (0xd lsl 26) lor ((reg2ind rs) lsl 21) lor ((reg2ind rt) lsl 16) lor imm)
-    (* 0x23(6) rs rt offset(16)  -- Load (word) at address into register rt.*) 
-    | Lw(rs, rt, offset)  -> ( 0 lor (0x23 lsl 26) lor ((reg2ind rs) lsl 21) lor ((reg2ind rt) lsl 16) lor offset )
-    (* 0x2b(6) rs rt offset(16)  -- Store word from rt at address *)
-    | Sw(rs, rt, offset)  -> ( 0 lor (0x2b lsl 26) lor ((reg2ind rs) lsl 21) lor ((reg2ind rt) lsl 16) lor offset )
 
+    (* 4(6)    rs rt offset(16)     -- Branch by offset if rs == rt *)
+    (* 0(6)    rs 0(15) 8(6)        -- Jump to the address specified in rs*)
+    (* 3(6)    target(26)           -- Jump to instruction at target, save address in RA*) 	     
+		(* 0xf(6)  0(5) rt imm(16)      -- Load immediate into upper half of register*) 
+    (* 0xd(6)  rt rs imm(16)        -- rs | imm -> rt *) 
+    (* 0x23(6) rs rt offset(16)     -- Load (word) at address into register rt.*) 
+		(* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
+		(* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
+		
+		| Beq(rs, rt, label)  -> (Int32.logor 0l (4l Int32.shift_left_logical 26) Int32.logor ((reg2ind rs) Int32.shift_left_logical 21) Int32.logor ((reg2ind rt) Int32.shift_left_logical 16) Int32.logor label )
+    | Jr(rs)              -> (Int32.logor 0l ((reg2ind rs) Int32.shift_left_logical 21) Int32.logor 8l )
+    | Jal(target)         -> (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 3l 26)) target )
+		| Lui(rt, imm)        -> (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 0xf  26)) (Int32.shift_left_logical (reg2ind rt) 16)) imm )
+		| Ori(rt, rs, imm)    -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 0xdl  26)) (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16)) imm )
+    | Lw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 0x23l 26)) (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16)) offset )
+    | Sw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 0x2bl 26)) (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16)) offset )
+    | Add(rd, rs, rt)     -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left_logical 6l 26)) (Int32.shift_left_logical (reg2ind rs) 21)) (Int32.shift_left_logical (reg2ind rt) 16)) (Int32.shift_left_logical (reg2ind rd) 11)) 0x20l)
+ 
 (* Map a program, a list of Mips assembly instructions, down to a starting 
    state. You can start the PC at any address you wish. Just make sure that 
    you put the generated machine code where you started the PC in memory! *)
@@ -96,14 +98,17 @@ let rec assem (prog : program) : state =
 		let rec assem_r (prog : program) (machine_s : state) : state = 
 		  (* Grab the next instruction *)
 			match prog with 
-				(* If we're at the end, then we're done*)
-				| [] -> machine_s
+				(* If we're at the end, move the PC to the beginning and return*)
+				| [] -> {m = machine_s.m; pc = 0l; rf = machine_s.rf}
 				(* For real instructions *)
 				| t_inst :: rest -> 
 		      (* Encode the part in binary and push the binary into memory at the next free address(es) *)
 					let new_state   = (inst_update_mem t_inst machine_s.pc machine_s.m) in
 		      (* assemble the rest of the program *) 
 					(assem_r rest new_state)
+		in 
+		let init_state = {m = Int32Map.empty_mem; pc = 0l; IntMap.empty_rf} in
+		(assem_r prog init_state)
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state = raise TODO

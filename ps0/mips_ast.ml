@@ -52,7 +52,7 @@ type inst =
 | Jr  of reg
 | Jal of reg * reg
 | Li  of reg * int32        (* this is a pseudoinstruction *) 
-| Lw  of reg * reg * int32  (* same here ... *)
+| Lw  of reg * reg * int32  (* should be int16, but ocaml doesn't have these *)
 | Sw  of reg * reg * int32  (* and here ... *)
 | Lui of reg * int32        (* and here ... *)
 | Ori of reg * reg * int32  (* and here ... *)
