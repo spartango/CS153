@@ -16,7 +16,9 @@ mips:
 	$(COMPILER) -c byte.ml
 	$(COMPILER) -c mips_sim.ml
 	$(COMPILER) -c mips.ml
+	$(COMPILER) -c mips_tests.ml
 	$(COMPILER) -o ps0 mips_ast.cmo parse.cmo lex.cmo byte.cmo 	mips_sim.cmo mips.cmo
-
+	$(COMPILER) -o tests mips_ast.cmo byte.cmo mips_sim.cmo mips_tests.cmo
+	
 clean:
 	-rm *.cmo *.cmi ps0 parse.ml parse.mli lex.ml 
