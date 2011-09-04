@@ -61,9 +61,9 @@ let rec inst_update_mem (target : inst) (s : state) : state =
 		match inst with 
 			| Li(rs, imm) -> 
 				(* First put an Lui for the upper half of the immediate *) 
-				let new_state   = (inst_update_mem Lui(rs, (int32_upper imm)) s) in
+				let new_state   = (inst_update_mem Lui(R1, (int32_upper imm)) s) in
 				(* Then tack on an Ori for the lower half *)
-				(inst_update_mem Ori(rs, (int32_lower imm)) new_state)
+				(inst_update_mem Ori(rs, R1, (int32_lower imm)) new_state)
 			(* Do a binary translate & update *)
 			| t_inst      ->   { r = s.r; m = (word_mem_update (inst_to_bin inst) s.pc s.m); pc = s.pc Int32.add 32l}			 
 
