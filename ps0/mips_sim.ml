@@ -74,7 +74,7 @@ let inst_to_bin (target : inst) : int32 =
         
     | Beq(rs, rt, label)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 4l 26))  (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) label )
     | Jr(rs)              -> (Int32.logor (Int32.logor 0l (Int32.shift_left (reg_to_ind rs) 21)) 8l )
-    | Jal(ra, target)     -> (Int32.logor (Int32.logor 0l (Int32.shift_left 3l 26)) target )
+    | Jal(target)     -> (Int32.logor (Int32.logor 0l (Int32.shift_left 3l 26)) target )
     | Lui(rt, imm)        -> (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xf  26)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
     | Ori(rt, rs, imm)    -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xdl  26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
     | Lw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x23l 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )

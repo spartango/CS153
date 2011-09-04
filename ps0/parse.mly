@@ -17,7 +17,7 @@ let parse_error s =
 %type <Mips_ast.program> instlst
 %type <Mips_ast.inst> inst
 
-%token ADD BEQ JR JAL LI LW SW COMMA LPAREN RPAREN 
+%token ADD BEQ JR JAL LI LW SW LUI ORI COMMA LPAREN RPAREN 
 %token <int32> INT
 %token <string> ID
 %token <string> REG
@@ -36,8 +36,10 @@ inst :
   ADD REG COMMA REG COMMA REG { Add(str2reg $2,str2reg $4,str2reg $6) }
 | BEQ REG COMMA REG COMMA INT { Beq(str2reg $2,str2reg $4,$6) }
 | JR REG { Jr(str2reg $2) }
-| JAL REG COMMA REG { Jal(str2reg $2,str2reg $4) }
+| JAL INT { Jal($2) }
 | LI REG COMMA INT { Li(str2reg $2,$4) }
+| LUI REG COMMA INT { Lui(str2reg $2,$4) }
+| ORI REG COMMA REG COMMA INT { Ori(str2reg $2,str2reg $4,$6) }
 | LW REG COMMA INT LPAREN REG RPAREN { Lw(str2reg $2,str2reg $6,$4) }
 | SW REG COMMA INT LPAREN REG RPAREN { Sw(str2reg $2,str2reg $6,$4) }
 

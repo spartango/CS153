@@ -6,8 +6,10 @@ let inst2str i =
     Add (r1,r2,r3) -> "add "^(reg2str r1)^", "^(reg2str r2)^", "^(reg2str r3)^"\n"
   | Beq (r1,r2,imm) -> "beq "^(reg2str r1)^", "^(reg2str r2)^", "^(Int32.to_string imm)^"\n"
   | Jr (r) -> "jr "^(reg2str r)^"\n"
-  | Jal (r1,r2) -> "jal "^(reg2str r1)^", "^(reg2str r2)^"\n"
+  | Jal (imm) -> "jal "^(Int32.to_string imm)^"\n"
   | Li (r,imm) -> "li "^(reg2str r)^", "^(Int32.to_string imm)^"\n"
+  | Lui (r,imm) -> "lui "^(reg2str r)^", "^(Int32.to_string imm)^"\n"
+  | Ori (r1,r2,imm) -> "ori "^(reg2str r1)^", "^(reg2str r2)^", "^(Int32.to_string imm)^"\n"
   | Lw (r1,r2,imm) -> "lw "^(reg2str r1)^", "^(Int32.to_string imm)^"("^(reg2str r2)^")\n"
   | Sw (r1,r2,imm) -> "sw "^(reg2str r1)^", "^(Int32.to_string imm)^"("^(reg2str r2)^")\n"
 

@@ -22,6 +22,8 @@ rule lexer = parse
 | "jr" { JR }
 | "jal" { JAL }
 | "li" { LI }
+| "lui" { LUI }
+| "ori" { ORI }
 | "lw" { LW }
 | "sw" { SW }
 | "$"digit+ { REG(Lexing.lexeme lexbuf) }
