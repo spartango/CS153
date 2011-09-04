@@ -3,6 +3,7 @@ open Byte
 
 exception TODO
 exception FatalError
+exception UntranslateableError
 
 (* Register file definitions. A register file is a map from a register 
    number to a 32-bit quantity. *)
@@ -71,11 +72,11 @@ let inst_to_bin (target : inst) : int32 =
     (* 0x23(6) rs rt offset(16)     -- Load (word) at address into register rt.*) 
     (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
     (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
-        
+    | Li (_,_)            -> raise UntranslateableError (* We can't translate a pseudoinstruction straight to binary *)
     | Beq(rs, rt, label)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 4l 26))  (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) label )
     | Jr(rs)              -> (Int32.logor (Int32.logor 0l (Int32.shift_left (reg_to_ind rs) 21)) 8l )
-    | Jal(target)     -> (Int32.logor (Int32.logor 0l (Int32.shift_left 3l 26)) target )
-    | Lui(rt, imm)        -> (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xf  26)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
+    | Jal(target)         -> (Int32.logor (Int32.logor 0l (Int32.shift_left 3l 26)) target )
+    | Lui(rt, imm)        -> (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xfl 26)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
     | Ori(rt, rs, imm)    -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xdl  26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
     | Lw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x23l 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )
     | Sw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x2bl 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )
@@ -91,7 +92,7 @@ let rec inst_update_mem (target : inst) (s : state) : state =
         (* Then tack on an Ori for the lower half *)
         (inst_update_mem (Ori(rs, R1, (int32_lower imm))) new_state)
       (* Do a binary translate & update *)
-      | t_inst      ->   { r = s.r; m = (word_mem_update (inst_to_bin inst) s.pc s.m); pc = s.pc Int32.add 32l}       
+      | t_inst      ->   { r = s.r; m = (word_mem_update (inst_to_bin target) s.pc s.m); pc = (Int32.add s.pc 32l)}       
 
 (* Map a program, a list of Mips assembly instructions, down to a starting 
    state. You can start the PC at any address you wish. Just make sure that 
@@ -102,15 +103,15 @@ let rec assem (prog : program) : state =
       (* Grab the next instruction *)
       match prog with 
         (* If we're at the end, move the PC to the beginning and return*)
-        | [] -> {m = machine_s.m; pc = 0l; rf = machine_s.rf}
+        | [] -> {m = machine_s.m; pc = 0l; r = machine_s.r}
         (* For real instructions *)
         | t_inst :: rest -> 
           (* Encode the part in binary and push the binary into memory at the next free address(es) *)
-          let new_state   = (inst_update_mem t_inst machine_s.pc machine_s.m) in
+          let new_state   = (inst_update_mem t_inst machine_s) in
           (* assemble the rest of the program *) 
           (assem_r rest new_state)
     in 
-    let init_state = {m = Int32Map.empty_mem; pc = 0l; IntMap.empty_rf} in
+    let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
     (assem_r prog init_state)
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
