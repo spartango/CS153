@@ -32,8 +32,24 @@ let test_update_mem = fun () ->
         && ((mem_lookup 1l new_state.m) = (Byte.mk_byte 0xa6l))
         && ((mem_lookup 2l new_state.m) = (Byte.mk_byte 0x20l))
         && ((mem_lookup 3l new_state.m) = (Byte.mk_byte 0x20l)) )
+        
+
+let test_assemble_prog = fun () -> 
+    let test_program    = [ Add(R4, R5, R6);  Add(R4, R5, R6) ] in 
+    let new_state = (assem test_program) in 
+    (* We're looking for 0x00A62020 split into 4 bytes *)
+        (  ((mem_lookup 0l new_state.m) = (Byte.mk_byte 0x00l)) 
+        && ((mem_lookup 1l new_state.m) = (Byte.mk_byte 0xa6l))
+        && ((mem_lookup 2l new_state.m) = (Byte.mk_byte 0x20l))
+        && ((mem_lookup 3l new_state.m) = (Byte.mk_byte 0x20l))
+        && ((mem_lookup 4l new_state.m) = (Byte.mk_byte 0x00l))
+        && ((mem_lookup 5l new_state.m) = (Byte.mk_byte 0xa6l))
+        && ((mem_lookup 6l new_state.m) = (Byte.mk_byte 0x20l))
+        && ((mem_lookup 7l new_state.m) = (Byte.mk_byte 0x20l)) )
+        
 
 let _ = print_string "[==========] Running Tests\n"
 let _ = print_string (run_test test_inst_translate "Translate")
 let _ = print_string (run_test test_update_mem     "Update Memory")
+let _ = print_string (run_test test_assemble_prog  "Assembled Program")
 let _ = print_string "[==========] Tests Complete\n";;
