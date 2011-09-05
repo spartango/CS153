@@ -1,16 +1,6 @@
 open Mips_sim
 open Mips_ast
-
-let run_verbose_test (test : unit -> bool * string) (name : string) : string  = 
-    let result = (test ()) in 
-    match result with
-    | (true,  message) -> "[  PASSED  ] "^name^": "^message^"\n"
-    | (false, message) -> "[  FAILED  ] "^name^": "^message^"\n"
-
-let run_test  (test : unit -> bool) (name : string ) : string = 
-    let result = (test ()) in 
-    if result then "[  PASSED  ] "^name^"\n" 
-              else "[  FAILED  ] "^name^"\n"
+open Test_framework
 
 let test_verbose_inst_translate = fun () -> 
     let test_inst = Add(R4, R5, R6)      in 
@@ -49,8 +39,6 @@ let test_assemble_prog = fun () ->
         && (new_state.pc = 0l) )
         
 
-let _ = print_string "[==========] Running Tests\n"
-let _ = print_string (run_test test_inst_translate "Translate")
-let _ = print_string (run_test test_update_mem     "Update Memory")
-let _ = print_string (run_test test_assemble_prog  "Assembled Program")
-let _ = print_string "[==========] Tests Complete\n";;
+run_tests [ Test(test_inst_translate,         "Translate"); 
+            Test(run_test test_update_mem,    "Update Memory"); 
+            Test(run_test test_assemble_prog, "Assembled Program") ]
