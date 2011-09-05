@@ -37,8 +37,8 @@ let test_assemble_prog = fun () ->
         && ((mem_lookup 6l new_state.m) = (Byte.mk_byte 0x20l))
         && ((mem_lookup 7l new_state.m) = (Byte.mk_byte 0x20l)) 
         && (new_state.pc = 0l) )
-        
+;;        
 
-(run_tests [ Test(test_inst_translate,         "Translate"); 
-            Test(run_test test_update_mem,    "Update Memory"); 
-            Test(run_test test_assemble_prog, "Assembled Program") ])
+(run_tests [ Test("Translate",         test_inst_translate); 
+             Test("Update Memory",     test_update_mem); 
+             Test("Assembled Program", test_assemble_prog) ]) 
