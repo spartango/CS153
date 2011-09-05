@@ -16,7 +16,7 @@ let run_test  (t_test : test) : string =
 			     
             
 let run_tests ( tests : test list) : unit = 
-    let _ = print_string ((format_string "[==========] " Bright Blue)^"Running Tests\n")  in
+    let _ = print_string ((format_string "[==========] " Bright Cyan)^"Running Tests\n")  in
     let rec run_tests_h ( tests : test list ) : unit = 
         match tests with 
             | []             -> () (* done *)
@@ -25,5 +25,5 @@ let run_tests ( tests : test list) : unit =
                 (run_tests_h rest)
     in
     let _ = run_tests_h tests in 
-    let _ = print_string ((format_string "[==========] " Bright Blue)^"Tests Complete\n") in ()
+    let _ = print_string ((format_string "[==========] " Bright Cyan)^"Tests Complete\n") in ()
     
