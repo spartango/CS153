@@ -3,7 +3,7 @@ open Byte
 
 exception TODO
 exception FatalError
-exception UntranslateableError
+exception UntranslatableError
 
 (* Register file definitions. A register file is a map from a register 
    number to a 32-bit quantity. *)
@@ -72,7 +72,7 @@ let inst_to_bin (target : inst) : int32 =
     (* 0x23(6) rs rt offset(16)     -- Load (word) at address into register rt.*) 
     (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
     (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
-    | Li (_,_)            -> raise UntranslateableError (* We can't translate a pseudoinstruction straight to binary *)
+    | Li (_,_)            -> raise UntranslatableError (* We can't translate a pseudoinstruction straight to binary *)
     | Beq(rs, rt, label)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 4l 26))  (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) label )
     | Jr(rs)              -> (Int32.logor (Int32.logor 0l (Int32.shift_left (reg_to_ind rs) 21)) 8l )
     | Jal(target)         -> (Int32.logor (Int32.logor 0l (Int32.shift_left 3l 26)) target )
@@ -80,7 +80,7 @@ let inst_to_bin (target : inst) : int32 =
     | Ori(rt, rs, imm)    -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xdl  26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
     | Lw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x23l 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )
     | Sw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x2bl 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )
-    | Add(rd, rs, rt)     -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 6l 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) (Int32.shift_left (reg_to_ind rd) 11)) 0x20l)
+    | Add(rd, rs, rt)     -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) (Int32.shift_left (reg_to_ind rd) 11)) 0x20l)
     
 (* Translates an instruction to binary and copies it into memory, resolving pseudoinstructions *)
 let rec inst_update_mem (target : inst) (s : state) : state = 
