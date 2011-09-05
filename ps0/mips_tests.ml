@@ -45,7 +45,8 @@ let test_assemble_prog = fun () ->
         && ((mem_lookup 4l new_state.m) = (Byte.mk_byte 0x00l))
         && ((mem_lookup 5l new_state.m) = (Byte.mk_byte 0xa6l))
         && ((mem_lookup 6l new_state.m) = (Byte.mk_byte 0x20l))
-        && ((mem_lookup 7l new_state.m) = (Byte.mk_byte 0x20l)) )
+        && ((mem_lookup 7l new_state.m) = (Byte.mk_byte 0x20l)) 
+        && (new_state.pc = 0l)
         
 
 let _ = print_string "[==========] Running Tests\n"
