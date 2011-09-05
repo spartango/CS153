@@ -39,6 +39,6 @@ let test_assemble_prog = fun () ->
         && (new_state.pc = 0l) )
         
 
-run_tests [ Test(test_inst_translate,         "Translate"); 
+(run_tests [ Test(test_inst_translate,         "Translate"); 
             Test(run_test test_update_mem,    "Update Memory"); 
-            Test(run_test test_assemble_prog, "Assembled Program") ]
+            Test(run_test test_assemble_prog, "Assembled Program") ])
