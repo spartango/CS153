@@ -54,10 +54,10 @@ let reg_to_ind (rs : reg) : int32 = (Int32.of_int (reg2ind rs))
 let word_mem_update (word : int32) (offset : int32) (m : memory) : memory = 
   (* Split into parts by shifting *)   
   (* Insert parts into slots from offset *)
-  let mem_1 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 24)) m)     in
-  let mem_2 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 16)) mem_1) in
-  let mem_3 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 8))  mem_2) in
-    (mem_update offset (Byte.mk_byte word) mem_3)
+  let mem_1 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 24)) m)                   in
+  let mem_2 = (mem_update (Int32.add offset 1l) (Byte.mk_byte (Int32.shift_right_logical word 16)) mem_1) in
+  let mem_3 = (mem_update (Int32.add offset 2l) (Byte.mk_byte (Int32.shift_right_logical word 8))  mem_2) in
+              (mem_update (Int32.add offset 3l) (Byte.mk_byte word) mem_3)
 
 (* Performs machine-instruction to binary translation *) 
 let inst_to_bin (target : inst) : int32 = 
@@ -92,7 +92,7 @@ let rec inst_update_mem (target : inst) (s : state) : state =
         (* Then tack on an Ori for the lower half *)
         (inst_update_mem (Ori(rs, R1, (int32_lower imm))) new_state)
       (* Do a binary translate & update *)
-      | t_inst      ->   { r = s.r; m = (word_mem_update (inst_to_bin target) s.pc s.m); pc = (Int32.add s.pc 32l)}       
+      | t_inst      ->   { r = s.r; m = (word_mem_update (inst_to_bin target) s.pc s.m); pc = (Int32.add s.pc 4l)}       
 
 (* Map a program, a list of Mips assembly instructions, down to a starting 
    state. You can start the PC at any address you wish. Just make sure that 
