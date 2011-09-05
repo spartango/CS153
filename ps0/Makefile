@@ -6,6 +6,9 @@ COMPILER=ocamlc
  
 all: clean mips
 
+test: mips
+	./tests
+
 mips:
 	$(COMPILER) -c mips_ast.ml
 	ocamlyacc parse.mly
