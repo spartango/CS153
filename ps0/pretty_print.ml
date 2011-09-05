@@ -58,7 +58,7 @@ let format_string target t_format t_color : string =
             | White   -> color_WHITE
     in
     (*'\x1b\x5bATTR;COLOR;40m\tTARGET\n' *)
-    "\x1b\x5b"^(string_of_int s_format)^";"^(string_of_int s_color)^";40m"^target^default_format
+    "\x1b\x5b"^(string_of_int s_format)^";"^(string_of_int s_color)^"m"^target^default_format
     
 let print_formatted_string target t_format t_color : unit= 
     print_string (format_string target t_format t_color)
