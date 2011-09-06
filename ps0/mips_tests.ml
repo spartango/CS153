@@ -2,16 +2,14 @@ open Mips_sim
 open Mips_ast
 open Test_framework
 
-let test_verbose_inst_translate = fun () -> 
-    let test_inst = Add(R4, R5, R6)      in 
-    let binary = 0x00a62020l             in
-    let result = (inst_to_bin test_inst) in
-         ((result = binary), (Int32.to_string result)^" vs "^(Int32.to_string binary))
+let inst_translate = fun () -> 
+    let test_inst = Add(R4, R5, R6) in (inst_to_bin test_inst) 
 
-let test_inst_translate = fun () -> 
-    let test_inst = Add(R4, R5, R6) in 
-    let binary = 0x00a62020l in
-         (inst_to_bin test_inst) = binary
+let test_verbose_inst_translate = 
+    (mk_verbose_expect_test inst_translate 0x00a62020l Int32.to_string "Translate")
+
+let test_inst_translate = 
+    (mk_expect_test inst_translate 0x00a62020l "Translate")
 
 let test_update_mem = fun () ->
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
@@ -39,6 +37,6 @@ let test_assemble_prog = fun () ->
         && (new_state.pc = 0l) )
 ;;        
 
-(run_tests [ Test("Translate",         test_inst_translate); 
+(run_tests [ test_verbose_inst_translate;
              Test("Update Memory",     test_update_mem); 
-             Test("Assembled Program", test_assemble_prog) ]) 
+             Test("Assemble Program",  test_assemble_prog) ]) 
