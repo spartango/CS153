@@ -12,10 +12,10 @@ let ori_translate = fun () ->
     let test_inst = Ori(R6, R5, 34l) in (inst_to_bin test_inst) 
 
 let test_add_translate = 
-    (mk_verbose_expect_test add_translate 0x00a62020l Int32.to_string "Translate")
+    (mk_verbose_expect_test add_translate 0x00a62020l Int32.to_string "Translate Add")
 
 let test_ori_translate = 
-    (mk_verbose_expect_test ori_translate 0x34a60022l Int32.to_string "Translate")
+    (mk_verbose_expect_test ori_translate 0x34a60022l Int32.to_string "Translate Ori")
 
 let test_update_mem = fun () ->
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
