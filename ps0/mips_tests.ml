@@ -2,14 +2,20 @@ open Mips_sim
 open Mips_ast
 open Test_framework
 
-let inst_translate = fun () -> 
+(* add $4 $5 $6 -> 0x00a62020 *)
+(* ori $6 $5 34 -> 0x34a60022 *)
+
+let add_translate = fun () -> 
     let test_inst = Add(R4, R5, R6) in (inst_to_bin test_inst) 
 
-let test_verbose_inst_translate = 
-    (mk_verbose_expect_test inst_translate 0x00a62020l Int32.to_string "Translate")
+let ori_translate = fun () -> 
+    let test_inst = Ori(R6, R5, 34l) in (inst_to_bin test_inst) 
 
-let test_inst_translate = 
-    (mk_expect_test inst_translate 0x00a62020l "Translate")
+let test_add_translate = 
+    (mk_verbose_expect_test add_translate 0x00a62020l Int32.to_string "Translate")
+
+let test_ori_translate = 
+    (mk_verbose_expect_test ori_translate 0x34a60022l Int32.to_string "Translate")
 
 let test_update_mem = fun () ->
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
@@ -37,6 +43,7 @@ let test_assemble_prog = fun () ->
         && (new_state.pc = 0l) )
 ;;        
 
-(run_tests [ test_verbose_inst_translate;
+(run_tests [ test_add_translate;
+             test_ori_translate;
              Test("Update Memory",     test_update_mem); 
              Test("Assemble Program",  test_assemble_prog) ]) 
