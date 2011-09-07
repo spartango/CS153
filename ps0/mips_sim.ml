@@ -114,5 +114,24 @@ let rec assem (prog : program) : state =
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
     (assem_r prog init_state)
 
+(* Disassembles an instruction *) 
+let disassem (binary : int32) : inst = raise TODO
+    (* Mask off top 6 bits *) 
+    (* Match against possible ops *) 
+        (* if 0, mask off last 6 bits *) 
+            (* match jr vs add *)
+        (* Grab arguments specifically by masking / shifting*)
+        (* Return instruction *)
+
+let exec (target : inst) (machine_s : state) : state = raise TODO
+    (* Match against possible ops *)
+    (* Perform mem/reg operation *)
+    (* Move PC as necessary (default to +1) *)
+    (* Return state *)
+
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state = raise TODO
+    (* Grab instruction binary from addresses, concatenating as we go *)
+    (* Disassemble *) 
+    (* Exec *)
+    (* Handoff state *)
