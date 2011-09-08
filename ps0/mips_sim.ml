@@ -98,12 +98,19 @@ let disassem (binary : int32) : inst = raise TODO
         (* Grab arguments specifically by masking / shifting*)
         (* Return instruction *)
 
-let exec (target : inst) (machine_s : state) : state = raise TODO
+let exec (target : inst) (machine_s : state) : state =
     (* Match against possible ops *)
-    (* Perform mem/reg operation *)
-    (* Handle errors *)
-    (* Move PC as necessary (default to +1) *)
-    (* Return state *)
+    match target with 
+        (* Perform mem/reg operation *)     (* Move PC as necessary (default to +1) *)
+        | Li (rs, imm)        -> { pc = (Int32.succ machine_s.pc); m = machine_s.m; r = (rf_update (reg2ind rs) imm (machine_s.r))} 
+	    | Beq(rs, rt, label)  -> raise TODO
+	    | Jr(rs)              -> raise TODO
+	    | Jal(target)         -> raise TODO
+	    | Lui(rt, imm)        -> raise TODO
+	    | Ori(rt, rs, imm)    -> raise TODO
+	    | Lw(rs, rt, offset)  -> raise TODO
+	    | Sw(rs, rt, offset)  -> raise TODO
+	    | Add(rd, rs, rt)     -> raise TODO	 
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state = 
