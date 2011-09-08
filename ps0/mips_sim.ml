@@ -41,6 +41,14 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
 (* State *)
 type state = { r : regfile; pc : int32; m : memory }
 
+let left_shift_and_cat (targets : (int32 * int) list) : int32 = 
+    let op = 
+        fun (accum : int32) (item : (int32 * int)) -> 
+            match item with (value, shift) -> (Int32.logor accum (Int32.shift_left value shift))
+    in         
+    List.fold_left op 0l targets
+
+
 (* Utility function to get lower bits of a 32 bit int, shedding the sign *)
 let int32_lower (n : int32) : int32 = (Int32.logand n 0x0000FFFFl)
 
@@ -54,10 +62,22 @@ let reg_to_ind (rs : reg) : int32 = (Int32.of_int (reg2ind rs))
 let word_mem_update (word : int32) (offset : int32) (m : memory) : memory = 
   (* Split into parts by shifting *)   
   (* Insert parts into slots from offset *)
-  let mem_1 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 24)) m)                   in
+  let mem_1 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 24)) m)                    in
   let mem_2 = (mem_update (Int32.add offset 1l) (Byte.mk_byte (Int32.shift_right_logical word 16)) mem_1) in
   let mem_3 = (mem_update (Int32.add offset 2l) (Byte.mk_byte (Int32.shift_right_logical word 8))  mem_2) in
               (mem_update (Int32.add offset 3l) (Byte.mk_byte word) mem_3)
+
+(* Reads a word starting from the offset in memory *)
+let word_mem_lookup (offset : int32) (m : memory) : int32 = 
+    (Int32.logor 
+        (Int32.logor 
+            (Int32.logor 
+                (Int32.logor 
+                    0l 
+                    (Int32.shift_left (b2i32 (mem_lookup offset m)) 24) )
+                (Int32.shift_left (b2i32 (mem_lookup (Int32.add offset 1l) m)) 16) )
+            (Int32.shift_left (b2i32 (mem_lookup (Int32.add offset 2l) m)) 8) )
+        (b2i32 (mem_lookup (Int32.add offset 3l) m)) )
 
 (* Performs machine-instruction to binary translation *) 
 let inst_to_bin (target : inst) : int32 = 
@@ -126,12 +146,14 @@ let disassem (binary : int32) : inst = raise TODO
 let exec (target : inst) (machine_s : state) : state = raise TODO
     (* Match against possible ops *)
     (* Perform mem/reg operation *)
+    (* Handle errors *)
     (* Move PC as necessary (default to +1) *)
     (* Return state *)
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state = raise TODO
     (* Grab instruction binary from addresses, concatenating as we go *)
+    (* let bin_inst = (word_mem_lookup (init_state.pc) init_state.m) *)
     (* Disassemble *) 
     (* Exec *)
     (* Handoff state *)
