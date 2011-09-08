@@ -41,6 +41,22 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
 (* State *)
 type state = { r : regfile; pc : int32; m : memory }
 
+(* Shifts numbers left by a certain amount before ORing them together *)
+let left_shift_or (targets : (int32 * int) list) : int32 = 
+    let op = 
+        fun (accum : int32) (item : (int32 * int)) -> 
+            match item with (value, shift) -> (Int32.logor accum (Int32.shift_left value shift))
+    in         
+    List.fold_left op 0l targets
+
+(* Shifts numbers right by a certain amount before ORing them together *)
+let right_shift_or (targets : (int32 * int) list) : int32 = 
+    let op = 
+        fun (accum : int32) (item : (int32 * int)) -> 
+            match item with (value, shift) -> (Int32.logor accum (Int32.shift_right_logical value shift))
+    in         
+    List.fold_left op 0l targets
+
 (* Utility function to get lower bits of a 32 bit int, shedding the sign *)
 let int32_lower (n : int32) : int32 = (Int32.logand n 0x0000FFFFl)
 
@@ -54,10 +70,17 @@ let reg_to_ind (rs : reg) : int32 = (Int32.of_int (reg2ind rs))
 let word_mem_update (word : int32) (offset : int32) (m : memory) : memory = 
   (* Split into parts by shifting *)   
   (* Insert parts into slots from offset *)
-  let mem_1 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 24)) m)                   in
+  let mem_1 = (mem_update offset (Byte.mk_byte (Int32.shift_right_logical word 24)) m)                    in
   let mem_2 = (mem_update (Int32.add offset 1l) (Byte.mk_byte (Int32.shift_right_logical word 16)) mem_1) in
   let mem_3 = (mem_update (Int32.add offset 2l) (Byte.mk_byte (Int32.shift_right_logical word 8))  mem_2) in
               (mem_update (Int32.add offset 3l) (Byte.mk_byte word) mem_3)
+
+(* Reads a word starting from the offset in memory *)
+let word_mem_lookup (offset : int32) (m : memory) : int32 = 
+    left_shift_or [ ((b2i32 (mem_lookup offset m)), 24); 
+                    ((b2i32 (mem_lookup (Int32.add offset 1l) m)), 16);
+                    ((b2i32 (mem_lookup (Int32.add offset 2l) m)), 8);
+                    ((b2i32 (mem_lookup (Int32.add offset 3l) m)), 0) ]
 
 (* Performs machine-instruction to binary translation *) 
 let inst_to_bin (target : inst) : int32 = 
@@ -73,14 +96,14 @@ let inst_to_bin (target : inst) : int32 =
     (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
     (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
     | Li (_,_)            -> raise UntranslatableError (* We can't translate a pseudoinstruction straight to binary *)
-    | Beq(rs, rt, label)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 4l 26))  (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) label )
-    | Jr(rs)              -> (Int32.logor (Int32.logor 0l (Int32.shift_left (reg_to_ind rs) 21)) 8l )
-    | Jal(target)         -> (Int32.logor (Int32.logor 0l (Int32.shift_left 3l 26)) target )
-    | Lui(rt, imm)        -> (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xfl 26)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
-    | Ori(rt, rs, imm)    -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0xdl  26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) imm )
-    | Lw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x23l 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )
-    | Sw(rs, rt, offset)  -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left 0x2bl 26)) (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) offset )
-    | Add(rd, rs, rt)     -> (Int32.logor (Int32.logor (Int32.logor (Int32.logor 0l (Int32.shift_left (reg_to_ind rs) 21)) (Int32.shift_left (reg_to_ind rt) 16)) (Int32.shift_left (reg_to_ind rd) 11)) 0x20l)
+    | Beq(rs, rt, label)  -> left_shift_or [ (4l, 26);  ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); (label, 0) ]
+    | Jr(rs)              -> left_shift_or [ ((reg_to_ind rs), 21); (8l, 0) ]
+    | Jal(target)         -> left_shift_or [ (3l,    26);  (target, 0) ]
+    | Lui(rt, imm)        -> left_shift_or [ (0xfl,  26);  ((reg_to_ind rt), 16); (imm, 0) ]
+    | Ori(rt, rs, imm)    -> left_shift_or [ (0xdl,  26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (imm, 0) ]
+    | Lw(rs, rt, offset)  -> left_shift_or [ (0x23l, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
+    | Sw(rs, rt, offset)  -> left_shift_or [ (0x2bl, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
+    | Add(rd, rs, rt)     -> left_shift_or [ ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); ((reg_to_ind rd), 11); (0x20l, 0) ]
     
 (* Translates an instruction to binary and copies it into memory, resolving pseudoinstructions *)
 let rec inst_update_mem (target : inst) (s : state) : state = 
@@ -114,5 +137,26 @@ let rec assem (prog : program) : state =
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
     (assem_r prog init_state)
 
+(* Disassembles an instruction *) 
+let disassem (binary : int32) : inst = raise TODO
+    (* Mask off top 6 bits *) 
+    (* Match against possible ops *) 
+        (* if 0, mask off last 6 bits *) 
+            (* match jr vs add *)
+        (* Grab arguments specifically by masking / shifting*)
+        (* Return instruction *)
+
+let exec (target : inst) (machine_s : state) : state = raise TODO
+    (* Match against possible ops *)
+    (* Perform mem/reg operation *)
+    (* Handle errors *)
+    (* Move PC as necessary (default to +1) *)
+    (* Return state *)
+
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state = raise TODO
+    (* Grab instruction binary from addresses, concatenating as we go *)
+    (* let bin_inst = (word_mem_lookup (init_state.pc) init_state.m) *)
+    (* Disassemble *) 
+    (* Exec *)
+    (* Handoff state *)
