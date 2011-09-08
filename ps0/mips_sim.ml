@@ -154,9 +154,15 @@ let exec (target : inst) (machine_s : state) : state = raise TODO
     (* Return state *)
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
-let rec interp (init_state : state) : state = raise TODO
+let rec interp (init_state : state) : state = 
     (* Grab instruction binary from addresses, concatenating as we go *)
-    (* let bin_inst = (word_mem_lookup (init_state.pc) init_state.m) *)
-    (* Disassemble *) 
-    (* Exec *)
-    (* Handoff state *)
+    let bin_inst  = (word_mem_lookup init_state.pc init_state.m ) in
+    match bin_inst with 
+        | 0l -> (* Noop -> Done *) init_state
+        | _  -> 
+		    (* Disassemble *) 
+		    let t_inst    = (disassem bin_inst) in
+		    (* Exec *)
+		    let new_state = (exec t_inst init_state) in
+		    (* Handoff state *)
+            (interp new_state)
