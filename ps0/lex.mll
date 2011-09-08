@@ -31,4 +31,5 @@ rule lexer = parse
 | id { ID(Lexing.lexeme lexbuf) }
 | "0x"hex+ { INT(Int32.of_string(Lexing.lexeme lexbuf)) }
 | digit+ { INT(Int32.of_string(Lexing.lexeme lexbuf)) }
+| '-'digit+ { INT(Int32.of_string(Lexing.lexeme lexbuf)) }
 | eof { EOF }
