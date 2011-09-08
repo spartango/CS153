@@ -152,7 +152,9 @@ let exec (target : inst) (machine_s : state) : state =
                                                   (Int32.add (rf_lookup (reg2ind rs) machine_s.r) 
                                                              (rf_lookup (reg2ind rt) machine_s.r)) 
                                                   machine_s.r)  } 
-        | Li (rs, imm)        -> { pc = (Int32.succ machine_s.pc); m = machine_s.m; r = (rf_update (reg2ind rs) imm (machine_s.r))} 
+        | Li (rs, imm)        -> { pc = (Int32.succ machine_s.pc);  (* This shouldn't get called with the dissambler in the pipe, but is good for testing *)
+                                   m = machine_s.m; 
+                                   r = (rf_update (reg2ind rs) imm (machine_s.r))} 
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state = 
