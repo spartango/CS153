@@ -131,12 +131,27 @@ let exec (target : inst) (machine_s : state) : state =
                                    r = (rf_update (reg2ind rt) (Int32.shift_left imm 16) (machine_s.r))  }
 	    | Ori(rt, rs, imm)    -> { pc = (Int32.succ machine_s.pc); 
                                    m = machine_s.m; 
-                                   r = (rf_update (reg2ind rt) (Int32.logor imm (rf_lookup (reg2ind rs) machine_s.r)) (machine_s.r))  }
-	    | Lw(rs, rt, offset)  -> raise TODO
-	    | Sw(rs, rt, offset)  -> raise TODO
+                                   r = (rf_update (reg2ind rt) 
+                                                  (Int32.logor imm (rf_lookup (reg2ind rs) machine_s.r)) 
+                                                  machine_s.r )  }
+	    | Lw(rt, rs, offset)  -> { pc = (Int32.succ machine_s.pc);
+                                   m = machine_s.m; 
+                                   r = (rf_update (reg2ind rt) 
+			                                      (word_mem_lookup 
+			                                          (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
+			                                          machine_s.m) 
+			                                      machine_s.r )  }
+	    | Sw(rt, rs, offset)  -> { pc = (Int32.succ machine_s.pc);
+                                   m = (word_mem_update (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
+                                                        (rf_lookup (reg2ind rt) machine_s.r)
+                                                        machine_s.m); 
+                                   r = machine_s.r  }
 	    | Add(rd, rs, rt)     -> { pc = (Int32.succ machine_s.pc);
                                    m = machine_s.m; 
-                                   r = (rf_update (reg2ind rd) (Int32.add (rf_lookup (reg2ind rs) machine_s.r) (rf_lookup (reg2ind rt) machine_s.r)) machine_s.r)  } 
+                                   r = (rf_update (reg2ind rd) 
+                                                  (Int32.add (rf_lookup (reg2ind rs) machine_s.r) 
+                                                             (rf_lookup (reg2ind rt) machine_s.r)) 
+                                                  machine_s.r)  } 
         | Li (rs, imm)        -> { pc = (Int32.succ machine_s.pc); m = machine_s.m; r = (rf_update (reg2ind rs) imm (machine_s.r))} 
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)

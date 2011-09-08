@@ -83,7 +83,7 @@ let inst_to_bin (target : inst) : int32 =
     | Jal(target)         -> left_shift_or [ (3l,    26);  (target, 0) ]
     | Lui(rt, imm)        -> left_shift_or [ (0xfl,  26);  ((reg_to_ind rt), 16); (imm, 0) ]
     | Ori(rt, rs, imm)    -> left_shift_or [ (0xdl,  26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (imm, 0) ]
-    | Lw(rs, rt, offset)  -> left_shift_or [ (0x23l, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
-    | Sw(rs, rt, offset)  -> left_shift_or [ (0x2bl, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
+    | Lw(rt, rs, offset)  -> left_shift_or [ (0x23l, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
+    | Sw(rt, rs, offset)  -> left_shift_or [ (0x2bl, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
     | Add(rd, rs, rt)     -> left_shift_or [ ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); ((reg_to_ind rd), 11); (0x20l, 0) ]
     | Li (_,_)            -> raise UntranslatableError (* We can't translate a pseudoinstruction straight to binary *)
