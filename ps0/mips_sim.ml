@@ -41,7 +41,7 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
 (* State *)
 type state = { r : regfile; pc : int32; m : memory }
 
-(* Shifts numbers by a certain amount before ORing them together *)
+(* Shifts numbers left by a certain amount before ORing them together *)
 let left_shift_or (targets : (int32 * int) list) : int32 = 
     let op = 
         fun (accum : int32) (item : (int32 * int)) -> 
@@ -49,7 +49,7 @@ let left_shift_or (targets : (int32 * int) list) : int32 =
     in         
     List.fold_left op 0l targets
 
-(* Shifts numbers by a certain amount before ORing them together *)
+(* Shifts numbers right by a certain amount before ORing them together *)
 let right_shift_or (targets : (int32 * int) list) : int32 = 
     let op = 
         fun (accum : int32) (item : (int32 * int)) -> 
@@ -77,15 +77,10 @@ let word_mem_update (word : int32) (offset : int32) (m : memory) : memory =
 
 (* Reads a word starting from the offset in memory *)
 let word_mem_lookup (offset : int32) (m : memory) : int32 = 
-    (Int32.logor 
-        (Int32.logor 
-            (Int32.logor 
-                (Int32.logor 
-                    0l 
-                    (Int32.shift_left (b2i32 (mem_lookup offset m)) 24) )
-                (Int32.shift_left (b2i32 (mem_lookup (Int32.add offset 1l) m)) 16) )
-            (Int32.shift_left (b2i32 (mem_lookup (Int32.add offset 2l) m)) 8) )
-        (b2i32 (mem_lookup (Int32.add offset 3l) m)) )
+    left_shift_or [ ((b2i32 (mem_lookup offset m)), 24); 
+                    ((b2i32 (mem_lookup (Int32.add offset 1l) m)), 16);
+                    ((b2i32 (mem_lookup (Int32.add offset 2l) m)), 8);
+                    ((b2i32 (mem_lookup (Int32.add offset 3l) m)), 0) ]
 
 (* Performs machine-instruction to binary translation *) 
 let inst_to_bin (target : inst) : int32 = 
