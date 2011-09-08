@@ -112,41 +112,41 @@ let exec (target : inst) (machine_s : state) : state =
         (* Store word from rt at address *)
         (* rs + rt -> rd*)
         
-	    | Beq(rs, rt, label)  -> 
-				            if (rf_lookup (reg2ind rs) machine_s.r) = (rf_lookup (reg2ind rt) machine_s.r)
-				            then { pc = (Int32.add machine_s.pc (Int32.mul label 4l));
-				                   m = machine_s.m; 
-				                   r = machine_s.r  }
-				            else { pc = (Int32.succ machine_s.pc);
-				                   m = machine_s.m; 
-				                   r = machine_s.r  }
-	    | Jr(rs)              -> { pc = (rf_lookup (reg2ind rs) machine_s.r); 
+        | Beq(rs, rt, label)  -> 
+                            if (rf_lookup (reg2ind rs) machine_s.r) = (rf_lookup (reg2ind rt) machine_s.r)
+                            then { pc = (Int32.add machine_s.pc (Int32.mul label 4l));
+                                   m = machine_s.m; 
+                                   r = machine_s.r  }
+                            else { pc = (Int32.succ machine_s.pc);
+                                   m = machine_s.m; 
+                                   r = machine_s.r  }
+        | Jr(rs)              -> { pc = (rf_lookup (reg2ind rs) machine_s.r); 
                                    m = machine_s.m;
                                    r = machine_s.r  }
-	    | Jal(target)         -> { pc = target; 
+        | Jal(target)         -> { pc = target; 
                                    m = machine_s.m;
                                    r = (rf_update (reg2ind R31) (Int32.succ machine_s.pc) (machine_s.r))  }
-	    | Lui(rt, imm)        -> { pc = (Int32.succ machine_s.pc); 
+        | Lui(rt, imm)        -> { pc = (Int32.succ machine_s.pc); 
                                    m = machine_s.m; 
                                    r = (rf_update (reg2ind rt) (Int32.shift_left imm 16) (machine_s.r))  }
-	    | Ori(rt, rs, imm)    -> { pc = (Int32.succ machine_s.pc); 
+        | Ori(rt, rs, imm)    -> { pc = (Int32.succ machine_s.pc); 
                                    m = machine_s.m; 
                                    r = (rf_update (reg2ind rt) 
                                                   (Int32.logor imm (rf_lookup (reg2ind rs) machine_s.r)) 
                                                   machine_s.r )  }
-	    | Lw(rt, rs, offset)  -> { pc = (Int32.succ machine_s.pc);
+        | Lw(rt, rs, offset)  -> { pc = (Int32.succ machine_s.pc);
                                    m = machine_s.m; 
                                    r = (rf_update (reg2ind rt) 
-			                                      (word_mem_lookup 
-			                                          (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
-			                                          machine_s.m) 
-			                                      machine_s.r )  }
-	    | Sw(rt, rs, offset)  -> { pc = (Int32.succ machine_s.pc);
+                                                  (word_mem_lookup 
+                                                      (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
+                                                      machine_s.m) 
+                                                  machine_s.r )  }
+        | Sw(rt, rs, offset)  -> { pc = (Int32.succ machine_s.pc);
                                    m = (word_mem_update (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
                                                         (rf_lookup (reg2ind rt) machine_s.r)
                                                         machine_s.m); 
                                    r = machine_s.r  }
-	    | Add(rd, rs, rt)     -> { pc = (Int32.succ machine_s.pc);
+        | Add(rd, rs, rt)     -> { pc = (Int32.succ machine_s.pc);
                                    m = machine_s.m; 
                                    r = (rf_update (reg2ind rd) 
                                                   (Int32.add (rf_lookup (reg2ind rs) machine_s.r) 
@@ -163,9 +163,9 @@ let rec interp (init_state : state) : state =
     match bin_inst with 
         | 0l -> (* Noop -> Done *) init_state
         | _  -> 
-		    (* Disassemble *) 
-		    let t_inst    = (disassem bin_inst) in
-		    (* Exec *)
-		    let new_state = (exec t_inst init_state) in
-		    (* Handoff state *)
+            (* Disassemble *) 
+            let t_inst    = (disassem bin_inst) in
+            (* Exec *)
+            let new_state = (exec t_inst init_state) in
+            (* Handoff state *)
             (interp new_state)
