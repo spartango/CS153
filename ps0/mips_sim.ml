@@ -102,15 +102,40 @@ let exec (target : inst) (machine_s : state) : state =
     (* Match against possible ops *)
     match target with 
         (* Perform mem/reg operation *)     (* Move PC as necessary (default to +1) *)
-        | Li (rs, imm)        -> { pc = (Int32.succ machine_s.pc); m = machine_s.m; r = (rf_update (reg2ind rs) imm (machine_s.r))} 
-	    | Beq(rs, rt, label)  -> raise TODO
-	    | Jr(rs)              -> raise TODO
-	    | Jal(target)         -> raise TODO
-	    | Lui(rt, imm)        -> raise TODO
-	    | Ori(rt, rs, imm)    -> raise TODO
+        
+        (* Branch by offset if rs == rt *)
+        (* Jump to the address specified in rs*)
+        (* Jump to instruction at target, save address in RA*)
+        (* Load immediate into upper half of register*) 
+        (* rs | imm -> rt *) 
+        (* Load (word) at address into register rt.*) 
+        (* Store word from rt at address *)
+        (* rs + rt -> rd*)
+        
+	    | Beq(rs, rt, label)  -> 
+				            if (rf_lookup (reg2ind rs) machine_s.r) = (rf_lookup (reg2ind rt) machine_s.r)
+				            then { pc = (Int32.add machine_s.pc (Int32.mul label 4l));
+				                   m = machine_s.m; 
+				                   r = machine_s.r  }
+				            else { pc = (Int32.succ machine_s.pc);
+				                   m = machine_s.m; 
+				                   r = machine_s.r  }
+	    | Jr(rs)              -> { pc = (rf_lookup (reg2ind rs) machine_s.r); 
+                                   m = machine_s.m;
+                                   r = machine_s.r  }
+	    | Jal(target)         -> { pc = target; 
+                                   m = machine_s.m;
+                                   r = (rf_update (reg2ind R31) (Int32.succ machine_s.pc) (machine_s.r))  }
+	    | Lui(rt, imm)        -> { pc = (Int32.succ machine_s.pc); 
+                                   m = machine_s.m; 
+                                   r = (rf_update (reg2ind rt) (Int32.shift_left imm 16) (machine_s.r))  }
+	    | Ori(rt, rs, imm)    -> { pc = (Int32.succ machine_s.pc); 
+                                   m = machine_s.m; 
+                                   r = (rf_update (reg2ind rt) (Int32.logor imm (rf_lookup (reg2ind rs) machine_s.r)) (machine_s.r))  }
 	    | Lw(rs, rt, offset)  -> raise TODO
 	    | Sw(rs, rt, offset)  -> raise TODO
 	    | Add(rd, rs, rt)     -> raise TODO	 
+        | Li (rs, imm)        -> { pc = (Int32.succ machine_s.pc); m = machine_s.m; r = (rf_update (reg2ind rs) imm (machine_s.r))} 
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state = 

@@ -78,7 +78,6 @@ let inst_to_bin (target : inst) : int32 =
     (* 0x23(6) rs rt offset(16)     -- Load (word) at address into register rt.*) 
     (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
     (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
-    | Li (_,_)            -> raise UntranslatableError (* We can't translate a pseudoinstruction straight to binary *)
     | Beq(rs, rt, label)  -> left_shift_or [ (4l, 26);  ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); (label, 0) ]
     | Jr(rs)              -> left_shift_or [ ((reg_to_ind rs), 21); (8l, 0) ]
     | Jal(target)         -> left_shift_or [ (3l,    26);  (target, 0) ]
@@ -87,3 +86,4 @@ let inst_to_bin (target : inst) : int32 =
     | Lw(rs, rt, offset)  -> left_shift_or [ (0x23l, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
     | Sw(rs, rt, offset)  -> left_shift_or [ (0x2bl, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
     | Add(rd, rs, rt)     -> left_shift_or [ ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); ((reg_to_ind rd), 11); (0x20l, 0) ]
+    | Li (_,_)            -> raise UntranslatableError (* We can't translate a pseudoinstruction straight to binary *)
