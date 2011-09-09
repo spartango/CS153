@@ -27,11 +27,23 @@ let test_lw_translate =
 let test_sw_translate = 
     (mk_inst_to_bin_test (Sw(R15, R9, 8l)) 0x34a60022l)
 
+let test_beq_translate = 
+    (mk_inst_to_bin_test (Beq(R18, R13, 32l)) 0x34a60022l)
+
+let test_jr_translate = 
+    (mk_inst_to_bin_test (Jr(R21)) 0x34a60022l)
+
+let test_jal_translate = 
+    (mk_inst_to_bin_test (Jal(128l)) 0x34a60022l)
+
 let instruction_tests = [ test_add_translate; 
                           test_ori_translate; 
                           test_lui_translate;
                           test_lw_translate;
-                          test_sw_translate  ]
+                          test_sw_translate;
+                          test_beq_translate;
+                          test_jr_translate;
+                          test_jal_translate  ]
 
 let test_update_mem = fun () ->
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
