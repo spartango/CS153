@@ -4,6 +4,7 @@ open Binary_ops
 
 exception TODO
 exception FatalError
+exception UnalignedAccessError
 
 (* Register file definitions. A register file is a map from a register 
    number to a 32-bit quantity. *)
@@ -140,21 +141,29 @@ let exec_ori (rt : reg) (rs : reg) (imm : int32) (machine_s : state) : state =
 
 (* Executes a Lw on a given state, loading a word *)
 let exec_lw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
-    increment_pc { pc = machine_s.pc;
-                   m  = machine_s.m; 
-                   r  = (rf_update (reg2ind rt) 
-                        (word_mem_lookup 
-                            (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
-                            machine_s.m) 
-                        machine_s.r )  }
+    let target_addr = (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset)  in
+    if (Int32.rem target_addr 4l) != 0l 
+        then raise UnalignedAccessError
+        else
+		    increment_pc { pc = machine_s.pc;
+		                   m  = machine_s.m; 
+		                   r  = (rf_update (reg2ind rt) 
+		                        (word_mem_lookup 
+		                            target_addr 
+		                            machine_s.m) 
+		                        machine_s.r )  }
 
 (* Executes a Sw on a given state, storing a word *)                                                
 let exec_sw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
-    increment_pc { pc = machine_s.pc;
-                   m  = (word_mem_update (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
-                                         (rf_lookup (reg2ind rt) machine_s.r)
-                                         machine_s.m); 
-                   r  = machine_s.r  }
+    let target_addr = (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset)  in
+    if (Int32.rem target_addr 4l) != 0l 
+        then raise UnalignedAccessError
+        else
+		    increment_pc { pc = machine_s.pc;
+		                   m  = (word_mem_update target_addr
+		                                         (rf_lookup (reg2ind rt) machine_s.r)
+		                                         machine_s.m); 
+		                   r  = machine_s.r  }
 
 (* Executes an Add on a given state, adding the targeted registers*)
 let exec_add (rd : reg) (rs : reg) (rt : reg) (machine_s : state) : state =
