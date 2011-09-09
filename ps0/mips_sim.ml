@@ -1,9 +1,10 @@
 open Mips_ast
 open Byte
+open Binary_ops
 
 exception TODO
 exception FatalError
-exception UntranslatableError
+exception UnalignedAccessError
 
 (* Register file definitions. A register file is a map from a register 
    number to a 32-bit quantity. *)
@@ -41,31 +42,6 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
 (* State *)
 type state = { r : regfile; pc : int32; m : memory }
 
-(* Shifts numbers left by a certain amount before ORing them together *)
-let left_shift_or (targets : (int32 * int) list) : int32 = 
-    let op = 
-        fun (accum : int32) (item : (int32 * int)) -> 
-            match item with (value, shift) -> (Int32.logor accum (Int32.shift_left value shift))
-    in         
-    List.fold_left op 0l targets
-
-(* Shifts numbers right by a certain amount before ORing them together *)
-let right_shift_or (targets : (int32 * int) list) : int32 = 
-    let op = 
-        fun (accum : int32) (item : (int32 * int)) -> 
-            match item with (value, shift) -> (Int32.logor accum (Int32.shift_right_logical value shift))
-    in         
-    List.fold_left op 0l targets
-
-(* Utility function to get lower bits of a 32 bit int, shedding the sign *)
-let int32_lower (n : int32) : int32 = (Int32.logand n 0x0000FFFFl)
-
-(* Utility function to get upper bits of a 32 bit int*)
-let int32_upper (n : int32) : int32 = (Int32.shift_right_logical n 16) 
-
-(* Utility function that wraps reg_to_ind to give int32s *)
-let reg_to_ind (rs : reg) : int32 = (Int32.of_int (reg2ind rs))
-
 (* Copies a 32 bit object into adjacent memory locations *)
 let word_mem_update (word : int32) (offset : int32) (m : memory) : memory = 
   (* Split into parts by shifting *)   
@@ -81,29 +57,6 @@ let word_mem_lookup (offset : int32) (m : memory) : int32 =
                     ((b2i32 (mem_lookup (Int32.add offset 1l) m)), 16);
                     ((b2i32 (mem_lookup (Int32.add offset 2l) m)), 8);
                     ((b2i32 (mem_lookup (Int32.add offset 3l) m)), 0) ]
-
-(* Performs machine-instruction to binary translation *) 
-let inst_to_bin (target : inst) : int32 = 
-  match target with 
-    (* Registers are 5 bits unless otherwise indicated *) 
-
-    (* 4(6)    rs rt offset(16)     -- Branch by offset if rs == rt *)
-    (* 0(6)    rs 0(15) 8(6)        -- Jump to the address specified in rs*)
-    (* 3(6)    target(26)           -- Jump to instruction at target, save address in RA*)       
-    (* 0xf(6)  0(5) rt imm(16)      -- Load immediate into upper half of register*) 
-    (* 0xd(6)  rt rs imm(16)        -- rs | imm -> rt *) 
-    (* 0x23(6) rs rt offset(16)     -- Load (word) at address into register rt.*) 
-    (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
-    (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
-    | Li (_,_)            -> raise UntranslatableError (* We can't translate a pseudoinstruction straight to binary *)
-    | Beq(rs, rt, label)  -> left_shift_or [ (4l, 26);  ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); (label, 0) ]
-    | Jr(rs)              -> left_shift_or [ ((reg_to_ind rs), 21); (8l, 0) ]
-    | Jal(target)         -> left_shift_or [ (3l,    26);  (target, 0) ]
-    | Lui(rt, imm)        -> left_shift_or [ (0xfl,  26);  ((reg_to_ind rt), 16); (imm, 0) ]
-    | Ori(rt, rs, imm)    -> left_shift_or [ (0xdl,  26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (imm, 0) ]
-    | Lw(rs, rt, offset)  -> left_shift_or [ (0x23l, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
-    | Sw(rs, rt, offset)  -> left_shift_or [ (0x2bl, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
-    | Add(rd, rs, rt)     -> left_shift_or [ ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); ((reg_to_ind rd), 11); (0x20l, 0) ]
     
 (* Translates an instruction to binary and copies it into memory, resolving pseudoinstructions *)
 let rec inst_update_mem (target : inst) (s : state) : state = 
@@ -146,17 +99,122 @@ let disassem (binary : int32) : inst = raise TODO
         (* Grab arguments specifically by masking / shifting*)
         (* Return instruction *)
 
-let exec (target : inst) (machine_s : state) : state = raise TODO
+(* Checks for word alignment of address *)
+let check_word_aligned (target_addr : int32) : int32 =
+	if (Int32.rem target_addr 4l) != 0l 
+	    then raise UnalignedAccessError
+	    else
+	        target_addr
+	    
+(* Increments the PC of a state *) 
+let increment_pc (machine_s : state) : state = 
+   { pc = (Int32.add 4l machine_s.pc); 
+     m  = machine_s.m;
+     r  = machine_s.r  }
+
+(* Executes a Beq on a given state, branching if equal *)
+let exec_beq (rs : reg) (rt : reg) (label : int32) (machine_s : state) : state = 
+    if (rf_lookup (reg2ind rs) machine_s.r) = (rf_lookup (reg2ind rt) machine_s.r)
+    then { pc = (Int32.add machine_s.pc (Int32.mul label 4l));
+           m  = machine_s.m; 
+           r  = machine_s.r  }
+    else (increment_pc machine_s)
+
+(* Executes a Jr on a given state, jumping to the address stored in rs *)                  
+let exec_jr (rs : reg) (machine_s : state) : state = 
+	{ pc = (check_word_aligned (rf_lookup (reg2ind rs) machine_s.r)); 
+	  m  = machine_s.m;
+	  r  = machine_s.r  }
+
+(* Executes a Jal on a given state, jumping to a target and linking the return address *)          
+let exec_jal (target : int32) (machine_s : state) : state =
+    { pc = (check_word_aligned target); 
+      m  = machine_s.m;
+      r  = (rf_update (reg2ind R31) (Int32.add machine_s.pc 4l) (machine_s.r))  }
+
+(* Executes a Lui on a given state, loading an immediate into the upper half of a register *)
+let exec_lui (rt : reg) (imm : int32) (machine_s : state) : state = 
+    increment_pc { pc = machine_s.pc; 
+                   m  = machine_s.m; 
+                   r  = (rf_update (reg2ind rt) (Int32.shift_left imm 16) (machine_s.r))  }
+
+(* Executes a Ori on a given state, OR-ing an immediate *)                                
+let exec_ori (rt : reg) (rs : reg) (imm : int32) (machine_s : state) : state =
+	increment_pc { pc = machine_s.pc; 
+	               m  = machine_s.m; 
+	               r  = (rf_update (reg2ind rt) 
+	                    (Int32.logor imm (rf_lookup (reg2ind rs) machine_s.r)) 
+	                    machine_s.r )  }    
+
+(* Executes a Lw on a given state, loading a word *)
+let exec_lw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
+    let target_addr = (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset)  in
+	    increment_pc { pc = machine_s.pc;
+	                   m  = machine_s.m; 
+	                   r  = (rf_update (reg2ind rt) 
+	                        (word_mem_lookup 
+	                            (check_word_aligned target_addr)
+	                            machine_s.m) 
+	                        machine_s.r )  }
+
+(* Executes a Sw on a given state, storing a word *)                                                
+let exec_sw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
+    let target_addr = (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset)  in
+	    increment_pc { pc = machine_s.pc;
+	                   m  = (word_mem_update (check_word_aligned target_addr)
+	                                         (rf_lookup (reg2ind rt) machine_s.r)
+	                                         machine_s.m); 
+	                   r  = machine_s.r  }
+
+(* Executes an Add on a given state, adding the targeted registers*)
+let exec_add (rd : reg) (rs : reg) (rt : reg) (machine_s : state) : state =
+    increment_pc { pc = machine_s.pc;
+                   m  = machine_s.m; 
+                   r  = (rf_update (reg2ind rd) 
+                                   (Int32.add (rf_lookup (reg2ind rs) machine_s.r) 
+                                              (rf_lookup (reg2ind rt) machine_s.r)) 
+                                   machine_s.r)  } 
+                                
+(* Executes a Li on a given state, loading a 32 bit li *)                               
+let exec_li (rs : reg) (imm : int32) (machine_s : state) : state =    
+    increment_pc { pc = machine_s.pc;  
+                   m  = machine_s.m; 
+                   r  = (rf_update (reg2ind rs) imm (machine_s.r))}                               
+
+let exec (target : inst) (machine_s : state) : state =
     (* Match against possible ops *)
-    (* Perform mem/reg operation *)
-    (* Handle errors *)
-    (* Move PC as necessary (default to +1) *)
-    (* Return state *)
+    match target with 
+        (* Perform mem/reg operation *)     (* Move PC as necessary (default to +1) *)
+        
+        (* Branch by offset if rs == rt *)
+        (* Jump to the address specified in rs*)
+        (* Jump to instruction at target, save address in RA*)
+        (* Load immediate into upper half of register*) 
+        (* rs | imm -> rt *) 
+        (* Load (word) at address into register rt.*) 
+        (* Store word from rt at address *)
+        (* rs + rt -> rd*)
+        
+        | Beq(rs, rt, label)  -> (exec_beq rs rt label machine_s)                  
+        | Jr(rs)              -> (exec_jr  rs machine_s)
+        | Jal(target)         -> (exec_jal target machine_s)
+        | Lui(rt, imm)        -> (exec_lui rt imm machine_s)
+        | Ori(rt, rs, imm)    -> (exec_ori rt rs imm machine_s)
+        | Lw(rt, rs, offset)  -> (exec_lw  rt rs offset machine_s)
+        | Sw(rt, rs, offset)  -> (exec_sw  rt rs offset machine_s)
+        | Add(rd, rs, rt)     -> (exec_add rd rs rt machine_s) 
+        | Li (rs, imm)        -> (exec_li  rs imm machine_s) (* This shouldn't get called with the dissambler in the pipe, but is good for testing *)
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
-let rec interp (init_state : state) : state = raise TODO
+let rec interp (init_state : state) : state = 
     (* Grab instruction binary from addresses, concatenating as we go *)
-    (* let bin_inst = (word_mem_lookup (init_state.pc) init_state.m) *)
-    (* Disassemble *) 
-    (* Exec *)
-    (* Handoff state *)
+    let bin_inst  = (word_mem_lookup init_state.pc init_state.m ) in
+    match bin_inst with 
+        | 0l -> (* Noop -> Done *) init_state
+        | _  -> 
+            (* Disassemble *) 
+            let t_inst    = (disassem bin_inst) in
+            (* Exec *)
+            let new_state = (exec t_inst init_state) in
+            (* Handoff state *)
+            (interp new_state)

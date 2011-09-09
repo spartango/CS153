@@ -1,4 +1,5 @@
 open Int32
+open Binary_ops
 
 type label = string
 
@@ -44,6 +45,9 @@ let reg2ind r =
   | R20 -> 20 | R21 -> 21 | R22 -> 22 | R23 -> 23
   | R24 -> 24 | R25 -> 25 | R26 -> 26 | R27 -> 27
   | R28 -> 28 | R29 -> 29 | R30 -> 30 | R31 -> 31
+
+(* Utility function that wraps reg_to_ind to give int32s *)
+let reg_to_ind (rs : reg) : int32 = (Int32.of_int (reg2ind rs))
  
 (* A small subset of the Mips assembly language *)
 type inst =
@@ -58,3 +62,28 @@ type inst =
 | Ori of reg * reg * int32  (* and here ... *)
 
 type program = inst list
+
+exception UntranslatableError
+
+(* Performs machine-instruction to binary translation *) 
+let inst_to_bin (target : inst) : int32 = 
+  match target with 
+    (* Registers are 5 bits unless otherwise indicated *) 
+
+    (* 4(6)    rs rt offset(16)     -- Branch by offset if rs == rt *)
+    (* 0(6)    rs 0(15) 8(6)        -- Jump to the address specified in rs*)
+    (* 3(6)    target(26)           -- Jump to instruction at target, save address in RA*)       
+    (* 0xf(6)  0(5) rt imm(16)      -- Load immediate into upper half of register*) 
+    (* 0xd(6)  rt rs imm(16)        -- rs | imm -> rt *) 
+    (* 0x23(6) rs rt offset(16)     -- Load (word) at address into register rt.*) 
+    (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
+    (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
+    | Beq(rs, rt, label)  -> left_shift_or [ (4l, 26);  ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); (label, 0) ]
+    | Jr(rs)              -> left_shift_or [ ((reg_to_ind rs), 21); (8l, 0) ]
+    | Jal(target)         -> left_shift_or [ (3l,    26);  (target, 0) ]
+    | Lui(rt, imm)        -> left_shift_or [ (0xfl,  26);  ((reg_to_ind rt), 16); (imm, 0) ]
+    | Ori(rt, rs, imm)    -> left_shift_or [ (0xdl,  26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (imm, 0) ]
+    | Lw(rt, rs, offset)  -> left_shift_or [ (0x23l, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
+    | Sw(rt, rs, offset)  -> left_shift_or [ (0x2bl, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
+    | Add(rd, rs, rt)     -> left_shift_or [ ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); ((reg_to_ind rd), 11); (0x20l, 0) ]
+    | Li (_,_)            -> raise UntranslatableError (* We can't translate a pseudoinstruction straight to binary *)

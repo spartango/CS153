@@ -14,3 +14,9 @@ ps0/*.cmi
 ps0/ps0
 
 *.swp
+
+ps0/tests
+
+.DS_Store
+
+ps0/.paths

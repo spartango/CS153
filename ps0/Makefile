@@ -10,6 +10,7 @@ test: mips
 	./tests
 
 mips:
+	$(COMPILER) -c binary_ops.ml
 	$(COMPILER) -c mips_ast.ml
 	ocamlyacc parse.mly
 	$(COMPILER) -c parse.mli
@@ -22,8 +23,8 @@ mips:
 	$(COMPILER) -c pretty_print.ml
 	$(COMPILER) -c test_framework.ml
 	$(COMPILER) -c mips_tests.ml
-	$(COMPILER) -o ps0 mips_ast.cmo parse.cmo lex.cmo byte.cmo mips_sim.cmo mips.cmo
-	$(COMPILER) -o tests mips_ast.cmo byte.cmo mips_sim.cmo pretty_print.cmo test_framework.cmo mips_tests.cmo
+	$(COMPILER) -o ps0 binary_ops.cmo mips_ast.cmo parse.cmo lex.cmo byte.cmo mips_sim.cmo mips.cmo 
+	$(COMPILER) -o tests binary_ops.cmo mips_ast.cmo byte.cmo mips_sim.cmo pretty_print.cmo test_framework.cmo mips_tests.cmo
 	
 clean:
-	-rm *.cmo *.cmi ps0 parse.ml parse.mli lex.ml 
+	-rm *.cmo *.cmi ps0 tests parse.ml parse.mli lex.ml 
