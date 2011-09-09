@@ -18,7 +18,20 @@ let test_add_translate =
 let test_ori_translate = 
     (mk_inst_to_bin_test (Ori(R6, R5, 34l)) 0x34a60022l)
 
-let instruction_tests = [ test_add_translate; test_ori_translate ]
+let test_lui_translate = 
+    (mk_inst_to_bin_test (Lui(R11, 255l)) 0x34a60022l)
+
+let test_lw_translate = 
+    (mk_inst_to_bin_test (Lw(R10, R6, 4l)) 0x34a60022l)
+
+let test_sw_translate = 
+    (mk_inst_to_bin_test (Sw(R15, R9, 8l)) 0x34a60022l)
+
+let instruction_tests = [ test_add_translate; 
+                          test_ori_translate; 
+                          test_lui_translate;
+                          test_lw_translate;
+                          test_sw_translate  ]
 
 let test_update_mem = fun () ->
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
