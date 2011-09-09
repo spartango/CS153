@@ -98,33 +98,39 @@ let disassem (binary : int32) : inst = raise TODO
         (* Grab arguments specifically by masking / shifting*)
         (* Return instruction *)
 
+(* Increments the PC of a state *) 
 let increment_pc (machine_s : state) : state = 
    { pc = (Int32.add 4l machine_s.pc); 
      m  = machine_s.m;
      r  = machine_s.r  }
 
+(* Executes a Beq on a given state, branching if equal *)
 let exec_beq (rs : reg) (rt : reg) (label : int32) (machine_s : state) : state = 
     if (rf_lookup (reg2ind rs) machine_s.r) = (rf_lookup (reg2ind rt) machine_s.r)
     then { pc = (Int32.add machine_s.pc (Int32.mul label 4l));
            m  = machine_s.m; 
            r  = machine_s.r  }
     else (increment_pc machine_s)
-          
+
+(* Executes a Jr on a given state, jumping to the address stored in rs *)                  
 let exec_jr (rs : reg) (machine_s : state) : state = 
     { pc = (rf_lookup (reg2ind rs) machine_s.r); 
       m  = machine_s.m;
       r  = machine_s.r  }
-      
+
+(* Executes a Jal on a given state, jumping to a target and linking the return address *)          
 let exec_jal (target : int32) (machine_s : state) : state =
     { pc = target; 
       m  = machine_s.m;
       r  = (rf_update (reg2ind R31) (Int32.add machine_s.pc 4l) (machine_s.r))  }
 
+(* Executes a Lui on a given state, loading an immediate into the upper half of a register *)
 let exec_lui (rt : reg) (imm : int32) (machine_s : state) : state = 
     increment_pc { pc = machine_s.pc; 
                    m  = machine_s.m; 
                    r  = (rf_update (reg2ind rt) (Int32.shift_left imm 16) (machine_s.r))  }
-                
+
+(* Executes a Ori on a given state, OR-ing an immediate *)                                
 let exec_ori (rt : reg) (rs : reg) (imm : int32) (machine_s : state) : state =
 	increment_pc { pc = machine_s.pc; 
 	               m  = machine_s.m; 
@@ -132,6 +138,7 @@ let exec_ori (rt : reg) (rs : reg) (imm : int32) (machine_s : state) : state =
 	                    (Int32.logor imm (rf_lookup (reg2ind rs) machine_s.r)) 
 	                    machine_s.r )  }    
 
+(* Executes a Lw on a given state, loading a word *)
 let exec_lw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
     increment_pc { pc = machine_s.pc;
                    m  = machine_s.m; 
@@ -140,7 +147,8 @@ let exec_lw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
                             (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
                             machine_s.m) 
                         machine_s.r )  }
-                        
+
+(* Executes a Sw on a given state, storing a word *)                                                
 let exec_sw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
     increment_pc { pc = machine_s.pc;
                    m  = (word_mem_update (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
@@ -148,6 +156,7 @@ let exec_sw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
                                          machine_s.m); 
                    r  = machine_s.r  }
 
+(* Executes an Add on a given state, adding the targeted registers*)
 let exec_add (rd : reg) (rs : reg) (rt : reg) (machine_s : state) : state =
     increment_pc { pc = machine_s.pc;
                    m  = machine_s.m; 
@@ -156,6 +165,7 @@ let exec_add (rd : reg) (rs : reg) (rt : reg) (machine_s : state) : state =
                                              (rf_lookup (reg2ind rt) machine_s.r)) 
                                   machine_s.r)  } 
                                 
+(* Executes a Li on a given state, loading a 32 bit li *)                               
 let exec_li (rs : reg) (imm : int32) (machine_s : state) : state =    
     increment_pc { pc = machine_s.pc;  
                    m  = machine_s.m; 
