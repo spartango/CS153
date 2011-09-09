@@ -98,6 +98,69 @@ let disassem (binary : int32) : inst = raise TODO
         (* Grab arguments specifically by masking / shifting*)
         (* Return instruction *)
 
+let increment_pc (machine_s : state) : state = 
+   { pc = (Int32.add 4l machine_s.pc); 
+     m  = machine_s.m;
+     r  = machine_s.r  }
+
+let exec_beq (rs : reg) (rt : reg) (label : int32) (machine_s : state) : state = 
+    if (rf_lookup (reg2ind rs) machine_s.r) = (rf_lookup (reg2ind rt) machine_s.r)
+    then { pc = (Int32.add machine_s.pc (Int32.mul label 4l));
+           m  = machine_s.m; 
+           r  = machine_s.r  }
+    else (increment_pc machine_s)
+          
+let exec_jr (rs : reg) (machine_s : state) : state = 
+    { pc = (rf_lookup (reg2ind rs) machine_s.r); 
+      m  = machine_s.m;
+      r  = machine_s.r  }
+      
+let exec_jal (target : int32) (machine_s : state) : state =
+    { pc = target; 
+      m  = machine_s.m;
+      r  = (rf_update (reg2ind R31) (Int32.add machine_s.pc 4l) (machine_s.r))  }
+
+let exec_lui (rt : reg) (imm : int32) (machine_s : state) : state = 
+    increment_pc { pc = machine_s.pc; 
+                   m  = machine_s.m; 
+                   r  = (rf_update (reg2ind rt) (Int32.shift_left imm 16) (machine_s.r))  }
+                
+let exec_ori (rt : reg) (rs : reg) (imm : int32) (machine_s : state) : state =
+	increment_pc { pc = machine_s.pc; 
+	               m  = machine_s.m; 
+	               r  = (rf_update (reg2ind rt) 
+	                    (Int32.logor imm (rf_lookup (reg2ind rs) machine_s.r)) 
+	                    machine_s.r )  }    
+
+let exec_lw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
+    increment_pc { pc = machine_s.pc;
+                   m  = machine_s.m; 
+                   r  = (rf_update (reg2ind rt) 
+                        (word_mem_lookup 
+                            (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
+                            machine_s.m) 
+                        machine_s.r )  }
+                        
+let exec_sw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
+    increment_pc { pc = machine_s.pc;
+                   m  = (word_mem_update (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
+                                         (rf_lookup (reg2ind rt) machine_s.r)
+                                         machine_s.m); 
+                   r  = machine_s.r  }
+
+let exec_add (rd : reg) (rs : reg) (rt : reg) (machine_s : state) : state =
+    increment_pc { pc = machine_s.pc;
+                   m  = machine_s.m; 
+                   r  = (rf_update (reg2ind rd) 
+                                  (Int32.add (rf_lookup (reg2ind rs) machine_s.r) 
+                                             (rf_lookup (reg2ind rt) machine_s.r)) 
+                                  machine_s.r)  } 
+                                
+let exec_li (rs : reg) (imm : int32) (machine_s : state) : state =    
+    increment_pc { pc = machine_s.pc;  
+                   m  = machine_s.m; 
+                   r  = (rf_update (reg2ind rs) imm (machine_s.r))}                               
+
 let exec (target : inst) (machine_s : state) : state =
     (* Match against possible ops *)
     match target with 
@@ -112,49 +175,15 @@ let exec (target : inst) (machine_s : state) : state =
         (* Store word from rt at address *)
         (* rs + rt -> rd*)
         
-        | Beq(rs, rt, label)  -> 
-                            if (rf_lookup (reg2ind rs) machine_s.r) = (rf_lookup (reg2ind rt) machine_s.r)
-                            then { pc = (Int32.add machine_s.pc (Int32.mul label 4l));
-                                   m = machine_s.m; 
-                                   r = machine_s.r  }
-                            else { pc = (Int32.succ machine_s.pc);
-                                   m = machine_s.m; 
-                                   r = machine_s.r  }
-        | Jr(rs)              -> { pc = (rf_lookup (reg2ind rs) machine_s.r); 
-                                   m = machine_s.m;
-                                   r = machine_s.r  }
-        | Jal(target)         -> { pc = target; 
-                                   m = machine_s.m;
-                                   r = (rf_update (reg2ind R31) (Int32.succ machine_s.pc) (machine_s.r))  }
-        | Lui(rt, imm)        -> { pc = (Int32.succ machine_s.pc); 
-                                   m = machine_s.m; 
-                                   r = (rf_update (reg2ind rt) (Int32.shift_left imm 16) (machine_s.r))  }
-        | Ori(rt, rs, imm)    -> { pc = (Int32.succ machine_s.pc); 
-                                   m = machine_s.m; 
-                                   r = (rf_update (reg2ind rt) 
-                                                  (Int32.logor imm (rf_lookup (reg2ind rs) machine_s.r)) 
-                                                  machine_s.r )  }
-        | Lw(rt, rs, offset)  -> { pc = (Int32.succ machine_s.pc);
-                                   m = machine_s.m; 
-                                   r = (rf_update (reg2ind rt) 
-                                                  (word_mem_lookup 
-                                                      (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
-                                                      machine_s.m) 
-                                                  machine_s.r )  }
-        | Sw(rt, rs, offset)  -> { pc = (Int32.succ machine_s.pc);
-                                   m = (word_mem_update (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset) 
-                                                        (rf_lookup (reg2ind rt) machine_s.r)
-                                                        machine_s.m); 
-                                   r = machine_s.r  }
-        | Add(rd, rs, rt)     -> { pc = (Int32.succ machine_s.pc);
-                                   m = machine_s.m; 
-                                   r = (rf_update (reg2ind rd) 
-                                                  (Int32.add (rf_lookup (reg2ind rs) machine_s.r) 
-                                                             (rf_lookup (reg2ind rt) machine_s.r)) 
-                                                  machine_s.r)  } 
-        | Li (rs, imm)        -> { pc = (Int32.succ machine_s.pc);  (* This shouldn't get called with the dissambler in the pipe, but is good for testing *)
-                                   m = machine_s.m; 
-                                   r = (rf_update (reg2ind rs) imm (machine_s.r))} 
+        | Beq(rs, rt, label)  -> (exec_beq rs rt label machine_s)                  
+        | Jr(rs)              -> (exec_jr  rs machine_s)
+        | Jal(target)         -> (exec_jal target machine_s)
+        | Lui(rt, imm)        -> (exec_lui rt imm machine_s)
+        | Ori(rt, rs, imm)    -> (exec_ori rt rs imm machine_s)
+        | Lw(rt, rs, offset)  -> (exec_lw  rt rs offset machine_s)
+        | Sw(rt, rs, offset)  -> (exec_sw  rt rs offset machine_s)
+        | Add(rd, rs, rt)     -> (exec_add rd rs rt machine_s) 
+        | Li (rs, imm)        -> (exec_li  rs imm machine_s) (* This shouldn't get called with the dissambler in the pipe, but is good for testing *)
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state = 

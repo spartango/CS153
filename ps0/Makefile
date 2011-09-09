@@ -27,4 +27,4 @@ mips:
 	$(COMPILER) -o tests binary_ops.cmo mips_ast.cmo byte.cmo mips_sim.cmo pretty_print.cmo test_framework.cmo mips_tests.cmo
 	
 clean:
-	-rm *.cmo *.cmi ps0 parse.ml parse.mli lex.ml 
+	-rm *.cmo *.cmi ps0 tests parse.ml parse.mli lex.ml 
