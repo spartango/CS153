@@ -99,6 +99,13 @@ let disassem (binary : int32) : inst = raise TODO
         (* Grab arguments specifically by masking / shifting*)
         (* Return instruction *)
 
+(* Checks for word alignment of address *)
+let check_word_aligned (target_addr : int32) : int32 =
+	if (Int32.rem target_addr 4l) != 0l 
+	    then raise UnalignedAccessError
+	    else
+	        target_addr
+	    
 (* Increments the PC of a state *) 
 let increment_pc (machine_s : state) : state = 
    { pc = (Int32.add 4l machine_s.pc); 
@@ -115,9 +122,9 @@ let exec_beq (rs : reg) (rt : reg) (label : int32) (machine_s : state) : state =
 
 (* Executes a Jr on a given state, jumping to the address stored in rs *)                  
 let exec_jr (rs : reg) (machine_s : state) : state = 
-    { pc = (rf_lookup (reg2ind rs) machine_s.r); 
-      m  = machine_s.m;
-      r  = machine_s.r  }
+	{ pc = (check_word_aligned (rf_lookup (reg2ind rs) machine_s.r)); 
+	  m  = machine_s.m;
+	  r  = machine_s.r  }
 
 (* Executes a Jal on a given state, jumping to a target and linking the return address *)          
 let exec_jal (target : int32) (machine_s : state) : state =
@@ -142,37 +149,31 @@ let exec_ori (rt : reg) (rs : reg) (imm : int32) (machine_s : state) : state =
 (* Executes a Lw on a given state, loading a word *)
 let exec_lw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
     let target_addr = (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset)  in
-    if (Int32.rem target_addr 4l) != 0l 
-        then raise UnalignedAccessError
-        else
-		    increment_pc { pc = machine_s.pc;
-		                   m  = machine_s.m; 
-		                   r  = (rf_update (reg2ind rt) 
-		                        (word_mem_lookup 
-		                            target_addr 
-		                            machine_s.m) 
-		                        machine_s.r )  }
+	    increment_pc { pc = machine_s.pc;
+	                   m  = machine_s.m; 
+	                   r  = (rf_update (reg2ind rt) 
+	                        (word_mem_lookup 
+	                            (check_word_aligned target_addr)
+	                            machine_s.m) 
+	                        machine_s.r )  }
 
 (* Executes a Sw on a given state, storing a word *)                                                
 let exec_sw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
     let target_addr = (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset)  in
-    if (Int32.rem target_addr 4l) != 0l 
-        then raise UnalignedAccessError
-        else
-		    increment_pc { pc = machine_s.pc;
-		                   m  = (word_mem_update target_addr
-		                                         (rf_lookup (reg2ind rt) machine_s.r)
-		                                         machine_s.m); 
-		                   r  = machine_s.r  }
+	    increment_pc { pc = machine_s.pc;
+	                   m  = (word_mem_update (check_word_aligned target_addr)
+	                                         (rf_lookup (reg2ind rt) machine_s.r)
+	                                         machine_s.m); 
+	                   r  = machine_s.r  }
 
 (* Executes an Add on a given state, adding the targeted registers*)
 let exec_add (rd : reg) (rs : reg) (rt : reg) (machine_s : state) : state =
     increment_pc { pc = machine_s.pc;
                    m  = machine_s.m; 
                    r  = (rf_update (reg2ind rd) 
-                                  (Int32.add (rf_lookup (reg2ind rs) machine_s.r) 
-                                             (rf_lookup (reg2ind rt) machine_s.r)) 
-                                  machine_s.r)  } 
+                                   (Int32.add (rf_lookup (reg2ind rs) machine_s.r) 
+                                              (rf_lookup (reg2ind rt) machine_s.r)) 
+                                   machine_s.r)  } 
                                 
 (* Executes a Li on a given state, loading a 32 bit li *)                               
 let exec_li (rs : reg) (imm : int32) (machine_s : state) : state =    
