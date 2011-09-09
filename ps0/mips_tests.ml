@@ -5,17 +5,20 @@ open Test_framework
 (* add $4 $5 $6 -> 0x00a62020 *)
 (* ori $6 $5 34 -> 0x34a60022 *)
 
-let add_translate = fun () -> 
-    let test_inst = Add(R4, R5, R6) in (inst_to_bin test_inst) 
-
-let ori_translate = fun () -> 
-    let test_inst = Ori(R6, R5, 34l) in (inst_to_bin test_inst) 
+(* Tests for each instruction *)
+let mk_inst_to_bin_test (test_inst : inst) (expected : int32) =
+    (mk_verbose_expect_test (fun () -> (inst_to_bin test_inst)) 
+                           expected 
+                           Int32.to_string
+                           ("Translate "^(inst2str test_inst)) )
 
 let test_add_translate = 
-    (mk_verbose_expect_test add_translate 0x00a62020l Int32.to_string "Translate Add")
+    (mk_inst_to_bin_test (Add(R4, R5, R6)) 0x00a62020l)
 
 let test_ori_translate = 
-    (mk_verbose_expect_test ori_translate 0x34a60022l Int32.to_string "Translate Ori")
+    (mk_inst_to_bin_test (Ori(R6, R5, 34l)) 0x34a60022l)
+
+let instruction_tests = [ test_add_translate; test_ori_translate ]
 
 let test_update_mem = fun () ->
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
@@ -43,7 +46,7 @@ let test_assemble_prog = fun () ->
         && (new_state.pc = 0l) )
 ;;        
 
-(run_test_set [ test_add_translate; test_ori_translate ] "Binary Translation Tests") ;;
+(run_test_set instruction_tests "Binary Translation Tests") ;;
 
 (run_test_set [   Test("Update Memory",     test_update_mem); 
                   Test("Assemble Program",  test_assemble_prog) ] 
