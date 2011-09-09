@@ -128,7 +128,7 @@ let exec_jr (rs : reg) (machine_s : state) : state =
 
 (* Executes a Jal on a given state, jumping to a target and linking the return address *)          
 let exec_jal (target : int32) (machine_s : state) : state =
-    { pc = target; 
+    { pc = (check_word_aligned target); 
       m  = machine_s.m;
       r  = (rf_update (reg2ind R31) (Int32.add machine_s.pc 4l) (machine_s.r))  }
 
