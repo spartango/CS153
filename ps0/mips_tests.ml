@@ -43,7 +43,8 @@ let test_assemble_prog = fun () ->
         && (new_state.pc = 0l) )
 ;;        
 
-(run_tests [ test_add_translate;
-             test_ori_translate;
-             Test("Update Memory",     test_update_mem); 
-             Test("Assemble Program",  test_assemble_prog) ]) 
+(run_test_set [ test_add_translate; test_ori_translate ] "Binary Translation Tests") ;;
+
+(run_test_set [   Test("Update Memory",     test_update_mem); 
+                  Test("Assemble Program",  test_assemble_prog) ] 
+              "Assembler Functional Tests" ) 

@@ -19,31 +19,39 @@ let mk_verbose_expect_test (f : unit -> 'a) (expected : 'a) (to_string : 'a -> s
     in
     Verbose_Test(name, t_test)
 
-let run_test  (t_test : test) : string = 
+let run_test  (t_test : test) : (bool * string) = 
     match t_test with 
         | Test(name, exec) ->
 		    let result = (exec ()) in 
-		    if result then (format_string "[  PASSED  ] " Bright Green)^name^"\n" 
-		              else (format_string "[  FAILED  ] " Bright Red)  ^name^"\n"
+            (result,  
+            (if result then (format_string "[  PASSED  ] " Bright Green) 
+                       else (format_string "[  FAILED  ] " Bright Red))
+                ^name^"\n")
         | Verbose_Test(name, exec) -> 
-            let result = (exec ()) in 
-			match result with
-			| (true,  message) -> (format_string "[  PASSED  ] " Bright Green)^name^": "^message^"\n"
-			| (false, message) -> (format_string "[  FAILED  ] " Bright Red)  ^name^": "^message^"\n"
+            let (result, message) = (exec ()) in 
+			(result,  
+            (if result then (format_string "[  PASSED  ] " Bright Green) 
+                       else (format_string "[  FAILED  ] " Bright Red))
+                ^name^": "^message^"\n")
 			     
             
-let run_tests ( tests : test list) : unit = 
-    let _ = print_string ((format_string "[==========] " Bright Cyan)^"Running Tests\n")  in
-    let rec run_tests_h ( tests : test list ) : unit = 
+let run_test_set (tests : test list) (set_name : string) : unit = 
+    let _ = print_string ((format_string "\n[==========] " Bright Cyan)^"Running "^set_name^"\n")  in
+    let rec run_tests_h ( tests : test list ) ( pass : bool ) : bool = 
         match tests with 
-            | []             -> () (* done *)
+            | []             -> pass
             | t_test :: rest -> 
-                let _ = print_string (run_test t_test) in 
-                (run_tests_h rest)
+                let (result, message) = (run_test t_test) in 
+                let _ = print_string message in 
+                (run_tests_h rest (pass && result))
     in
-    let _ = run_tests_h tests in 
-    let _ = print_string ((format_string "[==========] " Bright Cyan)^"Tests Complete\n") in ()
-    
+    let pass = run_tests_h tests true in 
+    print_string ((format_string "[==========] " Bright Cyan)^"Tests "
+                   ^(if pass then "Passed" else "Failed")^"\n\n")
+
+let run_tests (tests : test list) : unit = 
+    (run_test_set tests "Tests") 
+            
 let run_expect_test  (f : unit -> 'a) (expected : 'a) (name : string) =
     run_test ( mk_expect_test f expected name )
 
