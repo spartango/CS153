@@ -90,14 +90,20 @@ let rec assem (prog : program) : state =
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
     (assem_r prog init_state)
 
-(* Disassembles an instruction *) 
-let disassem (binary : int32) : inst = raise TODO
-    (* Mask off top 6 bits *) 
-    (* Match against possible ops *) 
-        (* if 0, mask off last 6 bits *) 
-            (* match jr vs add *)
-        (* Grab arguments specifically by masking / shifting*)
-        (* Return instruction *)
+(* Disassembles a binary word into a MIPS instruction *) 
+let disassem (binary : int32) : inst = 
+    match (get_opcode binary) with 
+        | 0x00l -> (match (get_opcode2 binary) with
+              | 0x08l -> Jr(get_reg1 binary)
+              | 0x20l -> Add((get_reg3 binary), (get_reg1 binary), (get_reg2 binary))
+              | _ -> raise NotRegister)
+        | 0x03l -> Jal(Int32.logand binary 0x03FFFFFFl)
+        | 0x04l -> Beq((get_reg1 binary), (get_reg2 binary), int32_lower binary)
+        | 0x0dl -> Ori((get_reg2 binary), (get_reg1 binary), int32_lower binary)
+        | 0x0fl -> Lui((get_reg2 binary), int32_lower binary)
+        | 0x23l -> Lw((get_reg2 binary), (get_reg1 binary), int32_lower binary)
+        | 0x2bl -> Sw((get_reg2 binary), (get_reg1 binary), int32_lower binary)
+        | _ -> raise NotRegister
 
 (* Checks for word alignment of address *)
 let check_word_aligned (target_addr : int32) : int32 =

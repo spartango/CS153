@@ -17,6 +17,14 @@ let test_add_translate =
 let test_ori_translate = 
     (mk_verbose_expect_test ori_translate 0x34a60022l Int32.to_string "Translate Ori")
 
+let test_add_disassem =
+    (mk_verbose_expect_test (fun () -> disassem 0x00a62020l) (Add(R4, R5, R6))
+         inst_to_string "Disassemble Add")
+
+let test_ori_disassem =
+    (mk_verbose_expect_test (fun () -> disassem 0x34a60022l) (Ori(R6, R5, 34l))
+         inst_to_string "Disassemble Ori")
+
 let test_update_mem = fun () ->
     let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
     let test_inst  = Add(R4, R5, R6)                        in
@@ -45,5 +53,7 @@ let test_assemble_prog = fun () ->
 
 (run_tests [ test_add_translate;
              test_ori_translate;
+             test_add_disassem;
+             test_ori_disassem;
              Test("Update Memory",     test_update_mem); 
              Test("Assemble Program",  test_assemble_prog) ]) 
