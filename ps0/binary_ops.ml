@@ -20,5 +20,7 @@ let int32_lower (n : int32) : int32 = (Int32.logand n 0x0000FFFFl)
 (* Utility function to get upper bits of a 32 bit int*)
 let int32_upper (n : int32) : int32 = (Int32.shift_right_logical n 16)
 
-
-
+(* Utility function to get lower bits of a 32 bit int, maintaining the sign *)
+let int32_signed_lower (n : int32) : int32 = 
+    (Int32.logor (Int32.shift_right_logical (Int32.logand n 0x80000000l) 16) 
+                 (Int32.logand n 0x00007FFFl))
