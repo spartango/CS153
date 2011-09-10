@@ -47,7 +47,7 @@ let run_test_set (tests : test list) (set_name : string) : unit =
     in
     let pass = run_tests_h tests true in 
     print_string ((format_string "[==========] " Bright Cyan)^"Tests "
-                   ^(if pass then "Passed" else "Failed")^"\n\n")
+                   ^(if pass then (format_string "Passed" Bright Green) else (format_string "Failed" Bright Red))^"\n\n")
 
 let run_tests (tests : test list) : unit = 
     (run_test_set tests "Tests") 

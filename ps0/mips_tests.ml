@@ -19,22 +19,22 @@ let test_ori_translate =
     (mk_inst_to_bin_test (Ori(R6, R5, 34l)) 0x34a60022l)
 
 let test_lui_translate = 
-    (mk_inst_to_bin_test (Lui(R11, 255l)) 0x34a60022l)
+    (mk_inst_to_bin_test (Lui(R11, 255l)) 0x3c0b00ffl)
 
 let test_lw_translate = 
-    (mk_inst_to_bin_test (Lw(R10, R6, 4l)) 0x34a60022l)
+    (mk_inst_to_bin_test (Lw(R10, R6, 4l)) 0x8cca0004l)
 
 let test_sw_translate = 
-    (mk_inst_to_bin_test (Sw(R15, R9, 8l)) 0x34a60022l)
+    (mk_inst_to_bin_test (Sw(R15, R9, 8l)) 0xad2f0008l)
 
 let test_beq_translate = 
-    (mk_inst_to_bin_test (Beq(R18, R13, 32l)) 0x34a60022l)
+    (mk_inst_to_bin_test (Beq(R18, R6, 4l)) 0x12460001l)
 
 let test_jr_translate = 
-    (mk_inst_to_bin_test (Jr(R21)) 0x34a60022l)
+    (mk_inst_to_bin_test (Jr(R21)) 0x02a00008l)
 
 let test_jal_translate = 
-    (mk_inst_to_bin_test (Jal(128l)) 0x34a60022l)
+    (mk_inst_to_bin_test (Jal(0x00400024l)) 0x0c100009l)
 
 let instruction_tests = [ test_add_translate; 
                           test_ori_translate; 
