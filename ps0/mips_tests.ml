@@ -11,14 +11,20 @@ let mk_masker_test (length: int) (offset: int) (expected: int32) =
     mk_verbose_expect_test (fun () -> masker length offset) 
                            expected 
                            Int32.to_string
-                           ("Make mask with length " ^ (string_of_int length) ^
-                           " and left offset " ^ (string_of_int offset))
+                           ("Bitmask: length " ^ (string_of_int length) ^
+                           " and offset " ^ (string_of_int offset))
 
 let masker_test1 = mk_masker_test 1 0 Int32.min_int
 let masker_test2 = mk_masker_test 31 1 Int32.max_int
+let masker_test3 = mk_masker_test 16 16 0x0000FFFFl
+let masker_test4 = mk_masker_test 8 12 0x000FF000l
+let masker_test5 = mk_masker_test 1 31 0x00000001l
 
 let masker_tests = [ masker_test1;
-                     masker_test2 ]
+                     masker_test2;
+                     masker_test3;
+                     masker_test4;
+                     masker_test5 ]
 
 (* Assembly Tests for each instruction *)
 let mk_inst_to_bin_test (test_inst : inst) (expected : int32) =
@@ -104,7 +110,7 @@ let test_assemble_prog = fun () ->
 
 (run_test_set assemble_inst_tests    "Binary Translation Tests") ;;
 (run_test_set disassemble_inst_tests "Disassembly Tests") ;;
-(run_test_set masker_tests           "Bit Masker Creation Tests") ;;
+(run_test_set masker_tests           "Bitmask Creation Tests") ;;
 (run_test_set [  test_update_mem; 
                  Test("Assemble Program",  test_assemble_prog) ] 
               "Assembler Functional Tests" ) 
