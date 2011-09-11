@@ -7,7 +7,7 @@ let masker (length: int) (left_offset: int) : int32 =
 let shift_or (shifter: int32 -> int -> int32) (targets : (int32 * int) list) : int32 =
     let op = 
         fun (accum : int32) (item : (int32 * int)) -> 
-            match item with (value, shift) -> (Int32.logor accum (shifter value shift))
+            let (value, shift) = item -> (Int32.logor accum (shifter value shift))
     in         
     List.fold_left op 0l targets
 

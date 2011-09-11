@@ -124,7 +124,6 @@ let inst_to_bin (target : inst) : int32 =
 (* Gets the opcode portion of a MIPS word, which is first six bits *)
 let get_opcode (word: int32) : int32 = (Int32.shift_right_logical word 26)
 
-
 let get_reg1 (word: int32) : reg = 
     ind2reg (Int32.shift_right_logical (Int32.logand word 0x03E00000l) 21)
 
