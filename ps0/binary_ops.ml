@@ -1,3 +1,8 @@
+(* Utility function to create a bitmask of length offset from the leftmost bit by
+ left_offset *)
+let masker (length: int) (left_offset: int) : int32 =
+    Int32.shift_right_logical (Int32.shift_right Int32.min_int (length - 1)) left_offset
+
 (* Higher order funciton for shift functions *)
 let shift_or (shifter: int32 -> int -> int32) (targets : (int32 * int) list) : int32 =
     let op = 
@@ -20,7 +25,15 @@ let int32_lower (n : int32) : int32 = (Int32.logand n 0x0000FFFFl)
 (* Utility function to get upper bits of a 32 bit int*)
 let int32_upper (n : int32) : int32 = (Int32.shift_right_logical n 16)
 
+
 (* Utility function to get lower bits of a 32 bit int, maintaining the sign *)
 let int32_signed_lower (n : int32) : int32 = 
     (Int32.logor (Int32.shift_right_logical (Int32.logand n 0x80000000l) 16) 
                  (Int32.logand n 0x00007FFFl))
+
+let int16_to_int32 (n: int32) : int32 =
+    (Int32.logor (Int32.shift_right (Int32.shift_left (Int32.logand n 0x00008000l) 16) 16)
+                 (Int32.logand n 0x00007FFFl))
+
+
+
