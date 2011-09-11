@@ -78,18 +78,6 @@ type inst =
 
 type program = inst list
 
-let inst2str target = 
-    match target with
-    | Beq(rs, rt, label)  -> "Beq"
-    | Jr(rs)              -> "Jr"
-    | Jal(target)         -> "Jal"
-    | Lui(rt, imm)        -> "Lui"
-    | Ori(rt, rs, imm)    -> "Ori"
-    | Lw(rt, rs, offset)  -> "Lw"
-    | Sw(rt, rs, offset)  -> "Sw"
-    | Add(rd, rs, rt)     -> "Add"
-    | Li (_,_)            -> "Li"
-
 exception UntranslatableError
 
 let inst_to_string (i: inst) : string = 

@@ -31,7 +31,7 @@ let mk_inst_to_bin_test (test_inst : inst) (expected : int32) =
     (mk_verbose_expect_test (fun () -> (inst_to_bin test_inst)) 
                            expected 
                            Int32.to_string
-                           ("Translate "^(inst2str test_inst)) )
+                           ("Translate "^(inst_to_string test_inst)) )
 
 let test_add_translate = 
     (mk_inst_to_bin_test (Add(R4, R5, R6)) 0x00a62020l)
