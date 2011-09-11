@@ -111,7 +111,7 @@ let inst_to_bin (target : inst) : int32 =
     (* 0x23(6) rs rt offset(16)     -- Load (word) at address into register rt.*) 
     (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
     (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
-    | Beq(rs, rt, label)  -> left_shift_or [ (4l, 26);  ((reg_to_ind rs), 21); ((reg_to_ind rt), 16) ; ((int32_signed_lower (Int32.div label 4l)), 0)  ]
+    | Beq(rs, rt, label)  -> left_shift_or [ (4l, 26);  ((reg_to_ind rs), 21); ((reg_to_ind rt), 16) ; (int32_signed_lower label), 0)  ]
     | Jr(rs)              -> left_shift_or [ ((reg_to_ind rs), 21); (8l, 0) ]
     | Jal(target)         -> left_shift_or [ (3l,    26);  ((Int32.shift_right_logical target 2), 0) ]
     | Lui(rt, imm)        -> left_shift_or [ (0xfl,  26);  ((reg_to_ind rt), 16); (imm, 0) ]
