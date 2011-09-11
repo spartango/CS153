@@ -98,11 +98,11 @@ let disassem (binary : int32) : inst =
               | 0x20l -> Add((get_reg3 binary), (get_reg1 binary), (get_reg2 binary))
               | _ -> raise NotRegister)
         | 0x03l -> Jal(Int32.logand binary 0x03FFFFFFl)
-        | 0x04l -> Beq((get_reg1 binary), (get_reg2 binary), int32_lower binary)
-        | 0x0dl -> Ori((get_reg2 binary), (get_reg1 binary), int32_lower binary)
+        | 0x04l -> Beq((get_reg1 binary), (get_reg2 binary), int16_to_int32 binary)
+        | 0x0dl -> Ori((get_reg2 binary), (get_reg1 binary), int16_to_int32 binary)
         | 0x0fl -> Lui((get_reg2 binary), int32_lower binary)
-        | 0x23l -> Lw((get_reg2 binary), (get_reg1 binary), int32_lower binary)
-        | 0x2bl -> Sw((get_reg2 binary), (get_reg1 binary), int32_lower binary)
+        | 0x23l -> Lw((get_reg2 binary), (get_reg1 binary), int16_to_int32 binary)
+        | 0x2bl -> Sw((get_reg2 binary), (get_reg1 binary), int16_to_int32 binary)
         | _ -> raise NotRegister
 
 (* Checks for word alignment of address *)
