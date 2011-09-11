@@ -94,11 +94,20 @@ exception UntranslatableError
 
 let inst_to_string (i: inst) : string = 
     match i with
-        | Add(r1, r2, r3) -> "Add(" ^ (reg2str r1) ^ ", " ^ (reg2str r2) ^ 
-              ", " ^ (reg2str r3) ^ ")"
-        | Ori(r1, r2, offset) -> "Ori(" ^ (reg2str r1) ^ ", " ^ (reg2str r2) ^ 
-              ", " ^ (Int32.to_string offset) ^ ")"
-        | _ -> "Not implemented."
+        | Beq(rs, rt, lab) -> "Beq " ^ (reg2str rs) ^ ", " ^ (reg2str rt) ^
+              ", " ^ (Int32.to_string lab)
+        | Jr(rs) -> "Jr " ^ (reg2str rs)
+        | Jal(target) -> "Jal " ^ (Int32.to_string target)
+        | Lui(rt, imm) -> "Lui " ^ (reg2str rt) ^ ", " ^ (Int32.to_string imm)
+        | Ori(r1, r2, offset) -> "Ori " ^ (reg2str r1) ^ ", " ^ (reg2str r2) ^ 
+              ", " ^ (Int32.to_string offset)
+        | Lw(rt, rs, offset) -> "Lw " ^ (reg2str rt) ^ ", " ^ (reg2str rs) ^
+              ", " ^ (Int32.to_string offset)
+        | Sw(rt, rs, offset) -> "Sw " ^ (reg2str rt) ^ ", " ^ (reg2str rs) ^ 
+              ", " ^ (Int32.to_string offset)
+        | Add(r1, r2, r3) -> "Add " ^ (reg2str r1) ^ ", " ^ (reg2str r2) ^ 
+              ", " ^ (reg2str r3)
+        | Li(rd, imm) -> "Li " ^ (reg2str rd) ^ ", " ^ (Int32.to_string imm)
               
 
 (* Performs machine-instruction to binary translation *) 
