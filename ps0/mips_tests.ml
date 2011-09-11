@@ -83,10 +83,10 @@ let test_sw_translate =
     (mk_inst_to_bin_test (Sw(R15, R9, 8l)) 0xad2f0008l)
 
 let test_beq_neg_translate = 
-    (mk_inst_to_bin_test (Beq(R18, R6, -28l)) 0x1246fff9l)
+    (mk_inst_to_bin_test (Beq(R18, R6, -28l)) 0x1246FFE4l)
 
 let test_beq_translate = 
-    (mk_inst_to_bin_test (Beq(R18, R6, 4l)) 0x12460001l)
+    (mk_inst_to_bin_test (Beq(R18, R6, 4l)) 0x12460004l)
 
 let test_jr_translate = 
     (mk_inst_to_bin_test (Jr(R21)) 0x02a00008l)
@@ -126,10 +126,10 @@ let test_sw_disassem =
     (mk_disassem_test (Sw(R15, R9, 8l)) 0xad2f0008l)
 
 let test_beq_neg_disassem = 
-    (mk_disassem_test (Beq(R18, R6, -28l)) 0x1246fff9l)
+    (mk_disassem_test (Beq(R18, R6, -28l)) 0x1246FFE4l)
 
 let test_beq_disassem = 
-    (mk_disassem_test (Beq(R18, R6, 4l)) 0x12460001l)
+    (mk_disassem_test (Beq(R18, R6, 4l))  0x12460004l)
 
 let test_jr_disassem = 
     (mk_disassem_test (Jr(R21)) 0x02a00008l)
