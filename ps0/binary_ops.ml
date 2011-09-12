@@ -25,7 +25,7 @@ let int32_lower (n : int32) : int32 = (Int32.logand n (masker 16 16))
 (* Utility function to get upper bits of a 32 bit int*)
 let int32_upper (n : int32) : int32 = (Int32.shift_right_logical n 16)
 
-(* Utility function to get lower bits of a 32 bit int, maintaining the sign *)
+(* Translates an int32 into a sudo int16 *)
 let int32_to_int16 (n : int32) : int32 = 
     (Int32.logor (Int32.shift_right_logical (Int32.logand n (masker 1 0)) 16) 
                  (Int32.logand n (masker 15 17)))
@@ -37,6 +37,4 @@ let int16_to_int32 (i16: int32) : int32 =
     then (Int32.logand i16 (masker 15 17))
     (* Fill upper have with 1 bits for negatives *)
     else Int32.logor (masker 17 0) i16
-
-
 
