@@ -180,8 +180,18 @@ let mk_exec_test (t_inst : inst) (init_state : state) (end_state : state) =
                              ^"]; Registers=["^reg_diff
                              ^"]; PC offset by "^(Int32.to_string pc_diff) )
          ) )
-            
-    
+        
+let test_exec_add = 
+    let rf_0 = empty_rf                        in
+    let rf_1 = (rf_update (reg2ind R5) 1l rf_0) in
+    let rf_2 = (rf_update (reg2ind R6) 2l rf_1) in
+    let rf_f = (rf_update (reg2ind R4) 3l rf_2) in
+    let init_state  = { r = rf_2; m = empty_mem; pc = 0l } in 
+    let final_state = { r = rf_f; m = empty_mem; pc = 4l } in
+    (mk_exec_test (Add(R4, R5, R6)) init_state final_state) 
+ 
+let exec_tests = [ test_exec_add ]
+  
 (* Functional Tests *)
 let test_update_mem = 
     (mk_verbose_expect_test 
@@ -211,6 +221,7 @@ let test_assemble_prog = fun () ->
 (run_test_set masker_tests           "Bitmask Creation Tests") ;;
 (run_test_set int32_to_int16_tests   "int32 to int16 Tests") ;;
 (run_test_set int16_to_int32_tests   "int16 to int32 Tests") ;;
+(run_test_set exec_tests             "Exec Tests") ;;
 (run_test_set [  test_update_mem; 
                  Test("Assemble Program",  test_assemble_prog) ] 
               "Assembler Functional Tests" ) 

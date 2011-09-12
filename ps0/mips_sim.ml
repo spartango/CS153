@@ -40,11 +40,11 @@ let compare_rf (rf_src : regfile) (rf_dest: regfile) : string =
             (fun key v s -> 
                 let src_val  = (rf_lookup key rf_src)  in
                 let dest_val = (rf_lookup key rf_dest) in  
-                if  src_val != dest_val 
-                then s^(reg2str (ind2reg (Int32.of_int key)))^": "
-                     ^(Int32.to_string src_val)
-                     ^" vs "^(Int32.to_string dest_val)
-                else s^"")
+                if src_val = dest_val 
+                then s^""
+	            else s^(reg2str (ind2reg (Int32.of_int key)))^": "
+	                  ^(Int32.to_string src_val)
+	                  ^" vs "^(Int32.to_string dest_val))
             union_keys 
             "")
                   
