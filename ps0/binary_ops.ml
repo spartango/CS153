@@ -38,5 +38,3 @@ let int16_to_int32 (i16: int32) : int32 =
     (* Fill upper have with 1 bits for negatives *)
     else Int32.logor (masker 17 0) i16
 
-
-

@@ -191,24 +191,21 @@ let exec_li (rs : reg) (imm : int32) (machine_s : state) : state =
 let exec (target : inst) (machine_s : state) : state =
     (* Match against possible ops *)
     match target with 
-        (* Perform mem/reg operation *)     (* Move PC as necessary (default to +1) *)
-        
-        (* Branch by offset if rs == rt *)
-        (* Jump to the address specified in rs*)
-        (* Jump to instruction at target, save address in RA*)
-        (* Load immediate into upper half of register*) 
-        (* rs | imm -> rt *) 
-        (* Load (word) at address into register rt.*) 
-        (* Store word from rt at address *)
-        (* rs + rt -> rd*)
-        
-        | Beq(rs, rt, label)  -> (exec_beq rs rt label machine_s)                  
+        (* Branch by offset if rs == rt *)        
+        | Beq(rs, rt, label)  -> (exec_beq rs rt label machine_s)   
+        (* Jump to the address specified in rs*)               
         | Jr(rs)              -> (exec_jr  rs machine_s)
+        (* Jump to instruction at target, save address in RA*)
         | Jal(target)         -> (exec_jal target machine_s)
+        (* Load immediate into upper half of register*) 
         | Lui(rt, imm)        -> (exec_lui rt imm machine_s)
+        (* rs |imm -> rt *)
         | Ori(rt, rs, imm)    -> (exec_ori rt rs imm machine_s)
+        (* Load (word) at address into register rt.*) 
         | Lw(rt, rs, offset)  -> (exec_lw  rt rs offset machine_s)
+        (* Store word from rt at address *)
         | Sw(rt, rs, offset)  -> (exec_sw  rt rs offset machine_s)
+        (* rs + rt -> rd*)
         | Add(rd, rs, rt)     -> (exec_add rd rs rt machine_s) 
         | Li (rs, imm)        -> (exec_li  rs imm machine_s) (* This shouldn't get called with the dissambler in the pipe, but is good for testing *)
 
