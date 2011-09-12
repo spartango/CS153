@@ -61,7 +61,12 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
   
   let mem_update (a : int32) (v : byte) (m : memory) : memory =
     Int32Map.add a v m
-    
+  
+  let rec mem_update_many (targets : (int32 * byte) list) (m : memory) : memory = 
+    match targets with 
+        | [] -> m
+        | (a, v) :: rest -> (mem_update_many rest (mem_update a v m))  
+   
   let mem_lookup (a : int32) (m : memory) : byte =
     try (Int32Map.find a m) with Not_found -> mk_byte Int32.zero
     
