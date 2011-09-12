@@ -42,7 +42,7 @@ let int16_to_int32_test2 =
     mk_int16_to_int32_test 0xFFFFl (-0x00000001l)
 
 let int16_to_int32_test3 = 
-    mk_int16_to_int32_test (int32_signed_lower (-0x2Fl)) (-0x0000002Fl)
+    mk_int16_to_int32_test (int32_to_int16 (-0x2Fl)) (-0x0000002Fl)
 
 let int16_to_int32_test4 = 
     mk_int16_to_int32_test 0x002Fl 0x00000002Fl
