@@ -23,6 +23,31 @@ module IntMap = Map.Make(struct type t = int let compare = compare end)
     IntMap.fold (fun key v s -> 
       s^(string_of_int key)^" -> "^(Int32.to_string v)^"\n") rf ""
 
+let compare_rf (rf_src : regfile) (rf_dest: regfile) : string = 
+    let src_keys = 
+        IntMap.fold 
+            (fun key v rf -> (rf_update key 0l rf)) 
+            rf_src 
+            empty_rf 
+    in
+    let union_keys = 
+        IntMap.fold 
+            (fun key v rf -> (rf_update key 0l rf)) 
+            rf_dest
+            src_keys
+    in
+    (IntMap.fold 
+            (fun key v s -> 
+                let src_val  = (rf_lookup key rf_src)  in
+                let dest_val = (rf_lookup key rf_dest) in  
+                if  src_val != dest_val 
+                then s^(reg2str (ind2reg (Int32.of_int key)))^": "
+                     ^(Int32.to_string src_val)
+                     ^" vs "^(Int32.to_string dest_val)
+                else s^"")
+            union_keys 
+            "")
+                  
 (* Memory definitions. A memory is a map from 32-bit addresses to bytes. *)
 module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end)
   type memory = byte Int32Map.t
@@ -38,9 +63,8 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
   let string_of_mem (m : memory) : string =
     Int32Map.fold (fun key v s ->
       s^(Int32.to_string key)^" -> "^(Int32.to_string (b2i32 v))^"\n") m ""
-
-        
-  let mem_diff (mem_expect : memory) (mem_test : memory) : string =
+   
+let compare_mem (mem_src : memory) (mem_dest: memory) : string =
       let comp (key: int32) (v: byte) (s: string * memory) : string * memory =
           let (diff_string, test_mem) = s in
               try
@@ -61,13 +85,19 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
                            "\n"),
                            test_mem)
       in
-      let(diff_string, test_mem) = Int32Map.fold comp mem_expect ("", mem_test) in
+      let(diff_string, test_mem) = Int32Map.fold comp mem_src ("", mem_dest) in
           Int32Map.fold (fun key v s -> s ^ "Unexpected value " ^ 
                              (Int32.to_string (Byte.b2i32 v)) ^ "in test at " ^
                              (Int32.to_string key) ^ "\n") test_mem diff_string
 
 (* State *)
-type state = { r : regfile; pc : int32; m : memory }
+type state      = { r : regfile;   pc : int32; m : memory }
+let empty_state = { m = empty_mem; pc = 0l;    r = empty_rf}
+
+let string_of_state (s : state) : string = 
+    "Memory:\n"         ^(string_of_mem s.m)
+    ^"---\nRegisters:\n"^(string_of_rf s.r)
+    ^"---\nPc: "        ^(Int32.to_string s.pc)
 
 (* Copies a 32 bit object into adjacent memory locations *)
 let word_mem_update (word : int32) (offset : int32) (m : memory) : memory = 
@@ -114,7 +144,7 @@ let rec assem (prog : program) : state =
           (* assemble the rest of the program *) 
           (assem_r rest new_state)
     in 
-    let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
+    let init_state = empty_state in
     (assem_r prog init_state)
 
 (* Disassembles a binary word into a MIPS instruction *) 
