@@ -14,6 +14,7 @@ let mk_masker_test (length: int) (offset: int) (expected: int32) =
                            ("Bitmask: length " ^ (string_of_int length) ^
                            " and offset " ^ (string_of_int offset))
 
+(* Masker Tests *)
 let masker_test1 = mk_masker_test 1 0 Int32.min_int
 let masker_test2 = mk_masker_test 31 1 Int32.max_int
 let masker_test3 = mk_masker_test 16 16 0x0000FFFFl
@@ -28,6 +29,7 @@ let masker_tests = [ masker_test1;
                      masker_test5;
                      masker_test6 ]
 
+(* Int16 to 32 tests *)
 let mk_int16_to_int32_test (i16 : int32) (i32: int32) =
     mk_verbose_expect_test (fun () -> int16_to_int32 i16)
                            i32
@@ -105,7 +107,6 @@ let assemble_inst_tests = [ test_add_translate;
                             test_jal_translate  ]
 
 (*Disassembly tests for each instruction*)
-
 let mk_disassem_test (i: inst) (bin: int32) = 
     mk_verbose_expect_test (fun () -> disassem bin) i inst_to_string
                            ("Disassemble " ^ (inst_to_string i))
@@ -147,8 +148,25 @@ let disassemble_inst_tests = [ test_add_disassem;
                                test_jr_disassem;
                                test_jal_disassem  ]
 
+(* Exec Tests *) 
+let mk_exec_test (t_inst : inst) (init_state : state) (end_state : state) = 
+    Verbose_Test(
+        ("Exec "^(inst_to_string t_inst))
+        (fun () ->
+            let new_state = (exec t_inst init_state)                in
+            let mem_diff  = (compare_mem new_state.m  end_state.m)  in
+            let reg_diff  = (compare_rf  new_state.r  end_state.r)  in 
+            let pc_diff   = (Int32.sub   new_state.pc end_state.pc) in
+            if  (pc_diff = 0 && mem_diff = "" && reg_diff = "") 
+                then (true,  "Expected end state reached")
+                else (false, "Unexpected end state, differs: "
+                             ^"Memory=["^mem_diff
+                             ^"]; Registers=["^reg_diff
+                             ^"]; PC offset by "^(Int32.to_string pc_diff) )
+         ) )
+            
+    
 (* Functional Tests *)
-
 let test_update_mem = 
     (mk_verbose_expect_test 
 	    (fun () ->
