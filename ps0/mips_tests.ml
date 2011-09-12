@@ -182,9 +182,7 @@ let mk_exec_test (t_inst : inst) (init_state : state) (end_state : state) =
          ) )
         
 let test_exec_add = 
-    let rf_0 = empty_rf                        in
-    let rf_1 = (rf_update (reg2ind R5) 1l rf_0) in
-    let rf_2 = (rf_update (reg2ind R6) 2l rf_1) in
+    let rf_2 = (rf_update_many [(6, 1l); (5, 2l)] empty_rf) in
     let rf_f = (rf_update (reg2ind R4) 3l rf_2) in
     let init_state  = { r = rf_2; m = empty_mem; pc = 0l } in 
     let final_state = { r = rf_f; m = empty_mem; pc = 4l } in

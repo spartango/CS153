@@ -15,7 +15,12 @@ module IntMap = Map.Make(struct type t = int let compare = compare end)
   
   let rf_update (r : int) (v : int32) (rf : regfile) : regfile = 
     IntMap.add r v rf
-    
+  
+  let rec rf_update_many ( targets : (int * int32) list ) (rf : regfile) : regfile =
+    match targets with
+        | []             -> rf
+        | (r, v) :: rest -> (rf_update_many rest (rf_update r v rf))
+      
   let rf_lookup (r : int) (rf : regfile) : int32 = 
     try IntMap.find r rf with Not_found -> Int32.zero
     
