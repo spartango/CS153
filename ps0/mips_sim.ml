@@ -39,6 +39,7 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
     Int32Map.fold (fun key v s ->
       s^(Int32.to_string key)^" -> "^(Int32.to_string (b2i32 v))^"\n") m ""
 
+        
   let mem_diff (mem_expect : memory) (mem_test : memory) : string =
       let comp (key: int32) (v: byte) (s: string * memory) : string * memory =
           let (diff_string, test_mem) = s in
