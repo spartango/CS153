@@ -23,7 +23,7 @@ module IntMap = Map.Make(struct type t = int let compare = compare end)
     IntMap.fold (fun key v s -> 
       s^(string_of_int key)^" -> "^(Int32.to_string v)^"\n") rf ""
 
-let compare_rf (rf_src : regfile) (rf_dest: string) = 
+let compare_rf (rf_src : regfile) (rf_dest: regfile) : string = 
     let src_keys = 
         IntMap.fold 
             (fun key v rf -> (rf_update key 0l rf)) 
@@ -41,7 +41,7 @@ let compare_rf (rf_src : regfile) (rf_dest: string) =
                 let src_val  = (rf_lookup key rf_src)  in
                 let dest_val = (rf_lookup key rf_dest) in  
                 if  src_val != dest_val 
-                then s^(ind2reg key)^": "
+                then s^(reg2str (ind2reg (Int32.of_int key)))^": "
                      ^(Int32.to_string src_val)
                      ^" vs "^(Int32.to_string dest_val)
                 else s^"")
@@ -63,6 +63,9 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
   let string_of_mem (m : memory) : string =
     Int32Map.fold (fun key v s ->
       s^(Int32.to_string key)^" -> "^(Int32.to_string (b2i32 v))^"\n") m ""
+
+let compare_mem (mem_src : memory) (mem_dest: memory) : string = 
+    ""
 
 (* State *)
 type state      = { r : regfile;   pc : int32; m : memory }

@@ -30,6 +30,22 @@ let masker_tests = [ masker_test1;
                      masker_test6 ]
 
 (* Int16 to 32 tests *)
+let mk_int32_to_int16_test (i32: int32) (i16 : int32) =
+    mk_verbose_expect_test (fun () -> int32_to_int16 i32)
+                           i16
+                           Int32.to_string
+                           ("Translate " ^ (Int32.to_string i32) ^ 
+                                " from 32 to 16 bits")
+
+let int32_to_int16_test1 = mk_int32_to_int16_test 0x00000001l 0x0001l
+let int32_to_int16_test2 = mk_int32_to_int16_test (-0x00000001l) 0xFFFFl
+let int32_to_int16_test3 = mk_int32_to_int16_test Int32.max_int 0x7FFFl
+let int32_to_int16_test4 = mk_int32_to_int16_test Int32.min_int 0x8001l
+
+let int32_to_int16_tests = [ int32_to_int16_test1;
+                             int32_to_int16_test2;
+                             int32_to_int16_test3 ]
+
 let mk_int16_to_int32_test (i16 : int32) (i32: int32) =
     mk_verbose_expect_test (fun () -> int16_to_int32 i16)
                            i32
@@ -44,7 +60,7 @@ let int16_to_int32_test2 =
     mk_int16_to_int32_test 0xFFFFl (-0x00000001l)
 
 let int16_to_int32_test3 = 
-    mk_int16_to_int32_test (int32_signed_lower (-0x2Fl)) (-0x0000002Fl)
+    mk_int16_to_int32_test (int32_to_int16 (-0x2Fl)) (-0x0000002Fl)
 
 let int16_to_int32_test4 = 
     mk_int16_to_int32_test 0x002Fl 0x00000002Fl
@@ -151,13 +167,13 @@ let disassemble_inst_tests = [ test_add_disassem;
 (* Exec Tests *) 
 let mk_exec_test (t_inst : inst) (init_state : state) (end_state : state) = 
     Verbose_Test(
-        ("Exec "^(inst_to_string t_inst))
+        ("Exec "^(inst_to_string t_inst)),
         (fun () ->
             let new_state = (exec t_inst init_state)                in
             let mem_diff  = (compare_mem new_state.m  end_state.m)  in
             let reg_diff  = (compare_rf  new_state.r  end_state.r)  in 
             let pc_diff   = (Int32.sub   new_state.pc end_state.pc) in
-            if  (pc_diff = 0 && mem_diff = "" && reg_diff = "") 
+            if  (pc_diff = 0l && mem_diff = "" && reg_diff = "") 
                 then (true,  "Expected end state reached")
                 else (false, "Unexpected end state, differs: "
                              ^"Memory=["^mem_diff
@@ -193,6 +209,7 @@ let test_assemble_prog = fun () ->
 (run_test_set assemble_inst_tests    "Binary Translation Tests") ;;
 (run_test_set disassemble_inst_tests "Disassembly Tests") ;;
 (run_test_set masker_tests           "Bitmask Creation Tests") ;;
+(run_test_set int32_to_int16_tests   "int32 to int16 Tests") ;;
 (run_test_set int16_to_int32_tests   "int16 to int32 Tests") ;;
 (run_test_set [  test_update_mem; 
                  Test("Assemble Program",  test_assemble_prog) ] 
