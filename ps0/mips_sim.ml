@@ -65,30 +65,30 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
       s^(Int32.to_string key)^" -> "^(Int32.to_string (b2i32 v))^"\n") m ""
    
 let compare_mem (mem_src : memory) (mem_dest: memory) : string =
-      let comp (key: int32) (v: byte) (s: string * memory) : string * memory =
-          let (diff_string, test_mem) = s in
-              try
-                  let v_test = Int32Map.find key test_mem in
-                  (* Remove found value from test memory *)
-                  let updated_test_mem = (Int32Map.remove key test_mem) in
-                  if v = v_test
-                  then (diff_string, updated_test_mem)
-                  else ((diff_string ^ "Inequality at " ^ (Int32.to_string key) ^ 
-                             ". Expected " ^ (Int32.to_string (Byte.b2i32 v)) ^ 
-                             "; found " ^ (Int32.to_string (Byte.b2i32 v_test)) ^
-                             "\n"),
-                         updated_test_mem)
-              with
-                      Not_found ->
-                          ("Missing in test at " ^ (Int32.to_string key) ^
-                           ". Expected" ^ (Int32.to_string (Byte.b2i32 v) ^
-                           "\n"),
-                           test_mem)
-      in
-      let(diff_string, test_mem) = Int32Map.fold comp mem_src ("", mem_dest) in
-          Int32Map.fold (fun key v s -> s ^ "Unexpected value " ^ 
-                             (Int32.to_string (Byte.b2i32 v)) ^ "in test at " ^
-                             (Int32.to_string key) ^ "\n") test_mem diff_string
+    let zero_byte = Byte.mk_byte 0l in
+    let src_keys = 
+        Int32Map.fold 
+            (fun key v mem -> (mem_update key zero_byte mem)) 
+            mem_src 
+            empty_mem
+    in
+    let union_keys = 
+        Int32Map.fold 
+            (fun key v mem -> (mem_update key zero_byte mem)) 
+            mem_dest
+            src_keys
+    in
+    (Int32Map.fold 
+            (fun key v s -> 
+                let src_val  = (mem_lookup key mem_src)  in
+                let dest_val = (mem_lookup key mem_dest) in  
+                if src_val = dest_val 
+                then s
+	            else s^(Int32.to_string key)^": "
+	                  ^(Int32.to_string (Byte.b2i32 src_val))
+	                  ^" vs "^(Int32.to_string (Byte.b2i32 dest_val)))
+            union_keys 
+            "")
 
 (* State *)
 type state      = { r : regfile;   pc : int32; m : memory }
