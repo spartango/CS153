@@ -28,6 +28,23 @@ let masker_tests = [ masker_test1;
                      masker_test5;
                      masker_test6 ]
 
+let mk_int32_to_int16_test (i32: int32) (i16 : int32) =
+    mk_verbose_expect_test (fun () -> int32_to_int16 i32)
+                           i16
+                           Int32.to_string
+                           ("Translate " ^ (Int32.to_string i32) ^ 
+                                " from 32 to 16 bits")
+
+let int32_to_int16_test1 = mk_int32_to_int16_test 0x00000001l 0x0001l
+let int32_to_int16_test2 = mk_int32_to_int16_test (-0x00000001l) 0xFFFFl
+let int32_to_int16_test3 = mk_int32_to_int16_test Int32.max_int 0x7FFFl
+let int32_to_int16_test4 = mk_int32_to_int16_test Int32.min_int 0x8001l
+
+let int32_to_int16_tests = [ int32_to_int16_test1;
+                             int32_to_int16_test2;
+                             int32_to_int16_test3 ]
+
+
 let mk_int16_to_int32_test (i16 : int32) (i32: int32) =
     mk_verbose_expect_test (fun () -> int16_to_int32 i16)
                            i32
@@ -175,6 +192,7 @@ let test_assemble_prog = fun () ->
 (run_test_set assemble_inst_tests    "Binary Translation Tests") ;;
 (run_test_set disassemble_inst_tests "Disassembly Tests") ;;
 (run_test_set masker_tests           "Bitmask Creation Tests") ;;
+(run_test_set int32_to_int16_tests   "int32 to int16 Tests") ;;
 (run_test_set int16_to_int32_tests   "int16 to int32 Tests") ;;
 (run_test_set [  test_update_mem; 
                  Test("Assemble Program",  test_assemble_prog) ] 
