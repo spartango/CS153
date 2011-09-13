@@ -232,13 +232,21 @@ let test_exec_jr =
     let final_state = { r = rf_i; m = empty_mem; pc = 40l } in
     (mk_exec_test (Jr(R10)) init_state final_state)
 
+let test_exec_jal = 
+    let rf_i = empty_rf in
+    let rf_f = (rf_update 31 4l empty_rf) in
+    let init_state =  { r = rf_i; m = empty_mem; pc = 0l } in
+    let final_state = { r = rf_f; m = empty_mem; pc = 84l } in
+    (mk_exec_test (Jal(84l)) init_state final_state)
+
 let exec_tests = [ test_exec_add;
                    test_exec_ori;
                    test_exec_lui;
                    test_exec_beq1;
                    test_exec_beq2;
                    test_exec_beq3;
-                   test_exec_jr ]
+                   test_exec_jr;
+                   test_exec_jal ]
   
 (* Functional Tests *)
 let test_update_mem = 
