@@ -3,6 +3,7 @@ open Mips_ast
 open Test_framework
 open Binary_ops
 open Pretty_print
+open Byte
 
 (* add $4 $5 $6 -> 0x00a62020 *)
 (* ori $6 $5 34 -> 0x34a60022 *)
@@ -246,6 +247,29 @@ let test_exec_li =
     let final_state = { r = rf_f; m = empty_mem; pc = 4l } in
     (mk_exec_test (Li(R8, 256l)) init_state final_state)
 
+(* Load word, 42,  located at offset 0x14 in memory *)
+let test_exec_lw =
+    let rf_i = (rf_update 8 4l empty_rf) in
+    let rf_f = (rf_update 9 42l rf_i) in
+    let init_mem = mem_update_many [ (20l, (mk_byte 0x00l)); 
+                                     (21l, (mk_byte 0x00l));
+                                     (22l, (mk_byte 0x00l));
+                                     (23l, (mk_byte 0x2al)) ] empty_mem in
+    let init_state =  { r = rf_i; m = init_mem; pc = 0l } in
+    let final_state = { r = rf_f; m = init_mem; pc = 4l } in
+    (mk_exec_test (Lw(R9, R8, 16l)) init_state final_state)
+
+(* Store $9 = 42 into memory at address 0x14 *)
+let test_exec_sw = 
+    let rf_i = (rf_update_many [ (8, 42l); (9, 4l)] empty_rf) in
+    let final_mem = mem_update_many [ (8l, (mk_byte 0x00l)); 
+                                      (9l, (mk_byte 0x00l));
+                                      (10l, (mk_byte 0x00l));
+                                      (11l, (mk_byte 0x2al)) ] empty_mem in
+    let init_state =  { r = rf_i; m = empty_mem; pc = 0l } in
+    let final_state = { r = rf_i; m = final_mem; pc = 4l } in
+    (mk_exec_test (Sw(R8, R9, 4l)) init_state final_state)
+    
 let exec_tests = [ test_exec_add;
                    test_exec_ori;
                    test_exec_lui;
@@ -254,7 +278,9 @@ let exec_tests = [ test_exec_add;
                    test_exec_beq3;
                    test_exec_jr;
                    test_exec_jal;
-                   test_exec_li ]
+                   test_exec_li;
+                   test_exec_lw;
+                   test_exec_sw ]
   
 (* Functional Tests *)
 let test_update_mem = 

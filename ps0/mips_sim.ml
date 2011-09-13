@@ -97,7 +97,7 @@ let compare_mem (mem_src : memory) (mem_dest: memory) : string =
                 then s
 	            else s^(Int32.to_string key)^": "
 	                  ^(Int32.to_string (Byte.b2i32 src_val))
-	                  ^" vs "^(Int32.to_string (Byte.b2i32 dest_val)))
+	                  ^" vs "^(Int32.to_string (Byte.b2i32 dest_val)) ^ "; ")
             union_keys 
             "")
 
@@ -235,8 +235,8 @@ let exec_lw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
 let exec_sw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
     let target_addr = (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset)  in
 	    increment_pc { pc = machine_s.pc;
-	                   m  = (word_mem_update (check_word_aligned target_addr)
-	                                         (rf_lookup (reg2ind rt) machine_s.r)
+	                   m  = (word_mem_update (rf_lookup (reg2ind rt) machine_s.r)
+                                     (check_word_aligned target_addr)
 	                                         machine_s.m); 
 	                   r  = machine_s.r  }
 
