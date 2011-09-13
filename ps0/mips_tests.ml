@@ -2,6 +2,7 @@ open Mips_sim
 open Mips_ast
 open Test_framework
 open Binary_ops
+open Pretty_print
 
 (* add $4 $5 $6 -> 0x00a62020 *)
 (* ori $6 $5 34 -> 0x34a60022 *)
@@ -175,10 +176,12 @@ let mk_exec_test (t_inst : inst) (init_state : state) (end_state : state) =
             let pc_diff   = (Int32.sub   new_state.pc end_state.pc) in
             if  (pc_diff = 0l && mem_diff = "" && reg_diff = "") 
                 then (true,  "Expected end state reached")
-                else (false, "Unexpected end state, differs: "
-                             ^"Memory=["^mem_diff
-                             ^"]; Registers=["^reg_diff
-                             ^"]; PC offset by "^(Int32.to_string pc_diff) )
+                else (false, "Unexpected end state, differs: "^
+                             (format_string 
+	                             ("Memory=["^mem_diff
+	                             ^"]; Registers=["^reg_diff
+	                             ^"]; PC offset by "^(Int32.to_string pc_diff)) 
+                              Bright Yellow) )
          ) )
         
 let test_exec_add = 
@@ -197,7 +200,7 @@ let test_exec_ori =
 
 let test_exec_lui = 
     let rf_i = empty_rf in
-    let rf_f = (rf_update (reg2ind R4) 0x00090000l rf_i)             in
+    let rf_f = (rf_update (reg2ind R4) 0x00090000l rf_i)    in
     let init_state  = { r = rf_i; m = empty_mem; pc = 0l }  in 
     let final_state = { r = rf_f; m = empty_mem; pc = 4l }  in
     (mk_exec_test (Lui(R4, 9l)) init_state final_state) 
