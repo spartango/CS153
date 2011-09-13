@@ -194,9 +194,17 @@ let test_exec_ori =
     let init_state  = { r = rf_i; m = empty_mem; pc = 0l }  in 
     let final_state = { r = rf_f; m = empty_mem; pc = 4l }  in
     (mk_exec_test (Ori(R4, R6, 3l)) init_state final_state) 
-    
+
+let test_exec_lui = 
+    let rf_i = empty_rf in
+    let rf_f = (rf_update (reg2ind R4) 0x00090000l rf_i)             in
+    let init_state  = { r = rf_i; m = empty_mem; pc = 0l }  in 
+    let final_state = { r = rf_f; m = empty_mem; pc = 4l }  in
+    (mk_exec_test (Lui(R4, 9l)) init_state final_state) 
+        
 let exec_tests = [ test_exec_add;
-                   test_exec_ori ]
+                   test_exec_ori;
+                   test_exec_lui ]
   
 (* Functional Tests *)
 let test_update_mem = 
