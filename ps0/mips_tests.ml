@@ -227,7 +227,7 @@ let test_exec_beq3=
     (mk_exec_test (Beq(R8, R9, 4l)) init_state final_state)
 
 let test_exec_jr =
-    let rf_i = (rf_update 10 4l empty_rf) in
+    let rf_i = (rf_update 10 40l empty_rf) in
     let init_state =  { r = rf_i; m = empty_mem; pc = 0l } in
     let final_state = { r = rf_i; m = empty_mem; pc = 40l } in
     (mk_exec_test (Jr(R10)) init_state final_state)
