@@ -175,10 +175,9 @@ let disassem (binary : int32) : inst =
 
 (* Checks for word alignment of address *)
 let check_word_aligned (target_addr : int32) : int32 =
-	if (Int32.rem target_addr 4l) != 0l 
-	    then raise UnalignedAccessError
-	    else
-	        target_addr
+    if (Int32.rem target_addr 4l) = 0l 
+    then target_addr
+    else raise UnalignedAccessError
 	    
 (* Increments the PC of a state *) 
 let increment_pc (machine_s : state) : state = 

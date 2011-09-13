@@ -204,10 +204,41 @@ let test_exec_lui =
     let init_state  = { r = rf_i; m = empty_mem; pc = 0l }  in 
     let final_state = { r = rf_f; m = empty_mem; pc = 4l }  in
     (mk_exec_test (Lui(R4, 9l)) init_state final_state) 
-        
+    
+(* Branch forward when equal *)    
+let test_exec_beq1=
+    let rf_i = rf_update_many [(8, 42l); (9, 42l)] empty_rf in
+    let init_state  = { r = rf_i; m = empty_mem; pc = 0l } in
+    let final_state = { r = rf_i; m = empty_mem; pc = 8l } in
+    (mk_exec_test (Beq(R8, R9, 2l)) init_state final_state)
+
+(* Branch backward when equal *)
+let test_exec_beq2=
+    let rf_i = rf_update_many [(8, 42l); (9, 42l)] empty_rf in
+    let init_state  = { r = rf_i; m = empty_mem; pc = 8l } in
+    let final_state = { r = rf_i; m = empty_mem; pc = 0l } in
+    (mk_exec_test (Beq(R8, R9, -2l)) init_state final_state)
+
+(* Do not branch as not equal *)
+let test_exec_beq3=
+    let rf_i = rf_update_many [(8, 42l); (9, (-42l))] empty_rf in
+    let init_state  = { r = rf_i; m = empty_mem; pc = 0l } in
+    let final_state = { r = rf_i; m = empty_mem; pc = 4l } in
+    (mk_exec_test (Beq(R8, R9, 4l)) init_state final_state)
+
+let test_exec_jr =
+    let rf_i = (rf_update 10 4l empty_rf) in
+    let init_state =  { r = rf_i; m = empty_mem; pc = 0l } in
+    let final_state = { r = rf_i; m = empty_mem; pc = 40l } in
+    (mk_exec_test (Jr(R10)) init_state final_state)
+
 let exec_tests = [ test_exec_add;
                    test_exec_ori;
-                   test_exec_lui ]
+                   test_exec_lui;
+                   test_exec_beq1;
+                   test_exec_beq2;
+                   test_exec_beq3;
+                   test_exec_jr ]
   
 (* Functional Tests *)
 let test_update_mem = 
