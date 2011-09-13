@@ -239,6 +239,13 @@ let test_exec_jal =
     let final_state = { r = rf_f; m = empty_mem; pc = 84l } in
     (mk_exec_test (Jal(84l)) init_state final_state)
 
+let test_exec_li = 
+    let rf_i = empty_rf in
+    let rf_f = (rf_update 8 256l empty_rf) in
+    let init_state =  { r = rf_i; m = empty_mem; pc = 0l } in
+    let final_state = { r = rf_f; m = empty_mem; pc = 4l } in
+    (mk_exec_test (Li(R8, 256l)) init_state final_state)
+
 let exec_tests = [ test_exec_add;
                    test_exec_ori;
                    test_exec_lui;
@@ -246,7 +253,8 @@ let exec_tests = [ test_exec_add;
                    test_exec_beq2;
                    test_exec_beq3;
                    test_exec_jr;
-                   test_exec_jal ]
+                   test_exec_jal;
+                   test_exec_li ]
   
 (* Functional Tests *)
 let test_update_mem = 
