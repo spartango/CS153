@@ -5,6 +5,7 @@ open Binary_ops
 exception TODO
 exception FatalError
 exception UnalignedAccessError
+exception InvalidInstruction
 
 (* Register file definitions. A register file is a map from a register 
    number to a 32-bit quantity. *)
@@ -171,7 +172,7 @@ let disassem (binary : int32) : inst =
         | 0x0fl -> Lui((get_reg2 binary), int32_lower binary)
         | 0x23l -> Lw((get_reg2 binary), (get_reg1 binary), int16_to_int32 binary)
         | 0x2bl -> Sw((get_reg2 binary), (get_reg1 binary), int16_to_int32 binary)
-        | _ -> raise NotRegister
+        | _ -> raise InvalidInstruction
 
 (* Checks for word alignment of address *)
 let check_word_aligned (target_addr : int32) : int32 =
