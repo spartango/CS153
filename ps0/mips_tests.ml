@@ -259,7 +259,7 @@ let test_exec_lw =
     let final_state = { r = rf_f; m = init_mem; pc = 4l } in
     (mk_exec_test (Lw(R9, R8, 16l)) init_state final_state)
 
-(* Store $9 = 42 into memory at address 0x14 *)
+(* Store $8 = 42 into memory at address 0x14 *)
 let test_exec_sw = 
     let rf_i = (rf_update_many [ (8, 42l); (9, 4l)] empty_rf) in
     let final_mem = mem_update_many [ (8l, (mk_byte 0x00l)); 
@@ -269,6 +269,17 @@ let test_exec_sw =
     let init_state =  { r = rf_i; m = empty_mem; pc = 0l } in
     let final_state = { r = rf_i; m = final_mem; pc = 4l } in
     (mk_exec_test (Sw(R8, R9, 4l)) init_state final_state)
+
+(* Store $10 = 256 into memory at address 0x64 *)
+let test_exec_sw2 = 
+    let rf_i = (rf_update_many [(10, 256l); (9, 4l)] empty_rf) in
+    let final_mem = mem_update_many [ (64l, (mk_byte 0x00l)); 
+                                      (65l, (mk_byte 0x00l));
+                                      (66l, (mk_byte 0x01l));
+                                      (67l, (mk_byte 0x00l)) ] empty_mem in
+    let init_state =  { r = rf_i; m = empty_mem; pc = 0l } in
+    let final_state = { r = rf_i; m = final_mem; pc = 4l } in
+    (mk_exec_test (Sw(R10, R9, 60l)) init_state final_state)
     
 let exec_tests = [ test_exec_add;
                    test_exec_ori;
@@ -280,7 +291,8 @@ let exec_tests = [ test_exec_add;
                    test_exec_jal;
                    test_exec_li;
                    test_exec_lw;
-                   test_exec_sw ]
+                   test_exec_sw;
+                   test_exec_sw2;]
   
 (* Functional Tests *)
 let test_update_mem = 
