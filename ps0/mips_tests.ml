@@ -183,12 +183,20 @@ let mk_exec_test (t_inst : inst) (init_state : state) (end_state : state) =
         
 let test_exec_add = 
     let rf_2 = (rf_update_many [(6, 1l); (5, 2l)] empty_rf) in
-    let rf_f = (rf_update (reg2ind R4) 3l rf_2) in
-    let init_state  = { r = rf_2; m = empty_mem; pc = 0l } in 
-    let final_state = { r = rf_f; m = empty_mem; pc = 4l } in
+    let rf_f = (rf_update (reg2ind R4) 3l rf_2)             in
+    let init_state  = { r = rf_2; m = empty_mem; pc = 0l }  in 
+    let final_state = { r = rf_f; m = empty_mem; pc = 4l }  in
     (mk_exec_test (Add(R4, R5, R6)) init_state final_state) 
- 
-let exec_tests = [ test_exec_add ]
+
+let test_exec_ori = 
+    let rf_i = (rf_update 6 5l empty_rf) in
+    let rf_f = (rf_update (reg2ind R4) 7l rf_i)             in
+    let init_state  = { r = rf_i; m = empty_mem; pc = 0l }  in 
+    let final_state = { r = rf_f; m = empty_mem; pc = 4l }  in
+    (mk_exec_test (Ori(R4, R6, 3l)) init_state final_state) 
+    
+let exec_tests = [ test_exec_add;
+                   test_exec_ori ]
   
 (* Functional Tests *)
 let test_update_mem = 
