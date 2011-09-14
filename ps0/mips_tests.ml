@@ -309,8 +309,8 @@ let test_update_mem =
     )        
 
 let test_assemble_prog = fun () -> 
-    let test_program    = [ Add(R4, R5, R6);  Lw(R10, R6, 4l); Sw(R15, R9, 8l) ] in 
-    let new_state = (assem test_program) in 
+    let test_program = [ Add(R4, R5, R6);  Lw(R10, R6, 4l); Sw(R15, R9, 8l) ] in 
+    let new_state    = (assem test_program) in 
     (* We're looking for 0x00A62020 split into 4 bytes *)
         (  (word_mem_lookup 0l new_state.m) = 0x00A62020l
         && (word_mem_lookup 4l new_state.m) = 0x8cca0004l

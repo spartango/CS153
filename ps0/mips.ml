@@ -33,8 +33,12 @@ let parse_stdin() =
 (* Expect 1 command line argument, the file to interpret
  * usage: ps0 [file-to-interpret] *)
 let _ =
-  let prog = parse_file() in
-  let state' = interp (assem prog) in
+  let prog   = parse_file()                  in
+  let _      = print_string "Parsed File"    in
+  let binary = assem prog                    in
+  let _      = print_string "Assembled Prog" in
+  let state' = interp binary                 in
+  
   let _ = print_string ("Register File\n"^(string_of_rf state'.r)) in
-  let _ = print_string ("Memory\n"^(string_of_mem state'.m)) in
+  let _ = print_string ("Memory\n"^(string_of_mem state'.m))       in
   print_string ("PC = "^(Int32.to_string state'.pc)^"\n")
