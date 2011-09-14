@@ -1,5 +1,8 @@
 open Int32
+
 open Binary_ops
+
+exception NotRegister
 
 type label = string
 
@@ -46,7 +49,19 @@ let reg2ind r =
   | R24 -> 24 | R25 -> 25 | R26 -> 26 | R27 -> 27
   | R28 -> 28 | R29 -> 29 | R30 -> 30 | R31 -> 31
 
-(* Utility function that wraps reg_to_ind to give int32s *)
+(* Translates an int32 into a register *)
+let ind2reg (i: int32) : reg = 
+    match i with
+        | 0l -> R0 | 1l -> R1 | 2l -> R2 | 3l -> R3
+        | 4l -> R4 | 5l -> R5 | 6l -> R6 | 7l -> R7
+        | 8l -> R8 | 9l -> R9 | 10l -> R10 | 11l -> R11
+        | 12l -> R12 | 13l -> R13 | 14l -> R14 | 15l -> R15
+        | 16l -> R16 | 17l -> R17 | 18l -> R18 | 19l -> R19
+        | 20l -> R20 | 21l -> R21 | 22l -> R22 | 23l -> R23
+        | 24l -> R24 | 25l -> R25 | 26l -> R26 | 27l -> R27
+        | 28l -> R28 | 29l -> R29 | 30l -> R30 | 31l -> R31
+        | _ -> raise NotRegister
+(* Utility function that wraps reg2ind to give int32s *)
 let reg_to_ind (rs : reg) : int32 = (Int32.of_int (reg2ind rs))
  
 (* A small subset of the Mips assembly language *)
@@ -63,19 +78,25 @@ type inst =
 
 type program = inst list
 
-let inst2str target = 
-    match target with
-    | Beq(rs, rt, label)  -> "Beq"
-    | Jr(rs)              -> "Jr"
-    | Jal(target)         -> "Jal"
-    | Lui(rt, imm)        -> "Lui"
-    | Ori(rt, rs, imm)    -> "Ori"
-    | Lw(rt, rs, offset)  -> "Lw"
-    | Sw(rt, rs, offset)  -> "Sw"
-    | Add(rd, rs, rt)     -> "Add"
-    | Li (_,_)            -> "Li"
-
 exception UntranslatableError
+
+let inst_to_string (i: inst) : string = 
+    match i with
+        | Beq(rs, rt, lab) -> "Beq " ^ (reg2str rs) ^ ", " ^ (reg2str rt) ^
+              ", " ^ (Int32.to_string lab)
+        | Jr(rs) -> "Jr " ^ (reg2str rs)
+        | Jal(target) -> "Jal " ^ (Int32.to_string target)
+        | Lui(rt, imm) -> "Lui " ^ (reg2str rt) ^ ", " ^ (Int32.to_string imm)
+        | Ori(r1, r2, offset) -> "Ori " ^ (reg2str r1) ^ ", " ^ (reg2str r2) ^ 
+              ", " ^ (Int32.to_string offset)
+        | Lw(rt, rs, offset) -> "Lw " ^ (reg2str rt) ^ ", " ^ (reg2str rs) ^
+              ", " ^ (Int32.to_string offset)
+        | Sw(rt, rs, offset) -> "Sw " ^ (reg2str rt) ^ ", " ^ (reg2str rs) ^ 
+              ", " ^ (Int32.to_string offset)
+        | Add(r1, r2, r3) -> "Add " ^ (reg2str r1) ^ ", " ^ (reg2str r2) ^ 
+              ", " ^ (reg2str r3)
+        | Li(rd, imm) -> "Li " ^ (reg2str rd) ^ ", " ^ (Int32.to_string imm)
+              
 
 (* Performs machine-instruction to binary translation *) 
 let inst_to_bin (target : inst) : int32 = 
@@ -90,7 +111,7 @@ let inst_to_bin (target : inst) : int32 =
     (* 0x23(6) rs rt offset(16)     -- Load (word) at address into register rt.*) 
     (* 0x2b(6) rs rt offset(16)     -- Store word from rt at address *)
     (* 0(6)    rs rt rd 0(5) 0x20(6)-- rs + rt -> rd*)
-    | Beq(rs, rt, label)  -> left_shift_or [ (4l, 26);  ((reg_to_ind rs), 21); ((reg_to_ind rt), 16) ; ((int32_signed_lower (Int32.div label 4l)), 0)  ]
+    | Beq(rs, rt, label)  -> left_shift_or [ (4l, 26);  ((reg_to_ind rs), 21); ((reg_to_ind rt), 16) ; ((int32_to_int16 label), 0)  ]
     | Jr(rs)              -> left_shift_or [ ((reg_to_ind rs), 21); (8l, 0) ]
     | Jal(target)         -> left_shift_or [ (3l,    26);  ((Int32.shift_right_logical target 2), 0) ]
     | Lui(rt, imm)        -> left_shift_or [ (0xfl,  26);  ((reg_to_ind rt), 16); (imm, 0) ]
@@ -99,3 +120,18 @@ let inst_to_bin (target : inst) : int32 =
     | Sw(rt, rs, offset)  -> left_shift_or [ (0x2bl, 26);  ((reg_to_ind rs), 21);  ((reg_to_ind rt), 16); (offset, 0) ]
     | Add(rd, rs, rt)     -> left_shift_or [ ((reg_to_ind rs), 21); ((reg_to_ind rt), 16); ((reg_to_ind rd), 11); (0x20l, 0) ]
     | Li (_,_)            -> raise UntranslatableError (* We can't translate a pseudoinstruction straight to binary *)
+
+(* Gets the opcode portion of a MIPS word, which is first six bits *)
+let get_opcode (word: int32) : int32 = (Int32.shift_right_logical word 26)
+
+let get_reg1 (word: int32) : reg = 
+    ind2reg (Int32.shift_right_logical (Int32.logand word 0x03E00000l) 21)
+
+let get_reg2 (word: int32) : reg = 
+    ind2reg (Int32.shift_right_logical (Int32.logand word 0x001F0000l) 16)
+
+let get_reg3 (word: int32) : reg = 
+    ind2reg (Int32.shift_right_logical (Int32.logand word 0x0000F800l) 11)
+
+(* Bitmask against last five bits of a word *)
+let get_opcode2 (word: int32) : int32 = Int32.logand word 0x0000003Fl

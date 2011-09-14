@@ -5,6 +5,7 @@ open Binary_ops
 exception TODO
 exception FatalError
 exception UnalignedAccessError
+exception InvalidInstruction
 
 (* Register file definitions. A register file is a map from a register 
    number to a 32-bit quantity. *)
@@ -15,7 +16,12 @@ module IntMap = Map.Make(struct type t = int let compare = compare end)
   
   let rf_update (r : int) (v : int32) (rf : regfile) : regfile = 
     IntMap.add r v rf
-    
+  
+  let rec rf_update_many ( targets : (int * int32) list ) (rf : regfile) : regfile =
+    match targets with
+        | []             -> rf
+        | (r, v) :: rest -> (rf_update_many rest (rf_update r v rf))
+      
   let rf_lookup (r : int) (rf : regfile) : int32 = 
     try IntMap.find r rf with Not_found -> Int32.zero
     
@@ -23,6 +29,31 @@ module IntMap = Map.Make(struct type t = int let compare = compare end)
     IntMap.fold (fun key v s -> 
       s^(string_of_int key)^" -> "^(Int32.to_string v)^"\n") rf ""
 
+let compare_rf (rf_src : regfile) (rf_dest: regfile) : string = 
+    let src_keys = 
+        IntMap.fold 
+            (fun key v rf -> (rf_update key 0l rf)) 
+            rf_src 
+            empty_rf 
+    in
+    let union_keys = 
+        IntMap.fold 
+            (fun key v rf -> (rf_update key 0l rf)) 
+            rf_dest
+            src_keys
+    in
+    (IntMap.fold 
+            (fun key v s -> 
+                let src_val  = (rf_lookup key rf_src)  in
+                let dest_val = (rf_lookup key rf_dest) in  
+                if src_val = dest_val 
+                then s^""
+	            else s^(reg2str (ind2reg (Int32.of_int key)))^": "
+	                  ^(Int32.to_string src_val)
+	                  ^" vs "^(Int32.to_string dest_val))
+            union_keys 
+            "")
+                  
 (* Memory definitions. A memory is a map from 32-bit addresses to bytes. *)
 module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end)
   type memory = byte Int32Map.t
@@ -31,16 +62,53 @@ module Int32Map = Map.Make(struct type t = int32 let compare = Int32.compare end
   
   let mem_update (a : int32) (v : byte) (m : memory) : memory =
     Int32Map.add a v m
-    
+  
+  let rec mem_update_many (targets : (int32 * byte) list) (m : memory) : memory = 
+    match targets with 
+        | [] -> m
+        | (a, v) :: rest -> (mem_update_many rest (mem_update a v m))  
+   
   let mem_lookup (a : int32) (m : memory) : byte =
     try (Int32Map.find a m) with Not_found -> mk_byte Int32.zero
     
   let string_of_mem (m : memory) : string =
     Int32Map.fold (fun key v s ->
       s^(Int32.to_string key)^" -> "^(Int32.to_string (b2i32 v))^"\n") m ""
+   
+let compare_mem (mem_src : memory) (mem_dest: memory) : string =
+    let zero_byte = Byte.mk_byte 0l in
+    let src_keys = 
+        Int32Map.fold 
+            (fun key v mem -> (mem_update key zero_byte mem)) 
+            mem_src 
+            empty_mem
+    in
+    let union_keys = 
+        Int32Map.fold 
+            (fun key v mem -> (mem_update key zero_byte mem)) 
+            mem_dest
+            src_keys
+    in
+    (Int32Map.fold 
+            (fun key v s -> 
+                let src_val  = (mem_lookup key mem_src)  in
+                let dest_val = (mem_lookup key mem_dest) in  
+                if src_val = dest_val 
+                then s
+	            else s^(Int32.to_string key)^": "
+	                  ^(Int32.to_string (Byte.b2i32 src_val))
+	                  ^" vs "^(Int32.to_string (Byte.b2i32 dest_val)) ^ "; ")
+            union_keys 
+            "")
 
 (* State *)
-type state = { r : regfile; pc : int32; m : memory }
+type state      = { r : regfile;   pc : int32; m : memory }
+let empty_state = { m = empty_mem; pc = 0l;    r = empty_rf}
+
+let string_of_state (s : state) : string = 
+    "Memory:\n"         ^(string_of_mem s.m)
+    ^"---\nRegisters:\n"^(string_of_rf s.r)
+    ^"---\nPc: "        ^(Int32.to_string s.pc)
 
 (* Copies a 32 bit object into adjacent memory locations *)
 let word_mem_update (word : int32) (offset : int32) (m : memory) : memory = 
@@ -87,24 +155,30 @@ let rec assem (prog : program) : state =
           (* assemble the rest of the program *) 
           (assem_r rest new_state)
     in 
-    let init_state = {m = empty_mem; pc = 0l; r = empty_rf} in
+    let init_state = empty_state in
     (assem_r prog init_state)
 
-(* Disassembles an instruction *) 
-let disassem (binary : int32) : inst = raise TODO
-    (* Mask off top 6 bits *) 
-    (* Match against possible ops *) 
-        (* if 0, mask off last 6 bits *) 
-            (* match jr vs add *)
-        (* Grab arguments specifically by masking / shifting*)
-        (* Return instruction *)
+(* Disassembles a binary word into a MIPS instruction *) 
+let disassem (binary : int32) : inst = 
+    match (get_opcode binary) with 
+        | 0x00l -> (match (get_opcode2 binary) with
+              | 0x08l -> Jr(get_reg1 binary)
+              | 0x20l -> Add((get_reg3 binary), (get_reg1 binary), (get_reg2 binary))
+              | _ -> raise NotRegister)
+        (* Left-shift target, as target must be word aligned *)
+        | 0x03l -> Jal(Int32.shift_left (Int32.logand binary (masker 26 6)) 2)
+        | 0x04l -> Beq((get_reg1 binary), (get_reg2 binary), int16_to_int32 binary)
+        | 0x0dl -> Ori((get_reg2 binary), (get_reg1 binary), int16_to_int32 binary)
+        | 0x0fl -> Lui((get_reg2 binary), int32_lower binary)
+        | 0x23l -> Lw((get_reg2 binary), (get_reg1 binary), int16_to_int32 binary)
+        | 0x2bl -> Sw((get_reg2 binary), (get_reg1 binary), int16_to_int32 binary)
+        | _ -> raise InvalidInstruction
 
 (* Checks for word alignment of address *)
 let check_word_aligned (target_addr : int32) : int32 =
-	if (Int32.rem target_addr 4l) != 0l 
-	    then raise UnalignedAccessError
-	    else
-	        target_addr
+    if (Int32.rem target_addr 4l) = 0l 
+    then target_addr
+    else raise UnalignedAccessError
 	    
 (* Increments the PC of a state *) 
 let increment_pc (machine_s : state) : state = 
@@ -161,8 +235,8 @@ let exec_lw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
 let exec_sw (rt : reg) (rs : reg) (offset : int32) (machine_s : state) : state =
     let target_addr = (Int32.add (rf_lookup (reg2ind rs) machine_s.r) offset)  in
 	    increment_pc { pc = machine_s.pc;
-	                   m  = (word_mem_update (check_word_aligned target_addr)
-	                                         (rf_lookup (reg2ind rt) machine_s.r)
+	                   m  = (word_mem_update (rf_lookup (reg2ind rt) machine_s.r)
+                                     (check_word_aligned target_addr)
 	                                         machine_s.m); 
 	                   r  = machine_s.r  }
 
@@ -184,24 +258,21 @@ let exec_li (rs : reg) (imm : int32) (machine_s : state) : state =
 let exec (target : inst) (machine_s : state) : state =
     (* Match against possible ops *)
     match target with 
-        (* Perform mem/reg operation *)     (* Move PC as necessary (default to +1) *)
-        
-        (* Branch by offset if rs == rt *)
-        (* Jump to the address specified in rs*)
-        (* Jump to instruction at target, save address in RA*)
-        (* Load immediate into upper half of register*) 
-        (* rs | imm -> rt *) 
-        (* Load (word) at address into register rt.*) 
-        (* Store word from rt at address *)
-        (* rs + rt -> rd*)
-        
-        | Beq(rs, rt, label)  -> (exec_beq rs rt label machine_s)                  
+        (* Branch by offset if rs == rt *)        
+        | Beq(rs, rt, label)  -> (exec_beq rs rt label machine_s)   
+        (* Jump to the address specified in rs*)               
         | Jr(rs)              -> (exec_jr  rs machine_s)
+        (* Jump to instruction at target, save address in RA*)
         | Jal(target)         -> (exec_jal target machine_s)
+        (* Load immediate into upper half of register*) 
         | Lui(rt, imm)        -> (exec_lui rt imm machine_s)
+        (* rs |imm -> rt *)
         | Ori(rt, rs, imm)    -> (exec_ori rt rs imm machine_s)
+        (* Load (word) at address into register rt.*) 
         | Lw(rt, rs, offset)  -> (exec_lw  rt rs offset machine_s)
+        (* Store word from rt at address *)
         | Sw(rt, rs, offset)  -> (exec_sw  rt rs offset machine_s)
+        (* rs + rt -> rd*)
         | Add(rd, rs, rt)     -> (exec_add rd rs rt machine_s) 
         | Li (rs, imm)        -> (exec_li  rs imm machine_s) (* This shouldn't get called with the dissambler in the pipe, but is good for testing *)
 
