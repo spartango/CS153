@@ -1,0 +1,10 @@
+Your job for this assignment is to implement a parser and lexer,
+using lex/yacc and parsing combinators. Running make in the
+current directory generates 2 executables ps2yacc and ps2comb to
+test the 2 approaches. Both expect a file-to-parse as an
+argument.
+
+Usage:
+ps2yacc [file-to-parse]
+
+ps2comb [file-to-parse]
