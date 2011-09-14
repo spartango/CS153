@@ -9,6 +9,9 @@ all: clean mips
 test: mips
 	./tests
 
+help:
+	./help.sh
+
 mips:
 	$(COMPILER) -c binary_ops.ml
 	$(COMPILER) -c mips_ast.ml
