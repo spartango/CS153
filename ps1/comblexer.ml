@@ -15,6 +15,14 @@ LParen | RParen | LCurly | RCurly |
 
 exception ImplementMe
 
+(* Parser for alpha_numeric characters *)
+let alpha_num : (char, char) pareser = alt (alpha, dig)
+
+(* Parser for variable *)
+let var = seq(lc_alpha, plus(alt(alpha_num, underscore))
+
+
+
 (* the tokenize function -- should convert a list of characters to a list of 
  * Fish tokens using the combinators. *)
 let rec tokenize(cs:char list) : token list = 
