@@ -4,7 +4,7 @@
 # change to a different ocamlc if you prefer (e.g., ocamlopt)
 COMPILER=ocamlc
  
-all: clean comb yacc
+all: clean comb yacc testall
 
 utility:
 	$(COMPILER) -c explode.ml
@@ -13,12 +13,20 @@ com:
 	$(COMPILER) -c ast.ml
 	$(COMPILER) -c eval.ml
 
+testf:
+	$(COMPILER) -c pretty_print.ml
+	$(COMPILER) -c test_framework.ml
+
 comb: utility com
 	$(COMPILER) -c lcombinators.ml
 	$(COMPILER) -c comblexer.ml
 	$(COMPILER) -c combparser.ml
 	$(COMPILER) -c fishcomb.ml
 	$(COMPILER) -o ps1comb ast.cmo eval.cmo explode.cmo lcombinators.cmo comblexer.cmo combparser.cmo fishcomb.cmo
+
+combtest: testf comb
+	$(COMPILER) -c fishcomb_test.ml
+	$(COMPILER) -o testcomb pretty_print.cmo test_framework.cmo ast.cmo eval.cmo explode.cmo lcombinators.cmo comblexer.cmo combparser.cmo fishcomb_test.cmo
 	
 yacc: com
 	ocamlyacc parse.mly
@@ -29,5 +37,17 @@ yacc: com
 	$(COMPILER) -c fishyacc.ml
 	$(COMPILER) -o ps1yacc ast.cmo parse.cmo lex.cmo eval.cmo fishyacc.cmo
 
+yacctest: testf yacc
+	$(COMPILER) -c fishyacc_test.ml
+	$(COMPILER) -o testyacc pretty_print.cmo test_framework.cmo ast.cmo parse.cmo lex.cmo eval.cmo fishyacc_test.cmo 
+
+runcombtest: combtest
+	./testcomb
+
+runyacctest: yacctest
+	./testyacc
+	
+testall: combtest yacctest runcombtest runyacctest
+	
 clean:
-	-rm *.cmo *.cmi ps1comb ps1yacc parse.ml parse.mli lex.ml
+	-rm *.cmo *.cmi ps1comb ps1yacc testyacc testcomb parse.ml parse.mli lex.ml
