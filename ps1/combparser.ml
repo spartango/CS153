@@ -114,6 +114,12 @@ module FishParsing =
         let parse_int_init (token, expr) parser = 
            (map pkg_int_init
                 (seq
+                    (satisfy 
+                        (fun t_token ->
+                            match t_token with 
+                            | Int(_) -> true
+                            | _      -> false 
+                        ))
                     (alts 
                          [ parse_half_plus;
                            parse_half_times;
@@ -128,9 +134,15 @@ module FishParsing =
             raise TODO
 
         (* Parser for a Var-initiated expression      *)
-        let parse_var_init (token, expr) parser =
+        let parse_var_init : (token, expr) parser =
             (map pkg_var_init
                  (seq
+                    (satisfy 
+                        (fun t_token ->
+                            match t_token with 
+                            | Int(_) -> true
+                            | _      -> false 
+                        ))
                      (alts 
                           [ parse_half_plus;
                             parse_half_sub;
@@ -142,9 +154,19 @@ module FishParsing =
                      )))
 
         (* Function to package a paren'd expression   *) 
-        
+        let pkg_paren_expr target = 
+            raise TODO
+
         (* Parser for Paren-contained expression      *)
-                
+        let parse_paren_expr : (token, expr) parser = 
+            (map pkg_paren_expr 
+                 (seq 
+                     (token_equal LParen)
+                     (seq
+                         expression
+                         (token_equal RParen)
+                     )))
+
 end
         
 
