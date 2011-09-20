@@ -14,7 +14,10 @@ type token =
 exception ImplementMe
 
 let tkn2str (t: token) : string = 
-    raise ImplementMe
+    match t with 
+        | Var(v) -> "Var(" ^ v ^ ")"
+        | Int(i) -> string_of_int i
+        | _ -> raise ImplementMe
 
 
 (* Combinators for lexer *)
