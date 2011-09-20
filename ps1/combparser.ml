@@ -8,25 +8,72 @@ open Ast
 module FishParsing =
     struct
         open Lcombinators.GenericParsing
+        open Comblexer
+        open Ast
         
+        (* Helpful parsers *)
+        let token_equal(target_token: token) : (token, token) parser = 
+            (satisfy (fun t_token -> t_token = target_token))
+
         (* Statement Parsers *)
-        
-        (* Function packaging If statements           *)
-        
+         
+        (* Function packaging If statements           *)         
+            
         (* Parser matching If statements              *)
         
-        (* Function packaging Return statements       *)
-                                                                                                  
+        (* Function packaging Return statements       *)                                                                                          
+        let pkg_return (target : (token * expr)) : rstmt =
+            raise TODO
+
         (* Parser matching Return statements          *) 
-        
+        (* TODO fix return types in seq *)
+        let parse_return : (token, rstmt) parser = 
+            (map pkg_return 
+                 (seq 
+                    (token_equal Return) 
+                    expression ) ) 
+            
         (* Function packaging While statements        *)
-                                                                                                  
+        let pkg_while (target : (token * (expr * statement))) : rstmt =                           
+            raise TODO
+
         (* Parser matching While statements           *) 
-        
+        let parse_while : (token, rstmt) parser  = 
+            (map pkg_while 
+                 (seq 
+                    (token_equal While)
+                    (seq 
+                        expression
+                        statement) ) ) 
+
         (* Function packaging For statements          *)        
-                                                                                                  
+        let pkg_for (target : (token * (expr * (expr * (expr * statement))))) 
+                    : rstmt = 
+            raise TODO
+
         (* Parser matching For statements             *)
-        
+        (* TODO implement mapping to get correct types *)
+        let parse_for 
+            (map pkg_for
+                 (seq
+                    (token_equal For) 
+                    (seq 
+                        (token_equal LParen)
+                        (seq
+                            expression
+                            (seq 
+                                (token_equal Seq) 
+                                (seq 
+                                    expression 
+                                    (seq
+                                        (token_equal Seq)
+                                        (seq
+                                            expression
+                                            (seq
+                                                (token_equal LParen)
+                                                statement
+                                            )))))))))
+
         (* Function packaging Blocks of statements    *)
         
         (* Parser matching Blocks of statements { x } *) 
