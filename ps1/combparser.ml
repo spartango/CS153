@@ -7,7 +7,7 @@ open Ast
 (* Module for parsing Fish *)
 module FishParsing =
     struct
-        open GenericParsing
+        open Lcombinators.GenericParsing
         
         (* Statement Parsers *)
         
