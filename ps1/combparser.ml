@@ -4,6 +4,8 @@ open Lcombinators.GenericParsing
 open Comblexer
 open Ast
 
+exception TODO
+
 (* Module for parsing Fish *)
 module FishParsing =
     struct
@@ -30,54 +32,64 @@ module FishParsing =
         let parse_return : (token, rstmt) parser = 
             (map pkg_return 
                  (seq 
-                    (token_equal Return) 
-                    expression ) ) 
+                     (token_equal Return) 
+                     expression ) ) 
             
         (* Function packaging While statements        *)
         let pkg_while (target : (token * (expr * statement))) : rstmt =                           
             raise TODO
 
         (* Parser matching While statements           *) 
-        let parse_while : (token, rstmt) parser  = 
+        let parse_while : (token, rstmt) parser = 
             (map pkg_while 
                  (seq 
-                    (token_equal While)
-                    (seq 
-                        expression
-                        statement) ) ) 
+                     (token_equal While)
+                     (seq 
+                         expression
+                         statement) ) ) 
 
         (* Function packaging For statements          *)        
-        let pkg_for (target : (token * (expr * (expr * (expr * statement))))) 
+        let pkg_for (target : (token * (expr * (expr * (expr * rstmt))))) 
                     : rstmt = 
             raise TODO
 
         (* Parser matching For statements             *)
         (* TODO implement mapping to get correct types *)
-        let parse_for 
+        let parse_for : (token, rstmt) parser = 
             (map pkg_for
                  (seq
-                    (token_equal For) 
-                    (seq 
-                        (token_equal LParen)
-                        (seq
-                            expression
-                            (seq 
-                                (token_equal Seq) 
-                                (seq 
-                                    expression 
-                                    (seq
-                                        (token_equal Seq)
-                                        (seq
-                                            expression
-                                            (seq
-                                                (token_equal LParen)
-                                                statement
-                                            )))))))))
+                     (token_equal For) 
+                     (seq 
+                         (token_equal LParen)
+                         (seq
+                             expression
+                             (seq 
+                                 (token_equal Seq) 
+                                 (seq 
+                                     expression 
+                                     (seq
+                                         (token_equal Seq)
+                                         (seq
+                                             expression
+                                             (seq
+                                                 (token_equal LParen)
+                                                 statement
+                                             )))))))))
 
         (* Function packaging Blocks of statements    *)
-        
+        let pkg_seq (target : (token * (rstmt list * token))) : rstmt =
+            raise TODO
+
         (* Parser matching Blocks of statements { x } *) 
-        
+        let parse_lcurly (token, rstmt) parser = 
+            (map pkg_seq
+                 (seq 
+                     (token_equal LCurly)
+                     (seq 
+                         (star statement)
+                         token_equal RCurly 
+                     )))
+
         (* Parser matching Expressions                *)
         
         (* Expression Parsers *) 
