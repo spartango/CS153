@@ -11,27 +11,51 @@ module FishParsing =
         
         (* Statement Parsers *)
         
+        (* Function packaging If statements           *)
+        
         (* Parser matching If statements              *)
-                                                      
+        
+        (* Function packaging Return statements       *)
+                                                                                                  
         (* Parser matching Return statements          *) 
-                                                      
+        
+        (* Function packaging While statements        *)
+                                                                                                  
         (* Parser matching While statements           *) 
-                                                      
+        
+        (* Function packaging For statements          *)        
+                                                                                                  
         (* Parser matching For statements             *)
+        
+        (* Function packaging Blocks of statements    *)
         
         (* Parser matching Blocks of statements { x } *) 
         
-        (* Parser matching Expression statements      *)
+        (* Parser matching Expressions                *)
         
         (* Expression Parsers *) 
         
-        (* Parameterized Parser for Int [binop] expr *) 
+        (* Parameterized Parser for      [binop] expr *) 
         
-        (* Parameterized Parser for Var [binop] expr *)
+        (* Parser for 2nd half Plus operation + expr  *)
         
-        (* Parser for Not expr                       *)
+        (* Parser for 2nd half Times operation + expr *)
         
-        (* Parser for Paren-contained expression     *)
+        (* Parser for 2nd half Div operation + expr   *)
+         
+        (* Parser for 2nd half Sub operation + expr   *)
+        
+        (* Function to package Int-init expression    *) 
+        
+        (* Parser for an Int-initiated expression     *)
+        
+        (* Function to package Var-init expression    *) 
+
+        (* Parser for a Var-initiated expression      *)
+        
+        (* Function to package a paren'd expression   *) 
+        
+        (* Parser for Paren-contained expression      *)
                 
 end
         
