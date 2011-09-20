@@ -24,3 +24,8 @@ let var = seq(lc_alpha, plus(alt(alpha_num, underscore)))
  * Fish tokens using the combinators. *)
 let rec tokenize(cs:char list) : token list = 
     raise ImplementMe
+    (* Declare combinators *)
+    (* Create massive single combinator with alts *)
+    (* Run combinator over cs *)
+        (* Return token list on end of cs *)
+        (* Handle errors when combinator returns Nil *)
