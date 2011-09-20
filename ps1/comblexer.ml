@@ -11,14 +11,19 @@ type token =
 	| Seq | If | While | For | Return |
 	(* Parens *)
 	LParen | RParen | LCurly | RCurly 
-
 exception ImplementMe
 
-(* Parser for alpha_numeric characters *)
+let tkn2str (t: token) : string = 
+    raise ImplementMe
+
+
+(* Combinators for lexer *)
+
+(* General parser for alpha_numeric characters *)
 let alpha_num : (char, char) parser = alt (alpha, dig)
 
-(* Parser for variable *)
-let var = seq(lc_alpha, plus(alt(alpha_num, underscore)))
+(* Lexer for variables *)
+let var = map (fun v -> (Var v)) identifier
 
 (* the tokenize function -- should convert a list of characters to a list of 
  * Fish tokens using the combinators. *)
