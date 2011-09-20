@@ -23,5 +23,7 @@ let mk_lex_combinator_test (p: char list -> token) (expected_token: token) =
                 " Lexed: " ^ (tkn2str(tkn))
             else errors in
     List.fold_left test_map "" lex_test_inputs
+
+let var_test = mk_lex_combinator_test var (Var("foo"))
         
     
