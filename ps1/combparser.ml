@@ -104,14 +104,43 @@ module FishParsing =
          
         (* Parser for 2nd half Sub operation + expr   *)
         
+        (* Parser for 2nd half assign operation       *)
+
         (* Function to package Int-init expression    *) 
+        let pkg_int_init target = 
+            raise TODO
         
         (* Parser for an Int-initiated expression     *)
-        
+        let parse_int_init (token, expr) parser = 
+           (map pkg_int_init
+                (seq
+                    (alts 
+                         [ parse_half_plus;
+                           parse_half_times;
+                           parse_half_div;
+                           parse_half_sub;
+                           always ()
+                         ]
+                    ) ))
+
         (* Function to package Var-init expression    *) 
+        let pkg_var_init target = 
+            raise TODO
 
         (* Parser for a Var-initiated expression      *)
-        
+        let parse_var_init (token, expr) parser =
+            (map pkg_var_init
+                 (seq
+                     (alts 
+                          [ parse_half_plus;
+                            parse_half_sub;
+                            parse_half_times;
+                            parse_half_div;
+                            parse_half_assign;
+                            always ()
+                          ]
+                     )))
+
         (* Function to package a paren'd expression   *) 
         
         (* Parser for Paren-contained expression      *)
