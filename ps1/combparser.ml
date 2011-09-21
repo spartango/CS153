@@ -23,8 +23,8 @@ module FishParsing =
                     parse_for;
                     parse_while;
                     parse_return;
-                    parse_s_expression;
-                    parse_seq
+                    parse_seq;
+                    parse_s_expression
                   ] )
 
         (* Function packaging If Statement           *)         
@@ -125,6 +125,14 @@ module FishParsing =
                          (star parse_statement)
                          token_equal Comblexer.RCurly 
                      )))
+        
+        (* Function packaging expressions -> stmt     *)
+        let pkg_s_expression (target : exp) : stmt
+            
+        (* Parser pushing an isolated expr -> stmt    *)
+        let parse_s_expression (token, stmt) parser =
+            (map pkg_s_expression 
+                 parse_expression)
 
         (* Parser matching Expressions                *)
         
@@ -161,6 +169,12 @@ module FishParsing =
                            parse_half_times;
                            parse_half_div;
                            parse_half_sub;
+                           parse_half_lte;
+                           parse_half_lt;
+                           parse_half_eq;
+                           parse_half_neq;
+                           parse_half_gt;
+                           parse_half_gte;
                            always ()
                          ]
                     ) ))
@@ -181,9 +195,15 @@ module FishParsing =
                         ))
                      (alts 
                           [ parse_half_plus;
-                            parse_half_sub;
                             parse_half_times;
                             parse_half_div;
+                            parse_half_sub;
+                            parse_half_lte;
+                            parse_half_lt;
+                            parse_half_eq;
+                            parse_half_neq;
+                            parse_half_gt;
+                            parse_half_gte;
                             parse_half_assign;
                             always ()
                           ]
