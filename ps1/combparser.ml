@@ -127,7 +127,8 @@ module FishParsing =
                      )))
         
         (* Function packaging expressions -> stmt     *)
-        let pkg_s_expression (target : exp) : stmt
+        let pkg_s_expression (target : exp) : stmt = 
+            Exp(target)
             
         (* Parser pushing an isolated expr -> stmt    *)
         let parse_s_expression : (token, stmt) parser =
@@ -139,20 +140,43 @@ module FishParsing =
         (* Expression Parsers *) 
         
         (* Parameterized Parser for      [binop] expr *) 
-        let parse_half_binop(operation : token) : (token, exp) parser = 
+        let parse_half_binop(operation : token) : (token, (token * exp)) parser = 
             (seq 
                 (token_equal operation)
                 parse_expression)
         
         (* Parser for 2nd half Plus operation + expr  *)
-        
+        let parse_half_plus
+
         (* Parser for 2nd half Times operation + expr *)
-        
+        let parse_half_sub 
+
         (* Parser for 2nd half Div operation + expr   *)
-         
+        let parse_half_times 
+
         (* Parser for 2nd half Sub operation + expr   *)
-        
+        let parse_half_div
+
         (* Parser for 2nd half assign operation       *)
+        let parse_half_assign
+
+        (* Parser for 2nd half lt operation + expr  *)
+        let parse_half_lt
+
+        (* Parser for 2nd half lte operation + expr *)
+        let parse_half_lte 
+
+        (* Parser for 2nd half gt operation + expr   *)
+        let parse_half_gt 
+
+        (* Parser for 2nd half gte operation + expr   *)
+        let parse_half_gte
+
+        (* Parser for 2nd half neq operation + expr   *)
+        let parse_half_neq
+
+        (* Parser for 2nd half eq operation + expr   *)
+        let parse_half_eq
 
         (* Function to package Int-init parse_expression    *) 
         let pkg_int_init target = 
