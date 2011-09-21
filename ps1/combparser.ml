@@ -23,7 +23,8 @@ module FishParsing =
                     parse_for;
                     parse_while;
                     parse_return;
-                    parse_s_expression
+                    parse_s_expression;
+                    parse_seq
                   ] )
 
         (* Function packaging If Statement           *)         
@@ -49,7 +50,8 @@ module FishParsing =
 
         (* Function packaging Return Statement       *)                                                                                          
         let pkg_return (target : (token * exp)) : stmt =
-            raise TODO
+            match target with 
+            | (_, t_expr) -> Return(t_expr)
 
         (* Parser matching Return Statement          *) 
         (* TODO fix return types in seq *)
@@ -60,8 +62,9 @@ module FishParsing =
                      parse_expression ) ) 
             
         (* Function packaging While Statement        *)
-        let pkg_while (target : (token * (exp * parse_statement))) : stmt =                           
-            raise TODO
+        let pkg_while (target : (token * (exp * stmt))) : stmt =                           
+            match target with 
+            | (_, (t_expr, t_stmt)) -> While(t_expr, t_stmt)
 
         (* Parser matching While Statement           *) 
         let parse_while : (token, stmt) parser = 
@@ -73,9 +76,13 @@ module FishParsing =
                          parse_statement) ) ) 
 
         (* Function packaging For Statement          *)        
-        let pkg_for (target : (token * (exp * (exp * (exp * stmt))))) 
+        let pkg_for (target : (token * (token * 
+                                (exp * (token * (exp * (token * (exp * 
+                                (token * stmt) ))))))) 
                     : stmt = 
-            raise TODO
+            match target with 
+            | (_, (_, (i_expr, (_, (c_expr, (_, (n_expr, (_, t_stmt)))))))) ->
+                    For(i_expr, c_expr, n_expr, t_stmt)
 
         (* Parser matching For Statement             *)
         (* TODO implement mapping to get correct types *)
@@ -96,16 +103,21 @@ module FishParsing =
                                          (seq
                                              parse_expression
                                              (seq
-                                                 (token_equal Comblexer.LParen)
+                                                 (token_equal Comblexer.RParen)
                                                  parse_statement
                                              )))))))))
 
         (* Function packaging Blocks of Statement    *)
-        let pkg_seq (target : (token * (stmt list * token))) : rstmt =
-            raise TODO
+        let pkg_seq (target : (token * (stmt list * token))) : stmt =
+            match target with 
+            | (_, (stmts, _)) -> (List.fold_left 
+                                       (fun sequence elt ->
+                                            Seq(elt, sequence)) 
+                                       (always ())
+                                       stmts)
 
         (* Parser matching Blocks of Statement { x } *) 
-        let parse_lcurly (token, stmt) parser = 
+        let parse_seq (token, stmt) parser = 
             (map pkg_seq
                  (seq 
                      (token_equal Comblexer.LCurly)
