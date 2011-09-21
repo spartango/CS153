@@ -6,7 +6,7 @@ type token =
 	(* Operators *)
 	Plus | Minus | Times | Div | Eq | Neq | Lt | Lte | Gt | Gte |
 	(* Types *)
-	Int of int | Var of string | Not | And | Or | Assign   
+	Int of int | Id of string | Not | And | Or | Assign   
 	(* Control statements *)
 	| Seq | If | While | For | Return |
 	(* Parens *)
@@ -15,7 +15,7 @@ exception ImplementMe
 
 let tkn2str (t: token) : string = 
     match t with 
-        | Var(v) -> "Var(" ^ v ^ ")"
+        | Id(v) -> "Id(" ^ v ^ ")"
         | Int(i) -> string_of_int i
         | _ -> raise ImplementMe
 
@@ -26,7 +26,7 @@ let tkn2str (t: token) : string =
 let alpha_num : (char, char) parser = alt (alpha, dig)
 
 (* Lexer for variables *)
-let var_combinator = map (fun v -> (Var v)) identifier
+let id_combinator = map (fun v -> (Id v)) identifier
 
 (* Lexer for integers *)
 let int_combinator = map (fun v -> (Int v)) integer

@@ -8,13 +8,13 @@ let stub = Test("Implemented", (fun () -> false)  )
 (* Function: Tests two tokens for equality *)
 let token_eq (t1: token) (t2: token) : bool =
     match (t1, t2) with
-        | (Var(v1),Var(v2)) -> (v1 == v2)
+        | (Id(v1),Id(v2)) -> (v1 == v2)
         | (Int(v1),Int(v2)) -> (v1 == v2)
         | (_,_) -> (t1 == t2)
  
 let lex_test_inputs = [
-    (['f';'o';'o'], [(Var "foo")]);
-    (['f';'o';'o';'=';'b';'a';'z'], [(Var "foo"); Eq; (Var "baz")]);
+    (['f';'o';'o'], [(Id "foo")]);
+    (['f';'o';'o';'=';'b';'a';'z'], [(Id "foo"); Eq; (Id "baz")]);
     (['5'], [(Int 5)]);
     (['5';'+';'9'], [(Int 5);Plus;(Int 6)])
 ]
@@ -44,13 +44,13 @@ let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
         then Verbose_Test(result, (fun () -> (false, label)))
         else Verbose_Test("", (fun () -> (true, label)))
 
-let test_var_combinator = 
-    (mk_lex_combinator_test var_combinator (Var "foo") "Combinator for Var")
-let test_int_combinator = 
+let test_id_combinator = 
+    (mk_lex_combinator_test id_combinator (Id "foo") "Combinator for Id")
+let test_int_combinator =
     (mk_lex_combinator_test int_combinator (Int 5) "Combinator for Int");;
   
 run_test_set [stub] "Test Stub";;
-run_test_set [test_var_combinator; 
+run_test_set [test_id_combinator; 
               test_int_combinator ] "Token Combinator Tests"
 
 
