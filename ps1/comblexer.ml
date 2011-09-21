@@ -26,7 +26,10 @@ let tkn2str (t: token) : string =
 let alpha_num : (char, char) parser = alt (alpha, dig)
 
 (* Lexer for variables *)
-let var = map (fun v -> (Var v)) identifier
+let var_combinator = map (fun v -> (Var v)) identifier
+
+(* Lexer for integers *)
+let int_combinator = map (fun v -> (Int v)) integer
 
 (* the tokenize function -- should convert a list of characters to a list of 
  * Fish tokens using the combinators. *)
