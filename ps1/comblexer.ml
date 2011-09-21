@@ -17,6 +17,7 @@ let tkn2str (t: token) : string =
     match t with 
         | Id(v) -> "Id(" ^ v ^ ")"
         | Int(i) -> string_of_int i
+        | Plus -> "+"
         | _ -> raise ImplementMe
 
 
@@ -31,7 +32,8 @@ let id_combinator = map (fun v -> (Id v)) identifier
 (* Combinator for integers *)
 let int_combinator = map (fun v -> (Int v)) integer
 
-
+(* Complete combinator *)
+let complete_combinator = alts [id_combinator; int_combinator; plus_combinator]
 
 (* the tokenize function -- should convert a list of characters to a list of 
  * Fish tokens using the combinators. *)

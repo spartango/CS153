@@ -4,17 +4,25 @@ open Lcombinators.GenericParsing
 open Lcombinators.CharParsing
 
 let stub = Test("Implemented", (fun () -> false)  )
-  
-(* Function: Tests two tokens for equality *)
-let token_eq (t1: token) (t2: token) : bool =
-    match (t1, t2) with
-        | (Id(v1),Id(v2)) -> (v1 == v2)
-        | (Int(v1),Int(v2)) -> (v1 == v2)
-        | (_,_) -> (t1 == t2)
- 
+
+(* 
+let mk_token_eq_test (t: token) =
+    mk_verbose_expect_test (fun () -> (token_eq t t)) true string_of_bool 
+        ("Equality of " ^ tkn2str(t))
+
+let plus_eq_test = 
+    (mk_token_eq_test Plus);;
+
+let id_eq_test =
+    (mk_token_eq_test (Id "foo"));;
+
+run_test_set [plus_eq_test;
+              id_eq_test] "Token equality tests.";;
+*)
 let lex_test_inputs = [
     (['f';'o';'o'], [(Id "foo")]);
     (['f';'o';'o';'=';'b';'a';'z'], [(Id "foo"); Eq; (Id "baz")]);
+
     (['5'], [(Int 5)]);
     (['5';'+';'9'], [(Int 5);Plus;(Int 6)]);
     (['+'], [Plus]);
@@ -28,11 +36,10 @@ let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
         let head_token = (List.hd tkns) in
             match (p cs) with
                 | Cons((tkn,_),_) ->
-                      let _ = print_string (string_of_bool (head_token == expected_token)) in
-                      if ((token_eq head_token expected_token) && 
-                              (token_eq tkn head_token)) ||
-                          ((not (token_eq head_token expected_token)) && 
-                                (not (token_eq tkn head_token)))
+                      if ((head_token = expected_token) && 
+                              (tkn = head_token)) ||
+                          ((head_token <> expected_token) && 
+                                (tkn <> head_token))
                       then errors
                       else errors ^ "\nExpected: " ^ (tkn2str(head_token)) ^ 
                           " Lexed: " ^ (tkn2str(tkn))
@@ -53,10 +60,29 @@ let test_int_combinator =
 let test_plus_combinator =
     (mk_lex_combinator_test plus_combinator (Plus) "Combinator for Plus");;
 
+let test_complete_combinator = 
+    let label = "Test for complete combinator" in
+    let test_iterator (errors: string) (case: char list * token list) : string = 
+        let (cs,tkns) = case in
+        let head_token = List.hd tkns in
+            match complete_combinator cs with
+                | Cons((tkn,_),_) ->
+                      if (tkn = head_token)
+                      then errors
+                      else errors ^ "\nExpected: " ^ (tkn2str(head_token)) ^ 
+                          " Lexed: " ^ (tkn2str(tkn))
+                | Nil -> errors ^ "\nReturned no token but expected: " ^
+                      (tkn2str(head_token)) in
+    let result = List.fold_left test_iterator "" lex_test_inputs in
+        if (result <> "")
+        then Verbose_Test(result, (fun () -> (false, label)))
+        else Verbose_Test("", (fun () -> (true, label)));;
+
 run_test_set [stub] "Test Stub";;
 run_test_set [test_id_combinator; 
               test_int_combinator;
-              test_plus_combinator ] "Token Combinator Tests"
+              test_plus_combinator;
+              test_complete_combinator ] "Token Combinator Tests"
 
 
 
