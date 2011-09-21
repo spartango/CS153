@@ -18,76 +18,100 @@ module FishParsing =
             (satisfy (fun t_token -> t_token = target_token))
 
         (* Statement Parsers *)
-         
-        (* Function packaging If statements           *)         
-            
-        (* Parser matching If statements              *)
-        
-        (* Function packaging Return statements       *)                                                                                          
-        let pkg_return (target : (token * expr)) : rstmt =
+        let parse_statement : (token, stmt) parser =
+            (alts [ parse_if;
+                    parse_for;
+                    parse_while;
+                    parse_return;
+                    parse_s_expression
+                  ] )
+
+        (* Function packaging If Statement           *)         
+        let pkg_if (target : (token * (exp * (stmt * (token * stmt) option)))) : stmt = 
+            match target with 
+            | (_, (t_expr, (s_then, Some(_, s_else)))) -> If(t_expr, s_then, s_else)
+            | (_, (t_expr, (s_then, None)))            -> If(t_expr, s_then, skip)
+
+        (* Parser matching If Statement              *)
+        let parse_if : (token, stmt) parser = 
+            (map pkg_if
+                 (seq 
+                     (token_equal Comblexer.If)
+                     (seq 
+                         parse_expression
+                         (seq 
+                             parse_statement
+                             (opt 
+                                 (seq 
+                                     (token_equal Comblexer.Else)
+                                     parse_statement
+                                 ))))))
+
+        (* Function packaging Return Statement       *)                                                                                          
+        let pkg_return (target : (token * exp)) : stmt =
             raise TODO
 
-        (* Parser matching Return statements          *) 
+        (* Parser matching Return Statement          *) 
         (* TODO fix return types in seq *)
-        let parse_return : (token, rstmt) parser = 
+        let parse_return : (token, stmt) parser = 
             (map pkg_return 
                  (seq 
-                     (token_equal Return) 
-                     expression ) ) 
+                     (token_equal Comblexer.Return) 
+                     parse_expression ) ) 
             
-        (* Function packaging While statements        *)
-        let pkg_while (target : (token * (expr * statement))) : rstmt =                           
+        (* Function packaging While Statement        *)
+        let pkg_while (target : (token * (exp * parse_statement))) : stmt =                           
             raise TODO
 
-        (* Parser matching While statements           *) 
-        let parse_while : (token, rstmt) parser = 
+        (* Parser matching While Statement           *) 
+        let parse_while : (token, stmt) parser = 
             (map pkg_while 
                  (seq 
-                     (token_equal While)
+                     (token_equal Comblexer.While)
                      (seq 
-                         expression
-                         statement) ) ) 
+                         parse_expression
+                         parse_statement) ) ) 
 
-        (* Function packaging For statements          *)        
-        let pkg_for (target : (token * (expr * (expr * (expr * rstmt))))) 
-                    : rstmt = 
+        (* Function packaging For Statement          *)        
+        let pkg_for (target : (token * (exp * (exp * (exp * stmt))))) 
+                    : stmt = 
             raise TODO
 
-        (* Parser matching For statements             *)
+        (* Parser matching For Statement             *)
         (* TODO implement mapping to get correct types *)
-        let parse_for : (token, rstmt) parser = 
+        let parse_for : (token, stmt) parser = 
             (map pkg_for
                  (seq
-                     (token_equal For) 
+                     (token_equal Comblexer.For) 
                      (seq 
-                         (token_equal LParen)
+                         (token_equal Comblexer.LParen)
                          (seq
-                             expression
+                             parse_expression
                              (seq 
-                                 (token_equal Seq) 
+                                 (token_equal Comblexer.Seq) 
                                  (seq 
-                                     expression 
+                                     parse_expression 
                                      (seq
-                                         (token_equal Seq)
+                                         (token_equal Comblexer.Seq)
                                          (seq
-                                             expression
+                                             parse_expression
                                              (seq
-                                                 (token_equal LParen)
-                                                 statement
+                                                 (token_equal Comblexer.LParen)
+                                                 parse_statement
                                              )))))))))
 
-        (* Function packaging Blocks of statements    *)
-        let pkg_seq (target : (token * (rstmt list * token))) : rstmt =
+        (* Function packaging Blocks of Statement    *)
+        let pkg_seq (target : (token * (stmt list * token))) : rstmt =
             raise TODO
 
-        (* Parser matching Blocks of statements { x } *) 
-        let parse_lcurly (token, rstmt) parser = 
+        (* Parser matching Blocks of Statement { x } *) 
+        let parse_lcurly (token, stmt) parser = 
             (map pkg_seq
                  (seq 
-                     (token_equal LCurly)
+                     (token_equal Comblexer.LCurly)
                      (seq 
-                         (star statement)
-                         token_equal RCurly 
+                         (star parse_statement)
+                         token_equal Comblexer.RCurly 
                      )))
 
         (* Parser matching Expressions                *)
@@ -106,19 +130,19 @@ module FishParsing =
         
         (* Parser for 2nd half assign operation       *)
 
-        (* Function to package Int-init expression    *) 
+        (* Function to package Int-init parse_expression    *) 
         let pkg_int_init target = 
             raise TODO
         
-        (* Parser for an Int-initiated expression     *)
-        let parse_int_init (token, expr) parser = 
+        (* Parser for an Int-initiated parse_expression     *)
+        let parse_int_init (token, exp) parser = 
            (map pkg_int_init
                 (seq
                     (satisfy 
                         (fun t_token ->
                             match t_token with 
-                            | Int(_) -> true
-                            | _      -> false 
+                            | Comblexer.Int(_) -> true
+                            | _                -> false 
                         ))
                     (alts 
                          [ parse_half_plus;
@@ -129,19 +153,19 @@ module FishParsing =
                          ]
                     ) ))
 
-        (* Function to package Var-init expression    *) 
+        (* Function to package Var-init parse_expression    *) 
         let pkg_var_init target = 
             raise TODO
 
-        (* Parser for a Var-initiated expression      *)
-        let parse_var_init : (token, expr) parser =
+        (* Parser for a Var-initiated parse_expression      *)
+        let parse_var_init : (token, exp) parser =
             (map pkg_var_init
                  (seq
                     (satisfy 
                         (fun t_token ->
                             match t_token with 
-                            | Int(_) -> true
-                            | _      -> false 
+                            | Comblexer.Var(_) -> true
+                            | _                -> false 
                         ))
                      (alts 
                           [ parse_half_plus;
@@ -153,18 +177,18 @@ module FishParsing =
                           ]
                      )))
 
-        (* Function to package a paren'd expression   *) 
+        (* Function to package a paren'd parse_expression   *) 
         let pkg_paren_expr target = 
             raise TODO
 
-        (* Parser for Paren-contained expression      *)
-        let parse_paren_expr : (token, expr) parser = 
+        (* Parser for Paren-contained parse_expression      *)
+        let parse_paren_expr : (token, exp) parser = 
             (map pkg_paren_expr 
                  (seq 
-                     (token_equal LParen)
+                     (token_equal Comblexer.LParen)
                      (seq
-                         expression
-                         (token_equal RParen)
+                         parse_expression
+                         (token_equal Comblexer.RParen)
                      )))
 
 end
