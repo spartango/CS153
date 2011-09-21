@@ -12,6 +12,7 @@ type token =
 	(* Parens *)
 	LParen | RParen | LCurly | RCurly 
 exception ImplementMe
+exception LexError
 
 let tkn2str (t: token) : string = 
     match t with 
@@ -38,7 +39,14 @@ let complete_combinator = alts [id_combinator; int_combinator; plus_combinator]
 (* the tokenize function -- should convert a list of characters to a list of 
  * Fish tokens using the combinators. *)
 let rec tokenize(cs:char list) : token list = 
-    raise ImplementMe
+    match cs with
+        | [] -> []
+        | _ ->
+              match complete_combinator cs with
+                  | Cons((tkn, cs_tail), _) -> tkn::(tokenize cs_tail)
+                  | Nil -> raise LexError
+
+
     (* Declare combinators *)
     (* Create massive single combinator with alts *)
     (* Run combinator over cs *)

@@ -78,6 +78,8 @@ let test_complete_combinator =
         then Verbose_Test(result, (fun () -> (false, label)))
         else Verbose_Test("", (fun () -> (true, label)));;
 
+
+
 run_test_set [stub] "Test Stub";;
 run_test_set [test_id_combinator; 
               test_int_combinator;
