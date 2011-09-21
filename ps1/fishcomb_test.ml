@@ -16,7 +16,9 @@ let lex_test_inputs = [
     (['f';'o';'o'], [(Id "foo")]);
     (['f';'o';'o';'=';'b';'a';'z'], [(Id "foo"); Eq; (Id "baz")]);
     (['5'], [(Int 5)]);
-    (['5';'+';'9'], [(Int 5);Plus;(Int 6)])
+    (['5';'+';'9'], [(Int 5);Plus;(Int 6)]);
+    (['+'], [Plus]);
+    (['+';' ';'f';'o';'o'], [Plus; (Id "foo")])
 ]
 
 let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
@@ -48,10 +50,13 @@ let test_id_combinator =
     (mk_lex_combinator_test id_combinator (Id "foo") "Combinator for Id")
 let test_int_combinator =
     (mk_lex_combinator_test int_combinator (Int 5) "Combinator for Int");;
-  
+let test_plus_combinator =
+    (mk_lex_combinator_test plus_combinator (Plus) "Combinator for Plus");;
+
 run_test_set [stub] "Test Stub";;
 run_test_set [test_id_combinator; 
-              test_int_combinator ] "Token Combinator Tests"
+              test_int_combinator;
+              test_plus_combinator ] "Token Combinator Tests"
 
 
 
