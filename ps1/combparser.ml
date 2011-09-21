@@ -117,7 +117,7 @@ module FishParsing =
                                        stmts)
 
         (* Parser matching Blocks of Statement { x } *) 
-        let parse_seq (token, stmt) parser = 
+        let parse_seq : (token, stmt) parser = 
             (map pkg_seq
                  (seq 
                      (token_equal Comblexer.LCurly)
@@ -130,7 +130,7 @@ module FishParsing =
         let pkg_s_expression (target : exp) : stmt
             
         (* Parser pushing an isolated expr -> stmt    *)
-        let parse_s_expression (token, stmt) parser =
+        let parse_s_expression : (token, stmt) parser =
             (map pkg_s_expression 
                  parse_expression)
 
@@ -139,6 +139,10 @@ module FishParsing =
         (* Expression Parsers *) 
         
         (* Parameterized Parser for      [binop] expr *) 
+        let parse_half_binop(operation : token) : (token, exp) parser = 
+            (seq 
+                (token_equal operation)
+                parse_expression)
         
         (* Parser for 2nd half Plus operation + expr  *)
         
