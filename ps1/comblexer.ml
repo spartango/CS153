@@ -19,13 +19,21 @@ let tkn2str (t: token) : string =
         | Id(v) -> "Id(" ^ v ^ ")"
         | Int(i) -> string_of_int i
         | Plus -> "+"
+        | Minus -> "-"
         | Assign -> "="
         | _ -> raise ImplementMe
 
 (* Combinators for lexer *)
 
+let c_combinator (ch: char) (t: token) =
+    map (fun _ -> t) (c ch)
+
 (* Operators *)
-let plus_combinator = map (fun v -> (Plus)) (c '+')
+let plus_combinator = c_combinator '+' Plus
+
+let minus_combinator = c_combinator '-' Minus
+
+let times_combinator = c_combinator '*' Times
 
 (* Assignment *)
 let assign_combinator = map (fun _ -> Assign) (c '=')
@@ -43,6 +51,8 @@ let complete_combinator =
             (alts [id_combinator; 
                   int_combinator; 
                   plus_combinator;
+                  minus_combinator;
+                  times_combinator;
                   assign_combinator])))
 
 (* the tokenize function -- should convert a list of characters to a list of 

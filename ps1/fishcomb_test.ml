@@ -14,6 +14,8 @@ let lex_test_inputs = [
     (['+';' ';'f';'o';'o'], [Plus; (Id "foo")]);
     (['='], [Assign]);
     (['=';'f';'o';'o'], [Assign; (Id "foo")]);
+    (['-';], [Minus]);
+    (['-';'f';'o';'o';'+';'f';'o';'o'], [Minus; (Id "foo"); Plus; (Id "foo")])
 ]
 
 let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
@@ -28,17 +30,17 @@ let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
                           ((head_token <> expected_token) && 
                                 (tkn <> head_token))
                       then errors
-                      else errors ^ "\nExpected: " ^ (tkn2str(head_token)) ^ 
+                      else errors ^ "\n\tExpected: " ^ (tkn2str(head_token)) ^ 
                           " Lexed: " ^ (tkn2str(tkn))
                 | Nil ->
                       if (head_token == expected_token)
-                      then errors ^ "\nReturned no token but expected: " ^
+                      then errors ^ "\n\tReturned no token but expected: " ^
                           (tkn2str(head_token))
                       else errors in
     let result = List.fold_left test_map "" lex_test_inputs in
         if (result <> "")
-        then Verbose_Test(result, (fun () -> (false, label)))
-        else Verbose_Test("", (fun () -> (true, label)))
+        then Verbose_Test(label, (fun () -> (false, "Lexing error:" ^ result)))
+        else Verbose_Test(label, (fun () -> (true, "Lexed expected tokens.")))
 
 let test_id_combinator = 
     (mk_lex_combinator_test id_combinator (Id "foo") "Combinator for Id")
@@ -46,6 +48,10 @@ let test_int_combinator =
     (mk_lex_combinator_test int_combinator (Int 5) "Combinator for Int");;
 let test_plus_combinator =
     (mk_lex_combinator_test plus_combinator (Plus) "Combinator for Plus");;
+let test_minus_combinator =
+    (mk_lex_combinator_test minus_combinator (Minus) "Minus Combinator");;
+let test_assign_combinator =
+    (mk_lex_combinator_test assign_combinator (Assign) "Combinator for Assign");;
 
 let test_complete_combinator = 
     let label = "Test for complete combinator" in
@@ -89,7 +95,9 @@ let test_tokenizer_snippets =
 run_test_set [test_id_combinator; 
               test_int_combinator;
               test_plus_combinator;
-              test_complete_combinator ] "Token Combinator Tests";;
+              test_assign_combinator;
+              test_minus_combinator;
+              test_complete_combinator;] "Token Combinator Tests";;
 run_test_set [test_tokenizer_snippets] "Tokenizer Tests";;
 
 
