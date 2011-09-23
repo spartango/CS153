@@ -35,6 +35,8 @@ let minus_combinator = c_combinator '-' Minus
 
 let times_combinator = c_combinator '*' Times
 
+let div_combinator = c_combinator '/' Div
+
 (* Assignment *)
 let assign_combinator = c_combinator '=' Assign
 
@@ -53,6 +55,7 @@ let complete_combinator =
                   plus_combinator;
                   minus_combinator;
                   times_combinator;
+                  div_combinator;
                   assign_combinator])))
 
 (* the tokenize function -- should convert a list of characters to a list of 
