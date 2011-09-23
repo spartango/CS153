@@ -36,7 +36,7 @@ let minus_combinator = c_combinator '-' Minus
 let times_combinator = c_combinator '*' Times
 
 (* Assignment *)
-let assign_combinator = map (fun _ -> Assign) (c '=')
+let assign_combinator = c_combinator '=' Assign
 
 (* Combinator for variables *)
 let id_combinator = map (fun v -> (Id v)) identifier
