@@ -5,6 +5,7 @@ open Comblexer
 open Ast
 
 exception TODO
+exception InvalidSyntax
 
 (* Module for parsing Fish *)
 module FishParsing =
@@ -146,41 +147,64 @@ module FishParsing =
                 parse_expression)
         
         (* Parser for 2nd half Plus operation + expr  *)
-        let parse_half_plus
+        let parse_half_plus : (token, (token * exp)) parser =
+            (parse_half_binop Comblexer.Plus)
 
         (* Parser for 2nd half Times operation + expr *)
-        let parse_half_sub 
+        let parse_half_sub : (token, (token * exp)) parser =
+            (parse_half_binop Comblexer.Sub)
 
         (* Parser for 2nd half Div operation + expr   *)
-        let parse_half_times 
+        let parse_half_times : (token, (token * exp)) parser =
+            (parse_half_binop Comblexer.Times)
 
         (* Parser for 2nd half Sub operation + expr   *)
-        let parse_half_div
+        let parse_half_div : (token, (token * exp)) parser =
+            (parse_half_binop Comblexer.Div)
 
         (* Parser for 2nd half assign operation       *)
-        let parse_half_assign
+        let parse_half_assign : (token, (token * exp)) parser =
+            (parse_half_binop Comblexer.Assign)
 
         (* Parser for 2nd half lt operation + expr  *)
-        let parse_half_lt
+        let parse_half_lt : (token, (token * exp)) parser = 
+            (parse_half_binop Comblexer.Lt)
 
         (* Parser for 2nd half lte operation + expr *)
-        let parse_half_lte 
+        let parse_half_lte : (token, (token * exp)) parser = 
+            (parse_half_binop Comblexer.Lte)
 
         (* Parser for 2nd half gt operation + expr   *)
-        let parse_half_gt 
+        let parse_half_gt : (token, (token * exp)) parser = 
+            (parse_half_binop Comblexer.Gt)
 
         (* Parser for 2nd half gte operation + expr   *)
-        let parse_half_gte
+        let parse_half_gte : (token, (token * exp)) parser = 
+            (parse_half_binop Comblexer.Gte)
 
         (* Parser for 2nd half neq operation + expr   *)
-        let parse_half_neq
+        let parse_half_neq : (token, (token * exp)) parser = 
+            (parse_half_binop Comblexer.Neq)
 
         (* Parser for 2nd half eq operation + expr   *)
-        let parse_half_eq
+        let parse_half_eq : (token, (token * exp)) parser = 
+            (parse_half_binop Comblexer.Eq)
 
         (* Function to package Int-init parse_expression    *) 
-        let pkg_int_init target = 
-            raise TODO
+        let pkg_int_init (target : (token * (token * exp) option)) : exp = 
+            match target with
+            | (Comblexer.Int(num), Some(Comblexer.Plus, t_expr))  ->  Plus(Int(num), t_expr) 
+            | (Comblexer.Int(num), Some(Comblexer.Sub, t_expr))   ->   Sub(Int(num), t_expr)
+            | (Comblexer.Int(num), Some(Comblexer.Times, t_expr)) -> Times(Int(num), t_expr)
+            | (Comblexer.Int(num), Some(Comblexer.Div, t_expr))   ->   Div(Int(num), t_expr)
+            | (Comblexer.Int(num), Some(Comblexer.Gt, t_expr))    ->    Gt(Int(num), t_expr)
+            | (Comblexer.Int(num), Some(Comblexer.Gte, t_expr))   ->   Gte(Int(num), t_expr)
+            | (Comblexer.Int(num), Some(Comblexer.Lte, t_expr))   ->   Lte(Int(num), t_expr)
+            | (Comblexer.Int(num), Some(Comblexer.Lt, t_expr))    ->    Lt(Int(num), t_expr)
+            | (Comblexer.Int(num), Some(Comblexer.Eq, t_expr))    ->    Eq(Int(num), t_expr)
+            | (Comblexer.Int(num), Some(Comblexer.Neq, t_expr))   ->   Neq(Int(num), t_expr)
+            | (Comblexer.Var(name), Some(_, _)                    ->   raise InvalidSyntax
+            | (Comblexer.Int(num), None)                          ->   Int(num)
         
         (* Parser for an Int-initiated parse_expression     *)
         let parse_int_init (token, exp) parser = 
@@ -192,7 +216,8 @@ module FishParsing =
                             | Comblexer.Int(_) -> true
                             | _                -> false 
                         ))
-                    (alts 
+                    (opt
+                        (alts 
                          [ parse_half_plus;
                            parse_half_times;
                            parse_half_div;
@@ -203,12 +228,24 @@ module FishParsing =
                            parse_half_neq;
                            parse_half_gt;
                            parse_half_gte;
-                           always ()
-                         ]
+                         ] )
                     ) ))
 
         (* Function to package Var-init parse_expression    *) 
-        let pkg_var_init target = 
+        let pkg_var_init (target : (token * (token * exp) option)) : exp = 
+            match target with
+            | (Comblexer.Var(name), Some(Comblexer.Plus, t_expr))   ->  Plus(Var(name), t_expr) 
+            | (Comblexer.Var(name), Some(Comblexer.Sub, t_expr))    ->   Sub(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Times, t_expr))  -> Times(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Div, t_expr))    ->   Div(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Gt, t_expr))     ->    Gt(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Gte, t_expr))    ->   Gte(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Lte, t_expr))    ->   Lte(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Lt, t_expr))     ->    Lt(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Eq, t_expr))     ->    Eq(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Neq, t_expr))    ->   Neq(Var(name), t_expr)
+            | (Comblexer.Var(name), Some(Comblexer.Assign, t_expr)) ->   Neq(Var(name), t_expr)
+            | (Comblexer.Var(name), None)                           ->   Var(name))
             raise TODO
 
         (* Parser for a Var-initiated parse_expression      *)
@@ -221,7 +258,8 @@ module FishParsing =
                             | Comblexer.Var(_) -> true
                             | _                -> false 
                         ))
-                     (alts 
+                     (opt 
+                         (alts 
                           [ parse_half_plus;
                             parse_half_times;
                             parse_half_div;
@@ -233,8 +271,7 @@ module FishParsing =
                             parse_half_gt;
                             parse_half_gte;
                             parse_half_assign;
-                            always ()
-                          ]
+                          ] )
                      )))
 
         (* Function to package a paren'd parse_expression   *) 
