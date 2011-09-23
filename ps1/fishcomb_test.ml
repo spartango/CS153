@@ -15,7 +15,9 @@ let lex_test_inputs = [
     (['='], [Assign]);
     (['=';'f';'o';'o'], [Assign; (Id "foo")]);
     (['-';], [Minus]);
-    (['-';'f';'o';'o';'+';'f';'o';'o'], [Minus; (Id "foo"); Plus; (Id "foo")])
+    (['-';'f';'o';'o';'+';'f';'o';'o'], [Minus; (Id "foo"); Plus; (Id "foo")]);
+    (['*'], [Times]);
+    (['*';'5';'=';'f';'o';'o'], [Times; (Int 5); Assign; (Id "foo")]) 
 ]
 
 let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
@@ -50,6 +52,8 @@ let test_plus_combinator =
     (mk_lex_combinator_test plus_combinator (Plus) "Combinator for Plus");;
 let test_minus_combinator =
     (mk_lex_combinator_test minus_combinator (Minus) "Minus Combinator");;
+let test_times_combinator =
+    (mk_lex_combinator_test times_combinator (Times) "Times Combinator");;
 let test_assign_combinator =
     (mk_lex_combinator_test assign_combinator (Assign) "Combinator for Assign");;
 
@@ -97,6 +101,7 @@ run_test_set [test_id_combinator;
               test_plus_combinator;
               test_assign_combinator;
               test_minus_combinator;
+              test_times_combinator;
               test_complete_combinator;] "Token Combinator Tests";;
 run_test_set [test_tokenizer_snippets] "Tokenizer Tests";;
 
