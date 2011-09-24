@@ -43,23 +43,27 @@ let pkg_seq (target : (token * (stmt list * token))) : stmt =
                                stmts)
 
 (* Function to package Int-init parse_expression    *) 
-let pkg_int_init (target : (token * (token * exp) option)) : exp = 
-    let position = get_token_position (fst target) in
-    match target with
-    | ((Comblexer.Int(num), _), Some((Comblexer.Plus,  _), t_expr)) -> (Binop((Int(num), position), Plus,  t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Minus, _), t_expr)) -> (Binop((Int(num), position), Minus, t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Times, _), t_expr)) -> (Binop((Int(num), position), Times, t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Div,   _), t_expr)) -> (Binop((Int(num), position), Div,   t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Gt,    _), t_expr)) -> (Binop((Int(num), position), Gt,    t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Gte,   _), t_expr)) -> (Binop((Int(num), position), Gte,   t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Lte,   _), t_expr)) -> (Binop((Int(num), position), Lte,   t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Lt,    _), t_expr)) -> (Binop((Int(num), position), Lt,    t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Eq,    _), t_expr)) -> (Binop((Int(num), position), Eq,    t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Neq,   _), t_expr)) -> (Binop((Int(num), position), Neq,   t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Or,    _), t_expr)) -> (Or( (Int(num), position), t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.And,   _), t_expr)) -> (And((Int(num), position), t_expr), position)
-    | ((Comblexer.Int(num), _), None)                               -> (Int(num), position)
-    | _                                                             -> raise InvalidSyntax
+let pkg_int_init (target : (token option * (token * (token * exp) option))) : exp = 
+    let sign = 
+            match (fst target) with 
+            | Some(_) -> -1
+            | None    -> 1
+    in 
+    match (snd target) with
+    | ((Comblexer.Int(num), position), Some((Comblexer.Plus,  _), t_expr)) -> (Binop((Int(sign * num), position), Plus,  t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Minus, _), t_expr)) -> (Binop((Int(sign * num), position), Minus, t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Times, _), t_expr)) -> (Binop((Int(sign * num), position), Times, t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Div,   _), t_expr)) -> (Binop((Int(sign * num), position), Div,   t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Gt,    _), t_expr)) -> (Binop((Int(sign * num), position), Gt,    t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Gte,   _), t_expr)) -> (Binop((Int(sign * num), position), Gte,   t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Lte,   _), t_expr)) -> (Binop((Int(sign * num), position), Lte,   t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Lt,    _), t_expr)) -> (Binop((Int(sign * num), position), Lt,    t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Eq,    _), t_expr)) -> (Binop((Int(sign * num), position), Eq,    t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Neq,   _), t_expr)) -> (Binop((Int(sign * num), position), Neq,   t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.Or,    _), t_expr)) -> (Or(   (Int(sign * num), position), t_expr), position)
+    | ((Comblexer.Int(num), position), Some((Comblexer.And,   _), t_expr)) -> (And(  (Int(sign * num), position), t_expr), position)
+    | ((Comblexer.Int(num), position), None)                               -> (Int(sign * num), position)
+    | _                                                                    -> raise InvalidSyntax
     
 (* Function to package Int-init parse_expression    *) 
 let pkg_var_init (target : (token * (token * exp) option)) : exp = 
@@ -78,8 +82,8 @@ let pkg_var_init (target : (token * (token * exp) option)) : exp =
     | ((Comblexer.Var(name), _), Some((Comblexer.Or,     _), t_expr)) -> (Or(    (Var(name), position),        t_expr), position)
     | ((Comblexer.Var(name), _), Some((Comblexer.And,    _), t_expr)) -> (And(   (Var(name), position),        t_expr), position)
     | ((Comblexer.Var(name), _), Some((Comblexer.Assign, _), t_expr)) -> (Assign(name, t_expr), position)
-    | ((Comblexer.Var(name), _), None)                               -> (Var(name), position)
-    | _                                                              -> raise InvalidSyntax
+    | ((Comblexer.Var(name), _), None)                                -> (Var(name), position)
+    | _                                                               -> raise InvalidSyntax
 
 
 (* Function packaging For Statement          *)        
@@ -96,9 +100,11 @@ let pkg_for (target : (token * (token *
 let pkg_s_expression (target : exp) : stmt = 
     (Exp(target), get_exp_position target)
 
+let rec parse(ts:token list) : program = 
+    raise ImplementMe
 
 (* Parser matching Expressions                *)
-let rec parse_expression : (token, exp) parser = 
+and parse_expression : (token, exp) parser = 
     (alts [ parse_int_init; 
             parse_var_init; 
             parse_paren_expr ])
@@ -190,76 +196,35 @@ and parse_half_binop(operation : rtoken) : (token, (token * exp)) parser =
         ((token_equal operation),
         parse_expression))
 
-(* Parser for 2nd half Plus operation + expr  *)
-and parse_half_plus : (token, (token * exp)) parser =
-    (parse_half_binop Comblexer.Plus)
-
-(* Parser for 2nd half Times operation + expr *)
-and parse_half_sub : (token, (token * exp)) parser =
-    (parse_half_binop Comblexer.Minus)
-
-(* Parser for 2nd half Div operation + expr   *)
-and parse_half_times : (token, (token * exp)) parser =
-    (parse_half_binop Comblexer.Times)
-
-(* Parser for 2nd half Sub operation + expr   *)
-and parse_half_div : (token, (token * exp)) parser =
-    (parse_half_binop Comblexer.Div)
-
-(* Parser for 2nd half assign operation       *)
-and parse_half_assign : (token, (token * exp)) parser =
-    (parse_half_binop Comblexer.Assign)
-
-(* Parser for 2nd half lt operation + expr  *)
-and parse_half_lt : (token, (token * exp)) parser = 
-    (parse_half_binop Comblexer.Lt)
-
-(* Parser for 2nd half lte operation + expr *)
-and parse_half_lte : (token, (token * exp)) parser = 
-    (parse_half_binop Comblexer.Lte)
-
-(* Parser for 2nd half gt operation + expr   *)
-and parse_half_gt : (token, (token * exp)) parser = 
-    (parse_half_binop Comblexer.Gt)
-
-(* Parser for 2nd half gte operation + expr   *)
-and parse_half_gte : (token, (token * exp)) parser = 
-    (parse_half_binop Comblexer.Gte)
-
-(* Parser for 2nd half neq operation + expr   *)
-and parse_half_neq : (token, (token * exp)) parser = 
-    (parse_half_binop Comblexer.Neq)
-
-(* Parser for 2nd half eq operation + expr   *)
-and parse_half_eq : (token, (token * exp)) parser = 
-    (parse_half_binop Comblexer.Eq)
-
-
 (* Parser for an Int-initiated parse_expression     *)
 and parse_int_init : (token, exp) parser = 
    (map pkg_int_init
-        (seq
-            ((satisfy 
-                (fun t_token ->
-                    let subrtoken = get_token_rtoken t_token in
-                    match subrtoken with 
-                    | Comblexer.Int(_) -> true
-                    | _                -> false 
-                )),
-            (opt
-                (alts 
-                 [ parse_half_plus;
-                   parse_half_times;
-                   parse_half_div;
-                   parse_half_sub;
-                   parse_half_lte;
-                   parse_half_lt;
-                   parse_half_eq;
-                   parse_half_neq;
-                   parse_half_gt;
-                   parse_half_gte;
-                 ] )
-            ) )))
+        (seq 
+            ((opt (token_equal Comblexer.Minus)),
+            (seq
+                ((satisfy 
+                    (fun t_token ->
+                        let subrtoken = get_token_rtoken t_token in
+                        match subrtoken with 
+                        | Comblexer.Int(_) -> true
+                        | _                -> false 
+                    )),
+                (opt
+                    (alts 
+                     [ (parse_half_binop Comblexer.Plus);
+                       (parse_half_binop Comblexer.Times);
+                       (parse_half_binop Comblexer.Div);
+                       (parse_half_binop Comblexer.Minus);
+                       (parse_half_binop Comblexer.Lte);
+                       (parse_half_binop Comblexer.Lt);
+                       (parse_half_binop Comblexer.Eq);
+                       (parse_half_binop Comblexer.Neq);
+                       (parse_half_binop Comblexer.Gt);
+                       (parse_half_binop Comblexer.Gte);
+                       (parse_half_binop Comblexer.Or);
+                       (parse_half_binop Comblexer.And)
+                     ] )
+                ) )))))
 
 (* Parser for a Var-initiated parse_expression      *)
 and parse_var_init : (token, exp) parser =
@@ -274,17 +239,19 @@ and parse_var_init : (token, exp) parser =
                 )),
              (opt 
                  (alts 
-                  [ parse_half_plus;
-                    parse_half_times;
-                    parse_half_div;
-                    parse_half_sub;
-                    parse_half_lte;
-                    parse_half_lt;
-                    parse_half_eq;
-                    parse_half_neq;
-                    parse_half_gt;
-                    parse_half_gte;
-                    parse_half_assign;
+                  [    (parse_half_binop Comblexer.Plus);
+                       (parse_half_binop Comblexer.Times);
+                       (parse_half_binop Comblexer.Div);
+                       (parse_half_binop Comblexer.Minus);
+                       (parse_half_binop Comblexer.Lte);
+                       (parse_half_binop Comblexer.Lt);
+                       (parse_half_binop Comblexer.Eq);
+                       (parse_half_binop Comblexer.Neq);
+                       (parse_half_binop Comblexer.Gt);
+                       (parse_half_binop Comblexer.Gte);
+                       (parse_half_binop Comblexer.Or);
+                       (parse_half_binop Comblexer.And);
+                       (parse_half_binop Comblexer.Assign)
                   ] )
              ))))
 
@@ -302,7 +269,3 @@ and parse_paren_expr : (token, exp) parser =
                  (token_equal Comblexer.RParen))
              ))))
 
-     
-
-let rec parse(ts:token list) : program = 
-    raise ImplementMe
