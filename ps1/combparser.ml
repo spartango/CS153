@@ -105,7 +105,7 @@ let rec parse(ts:token list) : program =
 
 (* Parser matching Expressions                *)
 and parse_expression : (token, exp) parser = 
-   lazy (alts [ parse_int_init; 
+    (alts [ parse_int_init; 
             parse_var_init; 
             parse_paren_expr ])
 
