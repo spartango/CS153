@@ -56,26 +56,30 @@ let pkg_int_init (target : (token * (token * exp) option)) : exp =
     | ((Comblexer.Int(num), _), Some((Comblexer.Lt,    _), t_expr)) -> (Binop((Int(num), position), Lt,    t_expr), position)
     | ((Comblexer.Int(num), _), Some((Comblexer.Eq,    _), t_expr)) -> (Binop((Int(num), position), Eq,    t_expr), position)
     | ((Comblexer.Int(num), _), Some((Comblexer.Neq,   _), t_expr)) -> (Binop((Int(num), position), Neq,   t_expr), position)
-    | ((Comblexer.Int(num), _), Some((Comblexer.Or,    _), t_expr)) -> (Or((Int(num), position), t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Or,    _), t_expr)) -> (Or( (Int(num), position), t_expr), position)
     | ((Comblexer.Int(num), _), Some((Comblexer.And,   _), t_expr)) -> (And((Int(num), position), t_expr), position)
     | ((Comblexer.Int(num), _), None)                               -> (Int(num), position)
     | _                                                             -> raise InvalidSyntax
     
-(* Function to package Var-init parse_expression    *) 
-let pkg_var_init (target : (token * (token * exp) option)) : exp = 
-   match target with
-   | (Comblexer.Var(name), Some(Comblexer.Plus, t_expr))   ->   Plus(Var(name), t_expr) 
-   | (Comblexer.Var(name), Some(Comblexer.Minus, t_expr))  ->    Sub(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Times, t_expr))  ->  Times(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Div, t_expr))    ->    Div(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Gt, t_expr))     ->     Gt(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Gte, t_expr))    ->    Gte(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Lte, t_expr))    ->    Lte(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Lt, t_expr))     ->     Lt(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Eq, t_expr))     ->     Eq(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Neq, t_expr))    ->    Neq(Var(name), t_expr)
-   | (Comblexer.Var(name), Some(Comblexer.Assign, t_expr)) -> Assign(Var(name), t_expr)
-   | (Comblexer.Var(name), None)                           ->        Var(name)
+(* Function to package Int-init parse_expression    *) 
+let pkg_int_init (target : (token * (token * exp) option)) : exp = 
+    let position = get_token_position (fst target) in
+    match target with
+    | ((Comblexer.Var(name), _), Some((Comblexer.Plus,   _), t_expr)) -> (Binop( (Var(name), position), Plus,  t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Minus,  _), t_expr)) -> (Binop( (Var(name), position), Minus, t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Times,  _), t_expr)) -> (Binop( (Var(name), position), Times, t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Div,    _), t_expr)) -> (Binop( (Var(name), position), Div,   t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Gt,     _), t_expr)) -> (Binop( (Var(name), position), Gt,    t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Gte,    _), t_expr)) -> (Binop( (Var(name), position), Gte,   t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Lte,    _), t_expr)) -> (Binop( (Var(name), position), Lte,   t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Lt,     _), t_expr)) -> (Binop( (Var(name), position), Lt,    t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Eq,     _), t_expr)) -> (Binop( (Var(name), position), Eq,    t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Neq,    _), t_expr)) -> (Binop( (Var(name), position), Neq,   t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Or,     _), t_expr)) -> (Or(    (Var(name), position),        t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.And,    _), t_expr)) -> (And(   (Var(name), position),        t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Assign, _), t_expr)) -> (Assign((Var(name), position),        t_expr), position)
+    | ((Comblexer.Var(name), _), None)                               -> (Var(name), position)
+    | _                                                              -> raise InvalidSyntax
 
 
 (* Function packaging For Statement          *)        
