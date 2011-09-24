@@ -6,13 +6,13 @@ type pos = int
 (* the datatype for tokens -- you will need to augment these *)
 type rtoken = 
 	(* Operators *)
-	Plus | Minus | Times | Div | Eq | Neq | Lt | Lte | Gt | Gte |
+	Plus | Minus | Times | Div | Eq | Neq | Lt | Lte | Gt | Gte 
 	(* Types *)
-	Int of int | Var of string | Not | And | Or | Assign   
+	| Int of int | Var of string | Not | And | Or | Assign  
 	(* Control statements *)
-	| Seq | If | While | For | Return |
+	| Seq | If | While | For | Return | Else 
 	(* Parens *)
-	LParen | RParen | LCurly | RCurly 
+	| LParen | RParen | LCurly | RCurly 
 
 and token = rtoken * pos
 
