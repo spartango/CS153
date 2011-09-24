@@ -1,8 +1,10 @@
 open Lcombinators.GenericParsing
 open Lcombinators.CharParsing
 
+type pos = int  
+
 (* the datatype for tokens -- you will need to augment these *)
-type token = 
+type rtoken = 
 	(* Operators *)
 	Plus | Minus | Times | Div | Eq | Neq | Lt | Lte | Gt | Gte |
 	(* Types *)
@@ -12,13 +14,18 @@ type token =
 	(* Parens *)
 	LParen | RParen | LCurly | RCurly 
 
+and token = rtoken * pos
+
+let get_token_position (target_token : token) : pos =
+    (snd target_token)
+
+let get_token_rtoken (target_token : token) : rtoken =
+    (fst target_token)
+
 exception ImplementMe
 
 (* Parser for alpha_numeric characters *)
 let alpha_num : (char, char) parser = alt (alpha, dig)
-
-(* Parser for variable *)
-let var = seq(lc_alpha, plus(alt(alpha_num, underscore)))
 
 (* the tokenize function -- should convert a list of characters to a list of 
  * Fish tokens using the combinators. *)
