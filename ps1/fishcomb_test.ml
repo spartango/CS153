@@ -30,7 +30,21 @@ let lex_test_inputs = [
     ("<=", [Lte]);
     ("<=foo", [Lte;(Id "foo")]);
     ("==", [Eq]);
-    ("==foo", [Eq;(Id "foo")])
+    ("==foo", [Eq;(Id "foo")]);
+    ("!", [Not]);
+    ("!0", [Not;(Int 0)]);
+    ("||", [Or]);
+    ("||5>=0", [Or;(Int 5);Gte;(Int 0)]);
+    ("&&", [And]);
+    ("&&6<=34", [And;(Int 6);Lte;(Int 34)]);
+    ("(", [LParen]);
+    ("(8)", [LParen;(Int 8);RParen]);
+    (")", [RParen]);
+    (")=(&&", [RParen;Assign;LParen;And]);
+    ("{", [LCurly]);
+    ("}", [RCurly]);
+    ("for{i=4;i<=6;i=i+1}", [For;LCurly;(Id "i");Assign;(Int 4);Seq;(Id "i");Lte;
+                             (Int 6);Seq;(Id "i");Assign;(Id "i");Plus;(Int 1);RCurly]);
 ]
 
 let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
@@ -78,6 +92,16 @@ let test_lte_combinator =
     (mk_lex_combinator_test lte_combinator (Lte) "Lte Combinator");;
 let test_eq_combinator =
     (mk_lex_combinator_test eq_combinator (Eq) "Combinator for Eq");;
+let test_or_combinator =
+    (mk_lex_combinator_test or_combinator (Or) "Or Combinator");;
+let test_and_combinator =
+    (mk_lex_combinator_test and_combinator (And) "And combinator");;
+let test_not_combinator =
+    (mk_lex_combinator_test not_combinator (Not) "Not combinator");;
+let test_lparen_combinator =
+    (mk_lex_combinator_test lparen_combinator (LParen) "LParen combinator");;
+let test_rparen_combinator =
+    (mk_lex_combinator_test rparen_combinator (RParen) "RParen combinator");;
 
 let test_complete_combinator = 
     let label = "Complete combinator" in
@@ -130,6 +154,11 @@ run_test_set [test_id_combinator;
               test_neq_combinator;
               test_gte_combinator;
               test_lte_combinator;
+              test_or_combinator;
+              test_and_combinator;
+              test_not_combinator;
+              test_lparen_combinator;
+              test_rparen_combinator;
               test_complete_combinator;] "Token Combinator Tests";;
 run_test_set [test_tokenizer_snippets] "Tokenizer Tests";;
 
