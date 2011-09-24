@@ -21,12 +21,19 @@ let tkn2str (t: token) : string =
         | Plus -> "+"
         | Minus -> "-"
         | Assign -> "="
-        | _ -> raise ImplementMe
+        | Gte -> ">="
+        | Gt -> ">"
+        | Lte -> "<="
+        | Lt -> "<"
+        | _ -> ""
 
 (* Combinators for lexer *)
 
 let c_combinator (ch: char) (t: token) =
     map (fun _ -> t) (c ch)
+
+let str_combinator (st: string) (t: token) =
+    map (fun _ -> t) (str st)
 
 (* Operators *)
 let plus_combinator = c_combinator '+' Plus
@@ -37,8 +44,15 @@ let times_combinator = c_combinator '*' Times
 
 let div_combinator = c_combinator '/' Div
 
-let neq_combinator =
-    map (fun _ -> Neq) (str "!=");;
+let neq_combinator = str_combinator "!=" Neq
+
+let gte_combinator = str_combinator ">=" Gte
+
+let gt_combinator = c_combinator '>' Gt
+
+let lte_combinator = str_combinator "<=" Lte
+
+let lt_combinator = c_combinator '<' Lt
 
 (* Assignment *)
 let assign_combinator = c_combinator '=' Assign
@@ -60,6 +74,10 @@ let complete_combinator =
                   times_combinator;
                   div_combinator;
                   neq_combinator;
+                  gte_combinator;
+                  gt_combinator;
+                  lte_combinator;
+                  lt_combinator;
                   assign_combinator])))
 
 (* the tokenize function -- should convert a list of characters to a list of 
