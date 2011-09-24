@@ -42,6 +42,42 @@ let pkg_seq (target : (token * (stmt list * token))) : stmt =
                                (skip, get_token_position (fst target))
                                stmts)
 
+(* Function to package Int-init parse_expression    *) 
+let pkg_int_init (target : (token * (token * exp) option)) : exp = 
+    let position = get_token_position (fst target) in
+    match target with
+    | ((Comblexer.Int(num), _), Some((Comblexer.Plus,  _), t_expr)) -> (Binop((Int(num), position), Plus,  t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Minus, _), t_expr)) -> (Binop((Int(num), position), Minus, t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Times, _), t_expr)) -> (Binop((Int(num), position), Times, t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Div,   _), t_expr)) -> (Binop((Int(num), position), Div,   t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Gt,    _), t_expr)) -> (Binop((Int(num), position), Gt,    t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Gte,   _), t_expr)) -> (Binop((Int(num), position), Gte,   t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Lte,   _), t_expr)) -> (Binop((Int(num), position), Lte,   t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Lt,    _), t_expr)) -> (Binop((Int(num), position), Lt,    t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Eq,    _), t_expr)) -> (Binop((Int(num), position), Eq,    t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Neq,   _), t_expr)) -> (Binop((Int(num), position), Neq,   t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.Or,    _), t_expr)) -> (Or((Int(num), position), t_expr), position)
+    | ((Comblexer.Int(num), _), Some((Comblexer.And,   _), t_expr)) -> (And((Int(num), position), t_expr), position)
+    | ((Comblexer.Int(num), _), None)                               -> (Int(num), position)
+    | _                                                             -> raise InvalidSyntax
+    
+(* Function to package Var-init parse_expression    *) 
+let pkg_var_init (target : (token * (token * exp) option)) : exp = 
+   match target with
+   | (Comblexer.Var(name), Some(Comblexer.Plus, t_expr))   ->   Plus(Var(name), t_expr) 
+   | (Comblexer.Var(name), Some(Comblexer.Minus, t_expr))  ->    Sub(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Times, t_expr))  ->  Times(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Div, t_expr))    ->    Div(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Gt, t_expr))     ->     Gt(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Gte, t_expr))    ->    Gte(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Lte, t_expr))    ->    Lte(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Lt, t_expr))     ->     Lt(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Eq, t_expr))     ->     Eq(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Neq, t_expr))    ->    Neq(Var(name), t_expr)
+   | (Comblexer.Var(name), Some(Comblexer.Assign, t_expr)) -> Assign(Var(name), t_expr)
+   | (Comblexer.Var(name), None)                           ->        Var(name)
+
+
 (* Function packaging For Statement          *)        
 let pkg_for (target : (token * (token * 
                         (exp * (token * (exp * (token * (exp * 
@@ -55,13 +91,30 @@ let pkg_for (target : (token * (token *
 (* Function packaging expressions -> stmt     *)
 let pkg_s_expression (target : exp) : stmt = 
     (Exp(target), get_exp_position target)
+
+
+(* Parser matching Expressions                *)
+let rec parse_expression : (token, exp) parser = 
+    (alts [ parse_int_init; 
+            parse_var_init; 
+            parse_paren_expr ])
+
+(* Statement Parsers *)
+and parse_statement : (token, stmt) parser =
+    (alts [ parse_if;
+            parse_for;
+            parse_while;
+            parse_return;
+            parse_seq;
+            parse_s_expression
+          ] )
     
 (* Parser matching Return Statement          *) 
-let parse_return : (token, stmt) parser = 
+and parse_return : (token, stmt) parser = 
     (map pkg_return 
          (seq 
-             (token_equal Comblexer.Return) 
-             parse_expression ) )
+             ((token_equal Comblexer.Return ), 
+             parse_expression) ))
 
 (* Parser matching If Statement              *)
 and parse_if : (token, stmt) parser = 
@@ -124,19 +177,7 @@ and parse_seq : (token, stmt) parser =
 and parse_s_expression : (token, stmt) parser =
     (map pkg_s_expression 
          parse_expression)
-
-(* Statement Parsers *)
-and parse_statement : (token, stmt) parser =
-    (alts [ parse_if;
-            parse_for;
-            parse_while;
-            parse_return;
-            parse_seq;
-            parse_s_expression
-          ] )
-    
-(* Parser matching Expressions                *)
-
+            
 (* Expression Parsers *) 
 
 (* Parameterized Parser for      [binop] expr *) 
@@ -151,7 +192,7 @@ and parse_half_plus : (token, (token * exp)) parser =
 
 (* Parser for 2nd half Times operation + expr *)
 and parse_half_sub : (token, (token * exp)) parser =
-    (parse_half_binop Comblexer.Sub)
+    (parse_half_binop Comblexer.Minus)
 
 (* Parser for 2nd half Div operation + expr   *)
 and parse_half_times : (token, (token * exp)) parser =
@@ -189,21 +230,6 @@ and parse_half_neq : (token, (token * exp)) parser =
 and parse_half_eq : (token, (token * exp)) parser = 
     (parse_half_binop Comblexer.Eq)
 
-(* Function to package Int-init parse_expression    *) 
-and pkg_int_init (target : (token * (token * exp) option)) : exp = 
-    match target with
-    | (Comblexer.Int(num), Some(Comblexer.Plus, t_expr))  ->  Plus(Int(num), t_expr) 
-    | (Comblexer.Int(num), Some(Comblexer.Sub, t_expr))   ->   Sub(Int(num), t_expr)
-    | (Comblexer.Int(num), Some(Comblexer.Times, t_expr)) -> Times(Int(num), t_expr)
-    | (Comblexer.Int(num), Some(Comblexer.Div, t_expr))   ->   Div(Int(num), t_expr)
-    | (Comblexer.Int(num), Some(Comblexer.Gt, t_expr))    ->    Gt(Int(num), t_expr)
-    | (Comblexer.Int(num), Some(Comblexer.Gte, t_expr))   ->   Gte(Int(num), t_expr)
-    | (Comblexer.Int(num), Some(Comblexer.Lte, t_expr))   ->   Lte(Int(num), t_expr)
-    | (Comblexer.Int(num), Some(Comblexer.Lt, t_expr))    ->    Lt(Int(num), t_expr)
-    | (Comblexer.Int(num), Some(Comblexer.Eq, t_expr))    ->    Eq(Int(num), t_expr)
-    | (Comblexer.Int(num), Some(Comblexer.Neq, t_expr))   ->   Neq(Int(num), t_expr)
-    | (Comblexer.Var(name), Some(_, _))                   ->   raise InvalidSyntax
-    | (Comblexer.Int(num), None)                          ->   Int(num)
 
 (* Parser for an Int-initiated parse_expression     *)
 and parse_int_init (token, exp) parser = 
@@ -229,22 +255,6 @@ and parse_int_init (token, exp) parser =
                    parse_half_gte;
                  ] )
             ) ))
-
-(* Function to package Var-init parse_expression    *) 
-and pkg_var_init (target : (token * (token * exp) option)) : exp = 
-    match target with
-    | (Comblexer.Var(name), Some(Comblexer.Plus, t_expr))   ->   Plus(Var(name), t_expr) 
-    | (Comblexer.Var(name), Some(Comblexer.Sub, t_expr))    ->    Sub(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Times, t_expr))  ->  Times(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Div, t_expr))    ->    Div(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Gt, t_expr))     ->     Gt(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Gte, t_expr))    ->    Gte(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Lte, t_expr))    ->    Lte(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Lt, t_expr))     ->     Lt(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Eq, t_expr))     ->     Eq(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Neq, t_expr))    ->    Neq(Var(name), t_expr)
-    | (Comblexer.Var(name), Some(Comblexer.Assign, t_expr)) -> Assign(Var(name), t_expr)
-    | (Comblexer.Var(name), None)                           ->        Var(name)
 
 (* Parser for a Var-initiated parse_expression      *)
 and parse_var_init : (token, exp) parser =
