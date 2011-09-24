@@ -9,7 +9,7 @@ type token =
 	(* Types *)
 	Int of int | Id of string | Not | And | Or | Assign |  
 	(* Control statements *)
-	Seq | If | Else | While | For | Return |
+	Semi | If | Else | While | For | Return |
 	(* Parens *)
 	LParen | RParen | LCurly | RCurly |
         (* End of file *)        
@@ -33,7 +33,7 @@ let tkn2str (t: token) : string =
         | And -> "&&"
         | Or -> "||"
         | If -> "if"
-        | Seq -> ";"
+        | Semi -> ";"
         | Neq -> "!="
         | Eq -> "=="
         | Div -> "/"
@@ -90,7 +90,7 @@ let or_combinator = str_combinator "||" Or
 let assign_combinator = c_combinator '=' Assign
 
 (* Control Statements *)
-let seq_combinator = c_combinator ';' Seq
+let semi_combinator = c_combinator ';' Semi
 let for_combinator = str_combinator "for" For
 let if_combinator = str_combinator "if" If
 let else_combinator = str_combinator "else" Else
@@ -114,7 +114,7 @@ let complete_combinator =
                  (* Keyword combinators must come before id *)
                  keyword_combinator;
                  int_combinator; 
-                 seq_combinator;
+                 semi_combinator;
                  plus_combinator;
                  minus_combinator;
                  times_combinator;
@@ -148,5 +148,14 @@ let rec tokenize(cs:char list) : token list =
                   | Cons((tkn, cs_tail), _) -> 
                             tkn::(tokenize cs_tail)
                   | Nil ->
-                        let _ = print_string (implode cs) in 
                         raise LexError
+
+(*
+let rec tokenize_debug(cs: char list) : token list =
+    let tokenize_line =
+        let get_line (cs: char list) =
+            match cs with
+                | [] -> []
+                | '\n'::tail -> tail
+                | hd::tl
+*)

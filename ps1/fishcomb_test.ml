@@ -43,20 +43,21 @@ let lex_test_inputs = [
     (")=(&&", [RParen;Assign;LParen;And]);
     ("{", [LCurly]);
     ("}", [RCurly]);
-    ("for{i=4;i<=6;i=i+1}", [For;LCurly;(Id "i");Assign;(Int 4);Seq;(Id "i");Lte;
-                             (Int 6);Seq;(Id "i");Assign;(Id "i");Plus;(Int 1);
+    ("for{i=4;i<=6;i=i+1}", [For;LCurly;(Id "i");Assign;(Int 4);Semi;(Id "i");Lte;
+                             (Int 6);Semi;(Id "i");Assign;(Id "i");Plus;(Int 1);
                              RCurly]);
     ("if(i==5){k=2;}else{k=1;}", [If;LParen;(Id "i");Eq;(Int 5);RParen;LCurly;
-                                  (Id "k");Assign;(Int 2);Seq;RCurly;Else;LCurly;
-                                  (Id "k");Assign;(Int 1);Seq;RCurly]);
+                                  (Id "k");Assign;(Int 2);Semi;RCurly;Else;LCurly;
+                                  (Id "k");Assign;(Int 1);Semi;RCurly]);
     ("while(i>=0){k=k-1;i=i-2;}", [While;LParen;(Id "i");Gte;(Int 0);RParen;LCurly;
-                                   (Id "k");Assign;(Id "k");Minus;(Int 1);Seq;
-                                   (Id "i");Assign;(Id "i");Minus;(Int 2);Seq;
+                                   (Id "k");Assign;(Id "k");Minus;(Int 1);Semi;
+                                   (Id "i");Assign;(Id "i");Minus;(Int 2);Semi;
                                    RCurly]);
     ("forever", [(Id "forever")]);
     ("if_i_am", [(Id "if_i_am")]);
     ("elsey", [(Id "elsey")]);
     ("whiley", [(Id "whiley")]);
+    ("+/*I am a comment*/5", [Plus;(Int 5)]);
 ]
 
 let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)

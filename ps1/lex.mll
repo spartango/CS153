@@ -16,15 +16,18 @@ let incr_lineno lexbuf =
   }
 }
 
+
+
 (* definition section *)
 let cr='\013'
 let nl='\010'
 let eol=(cr nl|nl|cr)
 let ws=('\012'|'\t'|' ')*
 let digit=['0'-'9'] 
+let identifier = ['a'-'z' 'A'-'Z'] (['a'-'z' 'A'-'Z' '0'-'9' '_'])*
 
 (* rules section *)
 rule lexer = parse
-| eol { incr_lineno lexbuf; lexer lexbuf } 
-| ws+ { lexer lexbuf }
-| digit+ { INT(int_of_string(Lexing.lexeme lexbuf)) } 
+    | eol                    { incr_lineno lexbuf; lexer lexbuf } 
+    | ws+                    { lexer lexbuf }
+    | digit+                 { Int(int_of_string(Lexing.lexeme lexbuf)) } 

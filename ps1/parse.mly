@@ -30,8 +30,13 @@ let parse_error s =
  * build values using this datatype constructor to pass to the parser.
  * You will need to augment this with your own tokens...
  */
-%token <int> INT 
+
+/* %token <string> Id */
+%token <int> Int
 %token EOF
+/*
+%token Plus Minus Times Div Eq Neq Lt Lte Gt Gte Not And Or Assign Semi If
+%token Else While For Return LParen RParen LCurly RCurly EOF */
 
 /* Here's where the real grammar starts -- you'll need to add 
  * more rules here... Do not remove the 2%'s!! */
