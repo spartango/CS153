@@ -77,7 +77,7 @@ let pkg_int_init (target : (token * (token * exp) option)) : exp =
     | ((Comblexer.Var(name), _), Some((Comblexer.Neq,    _), t_expr)) -> (Binop( (Var(name), position), Neq,   t_expr), position)
     | ((Comblexer.Var(name), _), Some((Comblexer.Or,     _), t_expr)) -> (Or(    (Var(name), position),        t_expr), position)
     | ((Comblexer.Var(name), _), Some((Comblexer.And,    _), t_expr)) -> (And(   (Var(name), position),        t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Assign, _), t_expr)) -> (Assign((Var(name), position),        t_expr), position)
+    | ((Comblexer.Var(name), _), Some((Comblexer.Assign, _), t_expr)) -> (Assign(name, t_expr), position)
     | ((Comblexer.Var(name), _), None)                               -> (Var(name), position)
     | _                                                              -> raise InvalidSyntax
 
