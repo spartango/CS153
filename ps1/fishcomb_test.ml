@@ -27,6 +27,10 @@ let lex_test_inputs = [
     (">=55", [Gte; (Int 55)]);
     (">", [Gt]);
     (">foo+5", [Gt;(Id "foo");Plus;(Int 5)]);
+    ("<=", [Lte]);
+    ("<=foo", [Lte;(Id "foo")]);
+    ("==", [Eq]);
+    ("==foo", [Eq;(Id "foo")])
 ]
 
 let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
@@ -52,7 +56,7 @@ let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
     let result = List.fold_left test_map "" lex_test_inputs in
         if (result <> "")
         then Verbose_Test(label, (fun () -> (false, "Lexing error:" ^ result)))
-        else Verbose_Test(label, (fun () -> (true, "Lexed expected tokens.")))
+        else Verbose_Test(label, (fun () -> (true, "Lexed expected tokens")))
 
 let test_id_combinator = 
     (mk_lex_combinator_test id_combinator (Id "foo") "Combinator for Id")
@@ -72,11 +76,11 @@ let test_gte_combinator =
     (mk_lex_combinator_test gte_combinator (Gte) "Gte Combinator");;
 let test_lte_combinator =
     (mk_lex_combinator_test lte_combinator (Lte) "Lte Combinator");;
-let test_assign_combinator =
-    (mk_lex_combinator_test assign_combinator (Assign) "Combinator for Assign");;
+let test_eq_combinator =
+    (mk_lex_combinator_test eq_combinator (Eq) "Combinator for Eq");;
 
 let test_complete_combinator = 
-    let label = "Test for complete combinator" in
+    let label = "Complete combinator" in
     let test_case (errors: string) (case: string * token list) : string = 
         let (code_string,tkns) = case in
         let cs = explode code_string in
@@ -91,8 +95,8 @@ let test_complete_combinator =
                       (tkn2str(head_token)) in
     let result = List.fold_left test_case "" lex_test_inputs in
         if (result <> "")
-        then Verbose_Test(result, (fun () -> (false, label)))
-        else Verbose_Test("", (fun () -> (true, label)));;
+        then Verbose_Test(label, (fun () -> (false, result)))
+        else Verbose_Test(label, (fun () -> (true, "Lexed expected tokens")));;
 
 let test_tokenizer_snippets =
     let label = "Tokenize Fish snippets" in
@@ -119,7 +123,7 @@ let test_tokenizer_snippets =
 run_test_set [test_id_combinator; 
               test_int_combinator;
               test_plus_combinator;
-              test_assign_combinator;
+              test_eq_combinator;
               test_minus_combinator;
               test_times_combinator;
               test_div_combinator;

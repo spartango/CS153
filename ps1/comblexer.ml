@@ -35,33 +35,33 @@ let c_combinator (ch: char) (t: token) =
 let str_combinator (st: string) (t: token) =
     map (fun _ -> t) (str st)
 
-(* Operators *)
+(*** Operators ***)
 let plus_combinator = c_combinator '+' Plus
-
 let minus_combinator = c_combinator '-' Minus
-
 let times_combinator = c_combinator '*' Times
-
 let div_combinator = c_combinator '/' Div
-
+let eq_combinator = str_combinator "==" Eq
 let neq_combinator = str_combinator "!=" Neq
-
 let gte_combinator = str_combinator ">=" Gte
-
 let gt_combinator = c_combinator '>' Gt
-
 let lte_combinator = str_combinator "<=" Lte
-
 let lt_combinator = c_combinator '<' Lt
 
+(* Types *)
+(* Combinator for integers *)
+let int_combinator = map (fun v -> (Int v)) integer
+(* Combinator for variables *)
+let id_combinator = map (fun v -> (Id v)) identifier
+(* Not Combinator *)
+let not_combinator = c_combinator '!' Not
+(* And Combinator *)
+let and_combinator = str_combinator "&&" And
+(* Or Combinator *)
+let or_combinator = str_combinator "||" Or
 (* Assignment *)
 let assign_combinator = c_combinator '=' Assign
 
-(* Combinator for variables *)
-let id_combinator = map (fun v -> (Id v)) identifier
 
-(* Combinator for integers *)
-let int_combinator = map (fun v -> (Int v)) integer
 
 (* Complete combinator *)
 let complete_combinator = 
@@ -73,12 +73,19 @@ let complete_combinator =
                   minus_combinator;
                   times_combinator;
                   div_combinator;
+                  (* Neq (!=) must come before Not (!) *)
                   neq_combinator;
+                  not_combinator;
+                  (* Gte (>=) must come before Gt (>) *)
                   gte_combinator;
                   gt_combinator;
+                  (* Lte (<=) must come before Lt (<) *)
                   lte_combinator;
                   lt_combinator;
-                  assign_combinator])))
+                  eq_combinator;
+                  and_combinator;
+                  or_combinator;
+                  assign_combinator;])))
 
 (* the tokenize function -- should convert a list of characters to a list of 
  * Fish tokens using the combinators. *)
