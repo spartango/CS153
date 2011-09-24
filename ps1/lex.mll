@@ -16,8 +16,6 @@ let incr_lineno lexbuf =
   }
 }
 
-
-
 (* definition section *)
 let cr='\013'
 let nl='\010'
@@ -28,6 +26,47 @@ let identifier = ['a'-'z' 'A'-'Z'] (['a'-'z' 'A'-'Z' '0'-'9' '_'])*
 
 (* rules section *)
 rule lexer = parse
-    | eol                    { incr_lineno lexbuf; lexer lexbuf } 
-    | ws+                    { lexer lexbuf }
-    | digit+                 { Int(int_of_string(Lexing.lexeme lexbuf)) } 
+    (* Whitespace *)
+    | eol                  { incr_lineno lexbuf; lexer lexbuf } 
+    | ws+                  { lexer lexbuf }
+    | "/*"                 {comment lexbuf }
+    (* Keywords - IDs must come last *)
+    | "for"                { FOR }
+    | "if"                 { IF }
+    | "else"               { ELSE }
+    | "while"              { WHILE }
+    | "return"             { RETURN }
+    | identifier as str    { ID(str) }
+    (* INT *)
+    | digit+ as num        { INT(int_of_string(num)) } 
+    (* Binops *)
+    | "+"                  { PLUS }
+    | "-"                  { MINUS }
+    | "*"                  { TIMES }
+    | "/"                  { DIV }
+    | eof                  { EOF }
+    | "=="                 { EQ }
+    | "="                  { ASSIGN }
+    | "!="                 { NEQ }
+    | ">="                 { GTE }
+    | ">"                  { GT }
+    | "<="                 { LTE }
+    | "<"                  { LT }
+    | "&&"                 { AND }
+    | "||"                 { OR }
+    (* Unops *)
+    | "!"                  { NOT }
+    (* Deliminators *)
+    | ";"                  { SEMI }
+    | "("                  { LPAREN }
+    | ")"                  { RPAREN }
+    | "{"                  { LCURLY }
+    | "}"                  { RCURLY }
+
+
+
+
+and comment = parse
+    | _                   { comment lexbuf }
+    | eof                 { raise (Failure "missing comment terminator") }
+    | "*/"                { lexer lexbuf }

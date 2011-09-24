@@ -31,9 +31,13 @@ let parse_error s =
  * You will need to augment this with your own tokens...
  */
 
-/* %token <string> Id */
-%token <int> Int
-%token EOF
+/* Tokens - names capitalized with lex/yacc conventions */
+%token <string> ID
+%token <int> INT
+%token EOF SEMI RPAREN LPAREN RCURLY LCURLY
+%token EQ NEQ GTE GT LTE LT OR AND ASSIGN PLUS MINUS TIMES DIV 
+%token FOR IF ELSE WHILE RETURN
+%token NOT
 /*
 %token Plus Minus Times Div Eq Neq Lt Lte Gt Gte Not And Or Assign Semi If
 %token Else While For Return LParen RParen LCurly RCurly EOF */
