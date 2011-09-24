@@ -39,7 +39,7 @@ yacc: com
 
 yacctest: testf yacc
 	$(COMPILER) -c fishyacc_test.ml
-	$(COMPILER) -o testyacc pretty_print.cmo test_framework.cmo ast.cmo parse.cmo lex.cmo eval.cmo fishyacc_test.cmo 
+	$(COMPILER) -o testyacc pretty_print.cmo test_framework.cmo ast.cmo parse.cmo lex.cmo eval.cmo fishyacc.cmo fishyacc_test.cmo 
 
 runcombtest: combtest
 	./testcomb
