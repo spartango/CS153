@@ -44,26 +44,43 @@ let lex_test_inputs = [
     ("{", [LCurly]);
     ("}", [RCurly]);
     ("for{i=4;i<=6;i=i+1}", [For;LCurly;(Id "i");Assign;(Int 4);Seq;(Id "i");Lte;
-                             (Int 6);Seq;(Id "i");Assign;(Id "i");Plus;(Int 1);RCurly]);
+                             (Int 6);Seq;(Id "i");Assign;(Id "i");Plus;(Int 1);
+                             RCurly]);
+    ("if(i==5){k=2;}else{k=1;}", [If;LParen;(Id "i");Eq;(Int 5);RParen;LCurly;
+                                  (Id "k");Assign;(Int 2);Seq;RCurly;Else;LCurly;
+                                  (Id "k");Assign;(Int 1);Seq;RCurly]);
+    ("while(i>=0){k=k-1;i=i-2;}", [While;LParen;(Id "i");Gte;(Int 0);RParen;LCurly;
+                                   (Id "k");Assign;(Id "k");Minus;(Int 1);Seq;
+                                   (Id "i");Assign;(Id "i");Minus;(Int 2);Seq;
+                                   RCurly]);
+    ("forever", [(Id "forever")]);
+    ("if_i_am", [(Id "if_i_am")]);
+    ("elsey", [(Id "elsey")]);
+    ("whiley", [(Id "whiley")]);
 ]
 
 let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
         (label: string) =
+    let tkn_match (t1: token) (t2: token) : bool  =
+        match (t1, t2) with
+            | ((Id _), (Id _)) -> true
+            | ((Int _), (Int _)) -> true
+            | (_,_) -> (t1 = t2) in
     let test_map (errors: string) (case: string * token list) : string =
         let(code_string, tkns) = case in
         let cs = explode code_string in
         let head_token = (List.hd tkns) in
             match (p cs) with
                 | Cons((tkn,_),_) ->
-                      if ((head_token = expected_token) && 
+                      if ((tkn_match head_token expected_token) && 
                               (tkn = head_token)) ||
-                          ((head_token <> expected_token) && 
+                          (not(tkn_match head_token expected_token) && 
                                 (tkn <> head_token))
                       then errors
                       else errors ^ "\n\tExpected: " ^ (tkn2str(head_token)) ^ 
                           " Lexed: " ^ (tkn2str(tkn))
                 | Nil ->
-                      if (head_token == expected_token)
+                      if (tkn_match head_token expected_token)
                       then errors ^ "\n\tReturned no token but expected: " ^
                           (tkn2str(head_token))
                       else errors in
@@ -72,8 +89,9 @@ let mk_lex_combinator_test (p: (char, token) parser) (expected_token: token)
         then Verbose_Test(label, (fun () -> (false, "Lexing error:" ^ result)))
         else Verbose_Test(label, (fun () -> (true, "Lexed expected tokens")))
 
-let test_id_combinator = 
-    (mk_lex_combinator_test id_combinator (Id "foo") "Combinator for Id")
+(* This test maker setup does not work for testing the individual
+   Gt, Lt, Not, Eq, and keyword combinators, due to longest match rule.
+   However, complete_combinator tests should validate them. *)
 let test_int_combinator =
     (mk_lex_combinator_test int_combinator (Int 5) "Combinator for Int");;
 let test_plus_combinator =
@@ -102,6 +120,10 @@ let test_lparen_combinator =
     (mk_lex_combinator_test lparen_combinator (LParen) "LParen combinator");;
 let test_rparen_combinator =
     (mk_lex_combinator_test rparen_combinator (RParen) "RParen combinator");;
+let test_lcurly_combinator =
+   (mk_lex_combinator_test lcurly_combinator (LCurly) "LCurly combinator");;   
+let test_rcurly_combinator =
+   (mk_lex_combinator_test rcurly_combinator (RCurly) "RCurly combinator");;  
 
 let test_complete_combinator = 
     let label = "Complete combinator" in
@@ -114,7 +136,7 @@ let test_complete_combinator =
                       if (tkn = head_token)
                       then errors
                       else errors ^ "\nExpected: " ^ (tkn2str(head_token)) ^ 
-                          " Lexed: " ^ (tkn2str(tkn))
+                          "\nLexed: " ^ (tkn2str(tkn))
                 | Nil -> errors ^ "\nReturned no token but expected: " ^
                       (tkn2str(head_token)) in
     let result = List.fold_left test_case "" lex_test_inputs in
@@ -132,7 +154,7 @@ let test_tokenizer_snippets =
         let lex = tokenize cs in
             if lex = tkns
             then errors
-            else errors ^ "\nExpected:" ^ (tkn_list2str tkns) ^ " Lexed:" ^
+            else errors ^ "\nExpected:" ^ (tkn_list2str tkns) ^ "\nLexed:   " ^
                 (tkn_list2str lex) in
         Verbose_Test(label, 
                      (fun () -> 
@@ -144,8 +166,7 @@ let test_tokenizer_snippets =
                                else "Lexed tokens did not match expected:" ^ 
                                    result ^ "\n"))));;
 
-run_test_set [test_id_combinator; 
-              test_int_combinator;
+run_test_set [test_int_combinator;
               test_plus_combinator;
               test_eq_combinator;
               test_minus_combinator;
@@ -159,6 +180,8 @@ run_test_set [test_id_combinator;
               test_not_combinator;
               test_lparen_combinator;
               test_rparen_combinator;
+              test_lcurly_combinator;
+              test_rcurly_combinator;
               test_complete_combinator;] "Token Combinator Tests";;
 run_test_set [test_tokenizer_snippets] "Tokenizer Tests";;
 

@@ -11,7 +11,10 @@ type token =
 	(* Control statements *)
 	Seq | If | Else | While | For | Return |
 	(* Parens *)
-	LParen | RParen | LCurly | RCurly 
+	LParen | RParen | LCurly | RCurly |
+        (* End of file *)        
+        EOF
+
 exception ImplementMe
 exception LexError
 
@@ -43,6 +46,7 @@ let tkn2str (t: token) : string =
         | RParen -> ")"
         | LCurly -> "{"
         | RCurly -> "}"
+        | EOF -> "eof"
 
 (* Combinators for lexer *)
 
@@ -67,8 +71,15 @@ let lt_combinator = c_combinator '<' Lt
 (* Types *)
 (* Combinator for integers *)
 let int_combinator = map (fun v -> (Int v)) integer
-(* Combinator for variables *)
-let id_combinator = map (fun v -> (Id v)) identifier
+(* Combinator for keywords *)
+let keyword_combinator = 
+    map (fun r -> match r with
+              | "for" -> For
+              | "if" -> If
+              | "else" -> Else
+              | "while" -> While
+              | "return" -> Return
+              | k -> (Id k)) identifier
 (* Not Combinator *)
 let not_combinator = c_combinator '!' Not
 (* And Combinator *)
@@ -92,18 +103,16 @@ let rparen_combinator = c_combinator ')' RParen
 let lcurly_combinator = c_combinator '{' LCurly
 let rcurly_combinator = c_combinator '}' RCurly
 
+(* End of file *)
+let eof_combinator = map (fun _ -> EOF) eof
+
 (* Complete combinator *)
 let complete_combinator = 
     map (fun r -> let(_,t) = r in t)
         (seq(whitespace,
             (alts [
                  (* Keyword combinators must come before id *)
-                 for_combinator;
-                 if_combinator;
-                 else_combinator;
-                 while_combinator;
-                 return_combinator;
-                 id_combinator; 
+                 keyword_combinator;
                  int_combinator; 
                  seq_combinator;
                  plus_combinator;
@@ -126,6 +135,7 @@ let complete_combinator =
                  rparen_combinator;
                  lcurly_combinator;
                  rcurly_combinator;
+                 eof_combinator;
                  assign_combinator;])))
 
 (* the tokenize function -- should convert a list of characters to a list of 
