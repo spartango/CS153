@@ -105,33 +105,7 @@ let rec parse(ts:token list) : program =
 
 (* Parser matching Expressions                *)
 and parse_expression : (token, exp) parser = 
-    (alts [ (map pkg_int_init
-         (seq 
-             ((opt (token_equal Comblexer.Minus)),
-             (seq
-                 ((satisfy 
-                     (fun t_token ->
-                         let subrtoken = get_token_rtoken t_token in
-                         match subrtoken with 
-                         | Comblexer.Int(_) -> true
-                         | _                -> false 
-                     )),
-                 (opt
-                     (alts 
-                      [ (parse_half_binop Comblexer.Plus);
-                        (parse_half_binop Comblexer.Times);
-                        (parse_half_binop Comblexer.Div);
-                        (parse_half_binop Comblexer.Minus);
-                        (parse_half_binop Comblexer.Lte);
-                        (parse_half_binop Comblexer.Lt);
-                        (parse_half_binop Comblexer.Eq);
-                        (parse_half_binop Comblexer.Neq);
-                        (parse_half_binop Comblexer.Gt);
-                        (parse_half_binop Comblexer.Gte);
-                        (parse_half_binop Comblexer.Or);
-                        (parse_half_binop Comblexer.And)
-                      ] )
-                 ) ))))); 
+    (alts [ parse_int_init; 
             parse_var_init; 
             parse_paren_expr ])
 
@@ -224,7 +198,33 @@ and parse_half_binop(operation : rtoken) : (token, (token * exp)) parser =
 
 (* Parser for an Int-initiated parse_expression     *)
 and parse_int_init : (token, exp) parser = 
-
+   (map pkg_int_init
+        (seq 
+            ((opt (token_equal Comblexer.Minus)),
+            (seq
+                ((satisfy 
+                    (fun t_token ->
+                        let subrtoken = get_token_rtoken t_token in
+                        match subrtoken with 
+                        | Comblexer.Int(_) -> true
+                        | _                -> false 
+                    )),
+                (opt
+                    (alts 
+                     [ (parse_half_binop Comblexer.Plus);
+                       (parse_half_binop Comblexer.Times);
+                       (parse_half_binop Comblexer.Div);
+                       (parse_half_binop Comblexer.Minus);
+                       (parse_half_binop Comblexer.Lte);
+                       (parse_half_binop Comblexer.Lt);
+                       (parse_half_binop Comblexer.Eq);
+                       (parse_half_binop Comblexer.Neq);
+                       (parse_half_binop Comblexer.Gt);
+                       (parse_half_binop Comblexer.Gte);
+                       (parse_half_binop Comblexer.Or);
+                       (parse_half_binop Comblexer.And)
+                     ] )
+                ) )))))
 
 (* Parser for a Var-initiated parse_expression      *)
 and parse_var_init : (token, exp) parser =
