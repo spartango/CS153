@@ -1,4 +1,6 @@
-(* Lexer for Fish --- TODO *)
+(* Lexer for Fish --- TODO 
+Aaron Watanabe and Anand Gupta
+*)
 
 (* You need to add new definition to build the
  * appropriate terminals to feed to parse.mly.
@@ -29,7 +31,7 @@ rule lexer = parse
     (* Whitespace *)
     | eol                  { incr_lineno lexbuf; lexer lexbuf } 
     | ws+                  { lexer lexbuf }
-    | "/*"                 {comment lexbuf }
+    | "/*"                 { comment lexbuf }
     (* Keywords - IDs must come last *)
     | "for"                { FOR }
     | "if"                 { IF }

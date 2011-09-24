@@ -3,10 +3,12 @@
 %{
 open Ast
 open Lexing
-(* use this to get the line number for the n'th token *)
+(* use this to get the line number for the n'th token  
+ * in the rule *)
 let rhs n =
   let pos = Parsing.rhs_start_pos n in
   pos.pos_lnum
+
 let parse_error s =
   let pos = Parsing.symbol_end_pos () in
   let l = pos.pos_lnum in
@@ -22,6 +24,7 @@ let parse_error s =
  */
 %type <Ast.program> program
 %type <Ast.stmt> stmt
+%type <Ast.exp> exp
 
 /* The %token directive gives a definition of all of the terminals
  * (i.e., tokens) in the grammar. This will be used to generate the
@@ -38,16 +41,21 @@ let parse_error s =
 %token EQ NEQ GTE GT LTE LT OR AND ASSIGN PLUS MINUS TIMES DIV 
 %token FOR IF ELSE WHILE RETURN
 %token NOT
-/*
-%token Plus Minus Times Div Eq Neq Lt Lte Gt Gte Not And Or Assign Semi If
-%token Else While For Return LParen RParen LCurly RCurly EOF */
+
 
 /* Here's where the real grammar starts -- you'll need to add 
  * more rules here... Do not remove the 2%'s!! */
-%%
+ %%
 
 program:
   stmt EOF { $1 }
 
 stmt :
-  /* empty */ { (Ast.skip, 0) } 
+    | exp SEMI         {  (Ast.Exp($1), (rhs 1)) }
+    | RETURN exp SEMI  { (Ast.Return($2), (rhs 1)) }
+    | /* empty */      { (Ast.skip, 0) } 
+
+exp:
+    | INT      {  (Ast.Int($1), (rhs 1)) }
+    | ID       {  (Ast.Var($1), (rhs 1)) }
+
