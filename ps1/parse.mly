@@ -25,7 +25,9 @@ let parse_error s =
  */
 %type <Ast.program> program
 %type <Ast.stmt> stmt
+%type <Ast.stmt> ctrl_stmt
 %type <Ast.exp> exp
+%type <Ast.stmt> bstmt
 
 /* The %token directive gives a definition of all of the terminals
  * (i.e., tokens) in the grammar. This will be used to generate the
@@ -60,12 +62,21 @@ program:
   stmt EOF { $1 }
 
 stmt :
-    | FOR LPAREN exp SEMI exp SEMI exp RPAREN stmt { (Ast.For($3,$5,$7,$9), (rhs 1)) }
+    | ctrl_stmt stmt { (Ast.Seq($1, $2), (rhs 1)) } 
     | LCURLY stmt RCURLY    { ($2) } 
     | exp SEMI stmt    { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
     | RETURN exp SEMI   { (Ast.Return($2), (rhs 1)) }
     | /* empty */      { (Ast.skip, 0) }   
 
+bstmt :
+    | LCURLY stmt RCURLY    { ($2) } 
+    | RETURN exp SEMI       { (Ast.Return($2), (rhs 1)) }
+    | exp SEMI              { (Ast.Exp($1), (rhs 1)) }
+    | ctrl_stmt             { $1 }
+
+ctrl_stmt :
+     | FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (Ast.For($3,$5,$7,$9), (rhs 1)) }
+     | WHILE LPAREN exp RPAREN bstmt                 { (Ast.While($3, $5), (rhs 1)) }
 
 
 exp:
