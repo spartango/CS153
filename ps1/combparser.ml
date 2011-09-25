@@ -43,9 +43,22 @@ let pkg_seq (target : (token * (stmt list * token))) : stmt =
                                stmts)
 
 (* Function to package a paren'd parse_expression   *) 
-let pkg_paren_expr (target : (token * (exp * token))) : exp = 
+let pkg_paren_expr (target : (((token * (exp * token)) * (token * exp) option))) : exp = 
     match target with 
-    | (_, (t_exp, _)) -> t_exp
+    | (((_, position), (t_exp, _)), Some((Comblexer.Plus,  _), s_expr)) -> (Binop(t_exp, Plus,  s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Minus, _), s_expr)) -> (Binop(t_exp, Minus, s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Times, _), s_expr)) -> (Binop(t_exp, Times, s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Div,   _), s_expr)) -> (Binop(t_exp, Div,   s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Gt,    _), s_expr)) -> (Binop(t_exp, Gt,    s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Gte,   _), s_expr)) -> (Binop(t_exp, Gte,   s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Lte,   _), s_expr)) -> (Binop(t_exp, Lte,   s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Lt,    _), s_expr)) -> (Binop(t_exp, Lt,    s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Eq,    _), s_expr)) -> (Binop(t_exp, Eq,    s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Neq,   _), s_expr)) -> (Binop(t_exp, Neq,   s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.Or,    _), s_expr)) -> (Or(   t_exp, s_expr), position)
+    | (((_, position), (t_exp, _)), Some((Comblexer.And,   _), s_expr)) -> (And(  t_exp, s_expr), position)
+    | (((_, position), (t_exp, _)), Some(_))                           -> raise InvalidSyntax
+    | (((_, position), (t_exp, _)), None) -> t_exp
 
 (* Function to package a Not expression *)
 let pkg_not_init (target : (token * exp)) : exp = 
@@ -198,11 +211,29 @@ and parse_paren_expr : (token, exp) parser =
     fun cs ->
     (map pkg_paren_expr 
          (seq 
-             ((token_equal Comblexer.LParen),
-             (seq
-                 (parse_expression,
-                 (token_equal Comblexer.RParen))
-             ))))
+             ((seq 
+                 ((token_equal Comblexer.LParen),
+                 (seq
+                     (parse_expression,
+                     (token_equal Comblexer.RParen))
+                 ))),
+             (opt
+                 (alts 
+                  [ (parse_half_binop Comblexer.Plus);
+                    (parse_half_binop Comblexer.Times);
+                    (parse_half_binop Comblexer.Div);
+                    (parse_half_binop Comblexer.Minus);
+                    (parse_half_binop Comblexer.Lte);
+                    (parse_half_binop Comblexer.Lt);
+                    (parse_half_binop Comblexer.Eq);
+                    (parse_half_binop Comblexer.Neq);
+                    (parse_half_binop Comblexer.Gt);
+                    (parse_half_binop Comblexer.Gte);
+                    (parse_half_binop Comblexer.Or);
+                    (parse_half_binop Comblexer.And)
+                  ] )
+             ))
+        ))
     cs
     
 (* Parser for Paren-contained parse_expression      *)
