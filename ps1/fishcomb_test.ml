@@ -421,7 +421,38 @@ let test_s_expr =
          ))
 ;;
 
+let test_return = 
+    Test(
+         "Statement return x + 1 Test",
+         (fun () -> 
+             let input_tokens =
+                 [
+                     (Comblexer.Return, 0);
+                     (Comblexer.Var("x"), 0);
+                     (Comblexer.Plus, 0);
+                     (Comblexer.Int(1), 0); 
+                 ]
+             in 
+             let parsed = (parse_statement input_tokens) in
+             match parsed with 
+             | Cons(
+                     (
+                         (Ast.Return(
+                         ((Ast.Binop(
+                             (Ast.Var("x"), 0),
+                             Ast.Plus,
+                             (Ast.Int(1), 0)))
+                         , 0)), 0),  
+                      [])
+                   , _ ) -> true
+
+             | _ -> false
+         ))
+;;
+
+
 run_test_set [ test_s_expr;
+               test_return;
              ]
              "Statement Parsing"
              
