@@ -349,6 +349,10 @@ and parse_s_expression : (token, stmt) parser =
 ;;
 
 let rec parse(ts:token list) : program = 
-    raise ImplementMe
-
-
+    (* Parse with combinators*)
+    let parsed = parse_statement ts in
+    (* Pick best parse *)
+    match parsed with 
+    | Cons((prog, _), _) -> prog
+    | Nil -> raise InvalidSyntax
+;;
