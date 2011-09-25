@@ -113,21 +113,26 @@ let pkg_s_expression (target : exp) : stmt =
 
 (* Parser matching Expressions                *)
 let rec parse_expression : (token, exp) parser = 
+    fun cs ->
     (alts [ parse_int_init; 
             parse_var_init; 
             parse_paren_expr;
             parse_not_init ])
-
+    cs
+    
 (* Expression Parsers *) 
 
 (* Parameterized Parser for      [binop] expr *) 
 and parse_half_binop(operation : rtoken) : (token, (token * exp)) parser = 
+    fun cs ->
     (seq 
         ((token_equal operation),
         parse_expression))
-
+    cs
+    
 (* Parser for an Int-initiated parse_expression     *)
 and parse_int_init : (token, exp) parser = 
+    fun cs ->
     (map pkg_int_init
         (seq 
             ((opt (token_equal Comblexer.Minus)),
@@ -155,9 +160,11 @@ and parse_int_init : (token, exp) parser =
                        (parse_half_binop Comblexer.And)
                      ] )
                 ) )))))
-
+    cs
+    
 (* Parser for a Var-initiated parse_expression      *)
 and parse_var_init : (token, exp) parser =
+    fun cs ->
     (map pkg_var_init
          (seq
             ((satisfy 
@@ -184,9 +191,11 @@ and parse_var_init : (token, exp) parser =
                        (parse_half_binop Comblexer.Assign)
                   ] )
              ))))
-
+    cs
+    
 (* Parser for Paren-contained parse_expression      *)
 and parse_paren_expr : (token, exp) parser = 
+    fun cs ->
     (map pkg_paren_expr 
          (seq 
              ((token_equal Comblexer.LParen),
@@ -194,33 +203,55 @@ and parse_paren_expr : (token, exp) parser =
                  (parse_expression,
                  (token_equal Comblexer.RParen))
              ))))
-
+    cs
+    
 (* Parser for Paren-contained parse_expression      *)
 and parse_not_init : (token, exp) parser = 
+    fun cs ->
     (map pkg_not_init 
         (seq 
             ((token_equal Comblexer.Not),
             parse_expression)))
+    cs
+;;
 
 (* Statement Parsers *)
-let rec parse_statement : (token, stmt) parser =
-    (alts [ parse_if;
-            parse_for;
-            parse_while;
-            parse_return;
-            parse_seq;
-            parse_s_expression
-          ] )
+let rec parse_statement: (token, stmt) parser =
+    fun cs -> 
+        (alts [ parse_if;
+                parse_for;
+                parse_while;
+                parse_return;
+                parse_seq;
+                parse_s_expression;
+              ] ) 
+    cs
 
 (* Parser matching Return Statement          *) 
 and parse_return : (token, stmt) parser = 
-    (map pkg_return 
+    fun cs ->     
+        (map pkg_return 
+           (seq 
+               ((token_equal Comblexer.Return ), 
+               parse_expression) ))
+           
+    cs
+    
+(* Parser matching While Statement           *) 
+and parse_while : (token, stmt) parser = 
+    fun cs ->
+    (map pkg_while 
        (seq 
-           ((token_equal Comblexer.Return ), 
-           parse_expression) ))
+           ((token_equal Comblexer.While), 
+           (seq 
+               (parse_expression,
+               parse_statement
+           ))))) 
+    cs
 
 (* Parser matching If Statement              *)
 and parse_if : (token, stmt) parser = 
+    fun cs ->
     (map pkg_if
        (seq 
            ((token_equal Comblexer.If),
@@ -233,19 +264,11 @@ and parse_if : (token, stmt) parser =
                            ((token_equal Comblexer.Else),
                            parse_statement)
                        )))))))))
-
-(* Parser matching While Statement           *) 
-and parse_while : (token, stmt) parser = 
-    (map pkg_while 
-       (seq 
-           ((token_equal Comblexer.While), 
-           (seq 
-               (parse_expression,
-               parse_statement))))) 
-
+    cs
+                       
 (* Parser matching For Statement             *)
-(* TODO implement mapping to get correct types *)
 and parse_for : (token, stmt) parser = 
+    fun cs ->
     (map pkg_for
        (seq
            ((token_equal Comblexer.For),
@@ -265,9 +288,11 @@ and parse_for : (token, stmt) parser =
                                        ((token_equal Comblexer.RParen),
                                        parse_statement)
                                    ))))))))))))))))
-
+    cs
+    
 (* Parser matching Blocks of Statement { x } *) 
 and parse_seq : (token, stmt) parser = 
+   fun cs ->
     (map pkg_seq
        (seq 
            ((token_equal Comblexer.LCurly),
@@ -275,11 +300,15 @@ and parse_seq : (token, stmt) parser =
                ((star parse_statement),
                token_equal Comblexer.RCurly) 
            ))))
-
+    cs
+    
 (* Parser pushing an isolated expr -> stmt    *)
 and parse_s_expression : (token, stmt) parser =
+    fun cs ->
     (map pkg_s_expression 
        parse_expression)
+    cs
+;;
 
 let rec parse(ts:token list) : program = 
     raise ImplementMe
