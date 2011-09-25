@@ -60,6 +60,7 @@ program:
   stmt EOF { $1 }
 
 stmt :
+    | IF exp stmt ELSE stmt { (Ast.If($2, $3, $5), (rhs 1)) }
     | exp SEMI stmt  { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
     | RETURN exp SEMI       { (Ast.Return($2), (rhs 1)) }
     | LCURLY stmt RCURLY    { ($2) }
