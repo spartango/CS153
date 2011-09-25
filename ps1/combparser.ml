@@ -96,20 +96,20 @@ let pkg_int_init (target : (token option * (token * (token * exp) option))) : ex
 let pkg_var_init (target : (token * (token * exp) option)) : exp = 
     let position = get_token_position (fst target) in
     match target with
-    | ((Comblexer.Var(name), _), Some((Comblexer.Plus,   _), t_expr)) -> (Binop( (Var(name), position), Plus,  t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Minus,  _), t_expr)) -> (Binop( (Var(name), position), Minus, t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Times,  _), t_expr)) -> (Binop( (Var(name), position), Times, t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Div,    _), t_expr)) -> (Binop( (Var(name), position), Div,   t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Gt,     _), t_expr)) -> (Binop( (Var(name), position), Gt,    t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Gte,    _), t_expr)) -> (Binop( (Var(name), position), Gte,   t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Lte,    _), t_expr)) -> (Binop( (Var(name), position), Lte,   t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Lt,     _), t_expr)) -> (Binop( (Var(name), position), Lt,    t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Eq,     _), t_expr)) -> (Binop( (Var(name), position), Eq,    t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Neq,    _), t_expr)) -> (Binop( (Var(name), position), Neq,   t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Or,     _), t_expr)) -> (Or(    (Var(name), position),        t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.And,    _), t_expr)) -> (And(   (Var(name), position),        t_expr), position)
-    | ((Comblexer.Var(name), _), Some((Comblexer.Assign, _), t_expr)) -> (Assign(name, t_expr), position)
-    | ((Comblexer.Var(name), _), None)                                -> (Var(name), position)
+    | ((Id(name), _), Some((Comblexer.Plus,   _), t_expr)) -> (Binop( (Var(name), position), Plus,  t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Minus,  _), t_expr)) -> (Binop( (Var(name), position), Minus, t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Times,  _), t_expr)) -> (Binop( (Var(name), position), Times, t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Div,    _), t_expr)) -> (Binop( (Var(name), position), Div,   t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Gt,     _), t_expr)) -> (Binop( (Var(name), position), Gt,    t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Gte,    _), t_expr)) -> (Binop( (Var(name), position), Gte,   t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Lte,    _), t_expr)) -> (Binop( (Var(name), position), Lte,   t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Lt,     _), t_expr)) -> (Binop( (Var(name), position), Lt,    t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Eq,     _), t_expr)) -> (Binop( (Var(name), position), Eq,    t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Neq,    _), t_expr)) -> (Binop( (Var(name), position), Neq,   t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Or,     _), t_expr)) -> (Or(    (Var(name), position),        t_expr), position)
+    | ((Id(name), _), Some((Comblexer.And,    _), t_expr)) -> (And(   (Var(name), position),        t_expr), position)
+    | ((Id(name), _), Some((Comblexer.Assign, _), t_expr)) -> (Assign(name, t_expr), position)
+    | ((Id(name), _), None)                                -> (Var(name), position)
     | _                                                               -> raise InvalidSyntax
 
 
@@ -187,7 +187,7 @@ and parse_var_init : (token, exp) parser =
                 (fun t_token ->
                     let subrtoken = get_token_rtoken t_token in
                     match subrtoken with
-                    | Comblexer.Var(_) -> true
+                    | Id(_) -> true
                     | _                -> false 
                 )),
              (opt 
@@ -261,7 +261,7 @@ let rec parse_statement: (token, stmt) parser =
                         parse_seq;
                         parse_s_expression;
                       ] ), 
-                (opt (token_equal Comblexer.Seq))
+                (opt (token_equal Comblexer.Semi))
         )))
     cs
 
@@ -315,11 +315,11 @@ and parse_for : (token, stmt) parser =
                (seq
                    (parse_expression,
                    (seq 
-                       ((token_equal Comblexer.Seq), 
+                       ((token_equal Comblexer.Semi), 
                        (seq 
                            (parse_expression, 
                            (seq
-                               ((token_equal Comblexer.Seq),
+                               ((token_equal Comblexer.Semi),
                                (seq
                                    (parse_expression,
                                    (seq
