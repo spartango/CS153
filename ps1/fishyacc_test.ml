@@ -30,6 +30,5 @@ let parse_test_files_list =
 
 let test_silly =
     (mk_file_test "silly.fish" 8);;
-    
-run_test_set [test_silly] "Lex/Yacc Parser";;
+  
 run_test_set parse_test_files_list "Lex/Yacc Parse of Test Files";;
