@@ -20,7 +20,7 @@ testf:
 comb: utility com
 	$(COMPILER) -c lcombinators.ml
 	$(COMPILER) -c comblexer.ml
-	$(COMPILER) -annot -c combparser.ml
+	$(COMPILER) -c combparser.ml
 	$(COMPILER) -c fishcomb.ml
 	$(COMPILER) -o ps1comb ast.cmo eval.cmo explode.cmo lcombinators.cmo comblexer.cmo combparser.cmo fishcomb.cmo
 

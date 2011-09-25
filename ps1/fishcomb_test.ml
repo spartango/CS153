@@ -289,9 +289,78 @@ let test_paren_var_expr =
             | _ -> false
         ))
 ;;
+
+let test_rgroup_expr = 
+   Test(     
+        "Expr 2 + (x + 1) Test",
+        (fun () ->
+            let input_tokens = 
+                [ (Comblexer.Int(2), 0);
+                  (Comblexer.Plus, 0);
+                  (Comblexer.LParen, 0);
+                  (Comblexer.Var("x"), 0); 
+                  (Comblexer.Plus, 0);
+                  (Comblexer.Int(1), 0);
+                  (Comblexer.RParen, 0)
+                ] in
+            let parsed = (parse_expression input_tokens) in
+            match parsed with 
+            | Cons(
+                    (
+                        ((Ast.Binop(
+                            (Ast.Int(2), 0),
+                            Ast.Plus, 
+                        ((Ast.Binop(
+                            (Ast.Var("x"), 0),
+                            Ast.Plus,
+                            (Ast.Int(1), 0))), 0)
+                        )), 0), 
+                     [])
+                  , _ ) -> true
+
+            | _ -> false
+        ))
+;;
+
+
+let test_lgroup_expr = 
+   Test(     
+        "Expr (x + 1) + 2 Test",
+        (fun () ->
+            let input_tokens = 
+                [ 
+                  (Comblexer.LParen, 0);
+                  (Comblexer.Var("x"), 0); 
+                  (Comblexer.Plus, 0);
+                  (Comblexer.Int(1), 0);
+                  (Comblexer.RParen, 0);
+                  (Comblexer.Plus, 0);
+                  (Comblexer.Int(2), 0);
+                ] in
+            let parsed = (parse_expression input_tokens) in
+            match parsed with 
+            | Cons(
+                    (
+                        ((Ast.Binop(
+                        ((Ast.Binop(
+                            (Ast.Var("x"), 0),
+                            Ast.Plus,
+                            (Ast.Int(1), 0))), 0),
+                            Ast.Plus, 
+                            (Ast.Int(2), 0)
+                        )), 0), 
+                     [])
+                  , _ ) -> true
+
+            | _ -> false
+        ))
+;;
+
 run_test_set [ test_simple_var_expr;
                test_simple_int_expr;
                test_paren_var_expr;
+               test_rgroup_expr;
+               test_lgroup_expr;
              ]
              "Expression Parsing"
 ;;
