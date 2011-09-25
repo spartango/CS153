@@ -26,6 +26,7 @@ let parse_error s =
 %type <Ast.program> program
 %type <Ast.stmt> stmt
 %type <Ast.stmt> ctrl_stmt
+%type <Ast.stmt> loop
 %type <Ast.exp> exp
 %type <Ast.stmt> bstmt
 
@@ -44,6 +45,7 @@ let parse_error s =
 %token EQ NEQ GTE GT LTE LT OR AND ASSIGN PLUS MINUS TIMES DIV 
 %token FOR IF ELSE WHILE RETURN
 %token NOT
+
 
 %right ASSIGN
 %left OR
@@ -72,12 +74,16 @@ bstmt :
     | LCURLY stmt RCURLY    { ($2) } 
     | RETURN exp SEMI       { (Ast.Return($2), (rhs 1)) }
     | exp SEMI              { (Ast.Exp($1), (rhs 1)) }
-    | ctrl_stmt             { $1 }
+    | ctrl_stmt             { $1 }  
+
+loop :
+    | FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (Ast.For($3,$5,$7,$9), (rhs 1)) }
+    | WHILE LPAREN exp RPAREN bstmt                 { (Ast.While($3, $5), (rhs 1)) }
 
 ctrl_stmt :
-     | FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (Ast.For($3,$5,$7,$9), (rhs 1)) }
-     | WHILE LPAREN exp RPAREN bstmt                 { (Ast.While($3, $5), (rhs 1)) }
-
+    | loop         { $1 }
+    | IF LPAREN exp RPAREN bstmt                    { (Ast.If($3, $5, (Ast.skip, 0)), (rhs 1)) }
+    | IF LPAREN exp RPAREN bstmt ELSE bstmt          { (Ast.If($3, $5, $7), (rhs 1)) }
 
 exp:
     /* Terminals */
