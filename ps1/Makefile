@@ -41,6 +41,9 @@ yacctest: testf yacc
 	$(COMPILER) -c fishyacc_test.ml
 	$(COMPILER) -o testyacc pretty_print.cmo test_framework.cmo ast.cmo parse.cmo lex.cmo eval.cmo fishyacc_test.cmo 
 
+combtoplevel: comb
+	ocamlmktop -o toplvl explode.cmo lcombinators.cmo comblexer.cmo ast.cmo combparser.cmo 
+
 runcombtest: combtest
 	./testcomb
 
@@ -50,4 +53,4 @@ runyacctest: yacctest
 testall: combtest yacctest runcombtest runyacctest
 	
 clean:
-	-rm *.cmo *.cmi ps1comb ps1yacc testyacc testcomb parse.ml parse.mli lex.ml
+	-rm *.cmo *.cmi toplvl ps1comb ps1yacc testyacc testcomb parse.ml parse.mli lex.ml
