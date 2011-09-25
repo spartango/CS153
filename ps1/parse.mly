@@ -15,6 +15,7 @@ let parse_error s =
   print_string ("line "^(string_of_int l)^": "^s^"\n") 
 %}
 
+
 /* Tells us which non-terminal to start the grammar with. */
 %start program
 
@@ -42,6 +43,7 @@ let parse_error s =
 %token FOR IF ELSE WHILE RETURN
 %token NOT
 
+%left PLUS MINUS
 
 /* Here's where the real grammar starts -- you'll need to add 
  * more rules here... Do not remove the 2%'s!! */
@@ -56,6 +58,9 @@ stmt :
     | /* empty */      { (Ast.skip, 0) } 
 
 exp:
-    | INT      {  (Ast.Int($1), (rhs 1)) }
-    | ID       {  (Ast.Var($1), (rhs 1)) }
+    | INT                   {  (Ast.Int($1), (rhs 1)) }
+    | ID                    {  (Ast.Var($1), (rhs 1)) }
+    | exp PLUS exp          { (Ast.Binop($1,Plus,$3), (rhs 2)) }
+    | exp MINUS exp         { (Ast.Binop($1,Minus,$3), (rhs 2)) }
+
 
