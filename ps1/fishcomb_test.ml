@@ -18,4 +18,21 @@ let test_token_equal =
         ("Token Equality Test") 
     )
 ;;
-run_test_set [test_token_equal;] "Parser Building Blocks"
+
+let test_int_alone = 
+   Test(     
+        "Standalone Int Test",
+        (fun () ->
+            let input_tokens = [ (Comblexer.Int(1), 0);] in
+            let parsed = (parse_int_init input_tokens) in
+            match parsed with 
+            | Cons(((Ast.Int(1), 0), []), _) -> true
+            | _ -> false
+        )) 
+
+;;
+
+run_test_set [ test_token_equal;
+               test_int_alone;
+             ]
+            "Parser Building Blocks"
