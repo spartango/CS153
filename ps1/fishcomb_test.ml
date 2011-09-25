@@ -520,12 +520,76 @@ let test_while =
         ))
 ;;
 
+let test_if = 
+    Test( 
+        "Simple If statement Test",
+        (fun () -> 
+            let input_tokens = 
+                [
+                    (Comblexer.If, 0);
+                    (Comblexer.LParen, 0); 
+                    (Comblexer.Int(0), 0);
+                    (Comblexer.RParen, 0);
+                    (Comblexer.Var("x"), 0);
+                    (Comblexer.Seq, 0);
+                ]
+             in 
+             let parsed = parse_statement input_tokens in
+             match parsed with 
+             | Cons( 
+                     ( 
+                         (Ast.If(
+                             (Ast.Int(0), 0), 
+                             (Ast.Exp(
+                                 (Ast.Var("x"), 0)), 0),
+                             _
+                         ), 0), []), _) -> true
+             | _ -> false
+        ))
+;;
+
+let test_if_else = 
+    Test( 
+        "If else statement Test",
+        (fun () -> 
+            let input_tokens = 
+                [
+                    (Comblexer.If, 0);
+                    (Comblexer.LParen, 0); 
+                    (Comblexer.Int(0), 0);
+                    (Comblexer.RParen, 0);
+                    (Comblexer.Var("x"), 0);
+                    (Comblexer.Seq, 0);
+                    (Comblexer.Else, 0);
+                    (Comblexer.Var("y"), 0);
+                    (Comblexer.Seq, 0);
+                ]
+             in 
+             let parsed = parse_statement input_tokens in
+             match parsed with 
+             | Cons( 
+                     ( 
+                         (Ast.If(
+                             (Ast.Int(0), 0), 
+                             (Ast.Exp(
+                                 (Ast.Var("x"), 0)), 0),
+                             (Ast.Exp(
+                                 (Ast.Var("y"), 0)), 0)
+                         ), 0), []), _) -> true
+             | _ -> false
+        ))
+;;
+
+
+
 
 
 run_test_set [ test_s_expr;
                test_return;
                test_seq;
                test_while;
+               test_if;
+               test_if_else;
              ]
              "Statement Parsing"
 
