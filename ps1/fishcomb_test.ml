@@ -580,9 +580,56 @@ let test_if_else =
         ))
 ;;
 
-
-
-
+let test_for = 
+    Test( 
+         "For loop Test", 
+         (fun () -> 
+             let input_tokens = 
+                 [
+                     (Comblexer.For, 0);
+                     (Comblexer.LParen, 0);
+                     (Comblexer.Var("i"), 0);
+                     (Comblexer.Assign, 0);
+                     (Comblexer.Int(0), 0);
+                     (Comblexer.Seq, 0);
+                     (Comblexer.Var("i"), 0);
+                     (Comblexer.Eq, 0);
+                     (Comblexer.Int(1), 0);
+                     (Comblexer.Seq, 0);
+                     (Comblexer.Var("i"), 0);
+                     (Comblexer.Assign, 0);
+                     (Comblexer.Var("i"), 0);
+                     (Comblexer.Plus, 0);
+                     (Comblexer.Int(1), 0);
+                     (Comblexer.RParen, 0);
+                     (Comblexer.Var("i"), 0);
+                     (Comblexer.Seq, 0)
+                 ]
+             in
+             let parsed = parse_statement input_tokens in
+             match parsed with 
+             | Cons( 
+                        (
+                           (Ast.For(
+                               (Ast.Assign(
+                                   "i", 
+                                   (Ast.Int(0), 0)), 0),
+                               (Ast.Binop(
+                                   (Ast.Var("i"), 0), 
+                                   Ast.Eq, 
+                                   (Ast.Int(1), 0)), 0),
+                               (Ast.Assign(
+                                   "i", 
+                                   (Ast.Binop(
+                                       (Ast.Var("i"), 0),
+                                       Ast.Plus,
+                                       (Ast.Int(1), 0)), 0)), 0), 
+                               (Ast.Exp(
+                                   (Ast.Var("i"), 0)), 0)), 0), 
+                      []), _) -> true;
+             | _ -> false
+         ))
+;;
 
 run_test_set [ test_s_expr;
                test_return;
@@ -590,6 +637,7 @@ run_test_set [ test_s_expr;
                test_while;
                test_if;
                test_if_else;
+               test_for;
              ]
              "Statement Parsing"
 
