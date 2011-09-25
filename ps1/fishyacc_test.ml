@@ -3,6 +3,7 @@ open Fishyacc_helpers
 open Parsing
 open Str
 open Eval
+open Ast
 
 (* Assumes all test files in test *)
 let mk_file_test (file: string) (expected: int) =
