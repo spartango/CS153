@@ -3,8 +3,6 @@ open Lcombinators.GenericParsing
 open Comblexer
 open Ast
 open Combparser 
-
-let stub = Test("Implemented", (fun () -> false)  );;
     
 (* Tests for the Parser *) 
 
@@ -392,4 +390,38 @@ run_test_set [ test_simple_var_expr;
              ]
              "Expression Parsing"
 ;;
+
+(* Statement Parsing Tests *)
+
+let test_s_expr = 
+    Test(
+         "Statement x + 1 Test",
+         (fun () -> 
+             let input_tokens =
+                 [
+                     (Comblexer.Var("x"), 0);
+                     (Comblexer.Plus, 0);
+                     (Comblexer.Int(1), 0); 
+                 ]
+             in 
+             let parsed = (parse_statement input_tokens) in
+             match parsed with 
+             | Cons(
+                     (
+                         (Ast.Exp(
+                         ((Ast.Binop(
+                             (Ast.Var("x"), 0),
+                             Ast.Plus,
+                             (Ast.Int(1), 0)))
+                         , 0)), 0),  
+                      [])
+                   , _ ) -> true
+
+             | _ -> false
+         ))
+;;
+
+run_test_set [ test_s_expr;
+             ]
+             "Statement Parsing"
              
