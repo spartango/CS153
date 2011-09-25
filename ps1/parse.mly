@@ -60,10 +60,13 @@ program:
   stmt EOF { $1 }
 
 stmt :
+    | FOR LPAREN exp SEMI exp SEMI exp RPAREN stmt { (Ast.For($3,$5,$7,$9), (rhs 1)) }
     | LCURLY stmt RCURLY    { ($2) } 
     | exp SEMI stmt    { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
     | RETURN exp SEMI   { (Ast.Return($2), (rhs 1)) }
     | /* empty */      { (Ast.skip, 0) }   
+
+
 
 exp:
     /* Terminals */
