@@ -42,6 +42,17 @@ let pkg_seq (target : (token * (stmt list * token))) : stmt =
                                (skip, get_token_position (fst target))
                                stmts)
 
+(* Function to package a paren'd parse_expression   *) 
+let pkg_paren_expr (target : (token * (exp * token))) : exp = 
+    match target with 
+    | (_, (t_exp, _)) -> t_exp
+
+(* Function to package a Not expression *)
+let pkg_not_init (target : (token * exp)) : exp = 
+    let position = get_token_position (fst target) in                      
+    match target with 
+    | (_, t_exp) -> (Not(t_exp), position)
+    
 (* Function to package Int-init parse_expression    *) 
 let pkg_int_init (target : (token option * (token * (token * exp) option))) : exp = 
     let sign = 
@@ -104,7 +115,8 @@ let pkg_s_expression (target : exp) : stmt =
 let rec parse_expression : (token, exp) parser = 
     (alts [ parse_int_init; 
             parse_var_init; 
-            parse_paren_expr ])
+            parse_paren_expr;
+            parse_not_init ])
 
 (* Expression Parsers *) 
 
@@ -173,10 +185,6 @@ and parse_var_init : (token, exp) parser =
                   ] )
              ))))
 
-(* Function to package a paren'd parse_expression   *) 
-and pkg_paren_expr target = 
-    raise TODO
-
 (* Parser for Paren-contained parse_expression      *)
 and parse_paren_expr : (token, exp) parser = 
     (map pkg_paren_expr 
@@ -187,10 +195,12 @@ and parse_paren_expr : (token, exp) parser =
                  (token_equal Comblexer.RParen))
              ))))
 
-
-
-let rec parse(ts:token list) : program = 
-    raise ImplementMe
+(* Parser for Paren-contained parse_expression      *)
+and parse_not_init : (token, exp) parser = 
+    (map pkg_not_init 
+        (seq 
+            ((token_equal Comblexer.Not),
+            parse_expression)))
 
 (* Statement Parsers *)
 let rec parse_statement : (token, stmt) parser =
@@ -270,5 +280,8 @@ and parse_seq : (token, stmt) parser =
 and parse_s_expression : (token, stmt) parser =
     (map pkg_s_expression 
        parse_expression)
+
+let rec parse(ts:token list) : program = 
+    raise ImplementMe
 
 
