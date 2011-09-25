@@ -32,3 +32,15 @@ and stmt = rstmt * pos
 let skip : rstmt = Exp(Int 0,0)          (* simulate a skip statement *)
 
 type program = stmt
+
+let get_exp_position (target : exp) : pos =
+    (snd target)
+
+let get_exp_rstmt (target : exp) : rexp =
+    (fst target)
+
+let get_stmt_position (target : stmt) : pos =
+    (snd target)
+
+let get_stmt_rstmt (target : stmt) : rstmt =
+    (fst target)
