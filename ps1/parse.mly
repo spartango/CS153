@@ -43,7 +43,14 @@ let parse_error s =
 %token FOR IF ELSE WHILE RETURN
 %token NOT
 
+%right ASSIGN
+%left OR
+%left AND
+%right EQ NEQ GTE GT LTE LT
 %left PLUS MINUS
+%left TIMES DIV
+%right NOT
+
 
 /* Here's where the real grammar starts -- you'll need to add 
  * more rules here... Do not remove the 2%'s!! */
@@ -53,14 +60,38 @@ program:
   stmt EOF { $1 }
 
 stmt :
-    | exp SEMI         {  (Ast.Exp($1), (rhs 1)) }
-    | RETURN exp SEMI  { (Ast.Return($2), (rhs 1)) }
+    | exp SEMI stmt  { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
+    | RETURN exp SEMI       { (Ast.Return($2), (rhs 1)) }
+    | LCURLY stmt RCURLY    { ($2) }
     | /* empty */      { (Ast.skip, 0) } 
 
 exp:
+    /* Terminals */
     | INT                   {  (Ast.Int($1), (rhs 1)) }
-    | ID                    {  (Ast.Var($1), (rhs 1)) }
+    /* Assignment */
+    | ID ASSIGN exp         { (Ast.Assign($1,$3), (rhs 2)) }
+    | ID                    { (Ast.Var($1), (rhs 1)) }
+    | LPAREN exp RPAREN     {  ( $2 ) }
+    /* Binary operators */
     | exp PLUS exp          { (Ast.Binop($1,Plus,$3), (rhs 2)) }
     | exp MINUS exp         { (Ast.Binop($1,Minus,$3), (rhs 2)) }
+    | exp TIMES exp         { (Ast.Binop($1,Times,$3), (rhs 2)) }
+    | exp DIV exp           { (Ast.Binop($1,Div,$3), (rhs 2)) }
+    | exp EQ exp            { (Ast.Binop($1,Eq,$3), (rhs 2)) }
+    | exp NEQ exp           { (Ast.Binop($1,Neq,$3), (rhs 2)) }
+    | exp GTE exp           { (Ast.Binop($1,Gte,$3), (rhs 2)) }
+    | exp GT exp            { (Ast.Binop($1,Gt,$3), (rhs 2)) }
+    | exp LTE exp           { (Ast.Binop($1,Lt,$3), (rhs 2)) }
+    | exp LT exp            { (Ast.Binop($1,Lte,$3), (rhs 2)) }
+    | exp AND exp           { (Ast.And($1,$3), (rhs 2)) }
+    | exp OR exp            { (Ast.Or($1,$3), (rhs 2)) }
+    /* Negation */
+    | MINUS exp             { (Ast.Binop((Ast.Int(-1), 0),Times,$2), (rhs 1)) }
+    | NOT exp               { (Ast.Not($2), (rhs 1)) }
 
 
+
+/*
+
+ 
+*/
