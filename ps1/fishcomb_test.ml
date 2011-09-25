@@ -5,6 +5,7 @@ open Ast
 open Combparser 
 open Lcombinators.CharParsing
 open Explode
+open Eval
     
 (* Tests for the Parser *) 
 
@@ -643,6 +644,72 @@ run_test_set [ test_s_expr;
              ]
              "Statement Parsing"
 ;;
+
+let mk_parse_test (file: string) =
+    let label = "Lexing & Parsing " ^ file in
+        Verbose_Test(label, (fun()->
+                                 try 
+                                     let ic  = (open_in file) in
+                                     let rec read_file accum = 
+                                        try 
+                                            (read_file accum ^ "\n" ^ (input_line ic))
+                                        with End_of_file -> accum
+                                     in 
+                                     let file_contents = (read_file "") in
+                                     let rslt = eval (parse (tokenize ( explode file_contents ))) in
+                                         (true, "Parsed with answer " ^ string_of_int rslt)
+                                 with  LexError        -> 
+                                                (false, "Lexer Failed")
+                                       | InvalidSyntax -> 
+                                                 (false, "Parser Failed")))
+
+let file_list = 
+[
+             "test/01cexpr_01add.fish";
+             "test/01cexpr_02sub.fish";
+             "test/01cexpr_03mul.fish";
+             "test/01cexpr_04div.fish";
+             "test/01cexpr_05eq.fish";
+             "test/01cexpr_06neq.fish";
+             "test/01cexpr_07gt.fish";
+             "test/01cexpr_08gte.fish";
+             "test/01cexpr_09lt.fish";
+             "test/01cexpr_10lte.fish";
+             "test/01cexpr_11uminus.fish";
+             "test/01cexpr_12not.fish";
+             "test/01cexpr_13and.fish";
+             "test/01cexpr_14or.fish";
+             "test/01cexpr_15bigcon.fish";
+             "test/01cexpr_16bigcon.fish";
+             "test/02vexpr_01add.fish";
+             "test/02vexpr_02sub.fish";
+             "test/02vexpr_03mul.fish";
+             "test/02vexpr_04div.fish";
+             "test/02vexpr_05eq.fish";
+             "test/02vexpr_06neq.fish";
+             "test/02vexpr_07gt.fish";
+             "test/02vexpr_08gte.fish";
+             "test/02vexpr_09lt.fish";
+             "test/02vexpr_10lte.fish";
+             "test/02vexpr_11uminus.fish";
+             "test/02vexpr_12not.fish";
+             "test/02vexpr_13and.fish";
+             "test/02vexpr_14or.fish";
+             "test/02vexpr_15assignval.fish";
+             "test/03stmt_01if.fish";
+             "test/03stmt_02if.fish";
+             "test/03stmt_03while.fish";
+             "test/03stmt_04for.fish";
+             "test/03stmt_05if.fish";
+             "test/03stmt_06for.fish";
+             "test/04opt_01cfoldif.fish";
+             "test/04opt_02cfoldif.fish";
+             "test/09all_01adder.fish";
+             "test/09all_02fibo.fish";
+]
+;;
+
+run_test_set (List.map mk_parse_test file_list) "Parse Test Files";;
 
 (*
 let lex_test_inputs = [

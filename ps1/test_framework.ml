@@ -27,18 +27,18 @@ let mk_verbose_expect_test (f : unit -> 'a) (expected : 'a) (to_string : 'a -> s
 let run_test  (t_test : test) : (bool * string) = 
     match t_test with 
         | Test(name, exec) ->
-		    let result = (exec ()) in 
+            let result = (exec ()) in 
             (result,  
             (if result then (format_string "[  PASSED  ] " Bright Green) 
                        else (format_string "[  FAILED  ] " Bright Red))
                 ^name^"\n")
         | Verbose_Test(name, exec) -> 
             let (result, message) = (exec ()) in 
-			(result,  
+            (result,  
             (if result then (format_string "[  PASSED  ] " Bright Green) 
                        else (format_string "[  FAILED  ] " Bright Red))
                 ^name^": "^message^"\n")
-			     
+                 
             
 (* Runs a set of tests together under a set name, grouping their output *)
 let run_test_set (tests : test list) (set_name : string) : unit = 
