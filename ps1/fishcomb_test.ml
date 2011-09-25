@@ -322,6 +322,33 @@ let test_rgroup_expr =
         ))
 ;;
 
+let test_not_var_expr = 
+   Test(     
+        "Expr !(x + 1) Test",
+        (fun () ->
+            let input_tokens = 
+                [ (Comblexer.Not, 0);
+                  (Comblexer.LParen, 0);
+                  (Comblexer.Var("x"), 0); 
+                  (Comblexer.Plus, 0);
+                  (Comblexer.Int(1), 0);
+                  (Comblexer.RParen, 0)
+                ] in
+            let parsed = (parse_expression input_tokens) in
+            match parsed with 
+            | Cons(
+                    ((Ast.Not(
+                        ((Ast.Binop(
+                            (Ast.Var("x"), 0),
+                            Ast.Plus,
+                            (Ast.Int(1), 0)))
+                        , 0)), 0), 
+                     [])
+                  , _ ) -> true
+
+            | _ -> false
+        ))
+;;
 
 let test_lgroup_expr = 
    Test(     
@@ -361,6 +388,7 @@ run_test_set [ test_simple_var_expr;
                test_paren_var_expr;
                test_rgroup_expr;
                test_lgroup_expr;
+               test_not_var_expr;
              ]
              "Expression Parsing"
 ;;
