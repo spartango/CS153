@@ -32,7 +32,21 @@ let test_int_alone =
 
 ;;
 
+let test_var_alone = 
+   Test(     
+        "Standalone Var Test",
+        (fun () ->
+            let input_tokens = [ (Comblexer.Var("x"), 0);] in
+            let parsed = (parse_var_init input_tokens) in
+            match parsed with 
+            | Cons(((Ast.Var("x"), 0), []), _) -> true
+            | _ -> false
+        )) 
+
+;;
+
 run_test_set [ test_token_equal;
                test_int_alone;
+               test_var_alone;
              ]
             "Parser Building Blocks"
