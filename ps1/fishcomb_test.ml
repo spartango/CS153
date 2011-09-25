@@ -450,9 +450,52 @@ let test_return =
          ))
 ;;
 
+let test_seq = 
+    Test(
+         "Statement { x + 1; y + 1; } Test",
+         (fun () -> 
+             let input_tokens =
+                 [
+                     (Comblexer.LCurly, 0);
+                     (Comblexer.Var("x"), 0);
+                     (Comblexer.Plus, 0);
+                     (Comblexer.Int(1), 0);
+                     (Comblexer.Seq, 0);
+                     (Comblexer.Var("y"), 0);
+                     (Comblexer.Plus, 0);
+                     (Comblexer.Int(1), 0);
+                     (Comblexer.RCurly, 0);
+                 ]
+             in 
+             let parsed = (parse_statement input_tokens) in
+             match parsed with 
+             | Cons(
+                     (
+                         (Ast.Seq(
+                         (Ast.Seq( _ , 
+                         (Ast.Exp(((Ast.Binop(
+                             (Ast.Var("x"), 0),
+                             Ast.Plus,
+                             (Ast.Int(1), 0)))
+                         , 0)), 0)), 0), 
+                         (Ast.Exp(((Ast.Binop(
+                             (Ast.Var("y"), 0),
+                             Ast.Plus,
+                             (Ast.Int(1), 0)))
+                         , 0)), 0)
+                         )
+                         , 0)
+                         , 
+                      [])
+                   , _ ) -> true
+
+             | _ -> false
+         ))
+;;
 
 run_test_set [ test_s_expr;
                test_return;
+               test_seq;
              ]
              "Statement Parsing"
              

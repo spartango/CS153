@@ -6,12 +6,15 @@ open Ast
 
 exception TODO
 exception InvalidSyntax
-    
+
 (* Helpful parsers *)
 let token_equal(target_token: rtoken) : (token, token) parser =
     (satisfy (fun t_token -> 
                 let subrtoken = get_token_rtoken t_token in 
                 subrtoken = target_token ))
+
+let pkg_stmt (target : (stmt * token option)) : stmt = 
+    (fst target)
 
 (* Function packaging If Statement           *)         
 let pkg_if (target : (token * (exp * (stmt * (token * stmt) option)))) : stmt = 
@@ -38,7 +41,7 @@ let pkg_seq (target : (token * (stmt list * token))) : stmt =
     | (_, (stmts, _)) -> (List.fold_left 
                                (fun (sequence : stmt) (elt : stmt) ->
                                     let position = get_stmt_position elt in                      
-                                    (Seq(elt, sequence)), position)
+                                    (Seq(sequence, elt)), position)
                                (skip, get_token_position (fst target))
                                stmts)
 
@@ -249,13 +252,17 @@ and parse_not_init : (token, exp) parser =
 (* Statement Parsers *)
 let rec parse_statement: (token, stmt) parser =
     fun cs -> 
-        (alts [ parse_if;
-                parse_for;
-                parse_while;
-                parse_return;
-                parse_seq;
-                parse_s_expression;
-              ] ) 
+        (map pkg_stmt
+            (seq(
+                (alts [ parse_if;
+                        parse_for;
+                        parse_while;
+                        parse_return;
+                        parse_seq;
+                        parse_s_expression;
+                      ] ), 
+                (opt (token_equal Comblexer.Seq))
+        )))
     cs
 
 (* Parser matching Return Statement          *) 
