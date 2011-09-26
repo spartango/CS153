@@ -168,9 +168,9 @@ struct
    * However, note that unlike ML, this won't handle nested comments!  Can
    * you transform it so it does? *)
   let comment : (char,unit) parser = 
-      unit(seq ((seq(c '(', c '*')), 
-             seq(star (alts [unit(notC '*'); unit(seq(c '*',notC ')'))]),
-                 (seq(c '*', c ')')))))
+      unit(seq ((seq(c '/', c '*')), 
+             seq(star (alts [unit(notC '*'); unit(seq(c '*',notC '/'))]),
+                 (seq(c '*', c '/')))))
 
   (* [whitespace] matches zero or more comments, spaces, tabs, etc. *)
   let whitespace = unit(star (alt (comment,white)))
