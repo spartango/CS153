@@ -169,7 +169,7 @@ struct
    * you transform it so it does? *)
   let comment : (char,unit) parser = 
       unit(seq ((seq(c '/', c '*')), 
-             seq(star (alts [unit(notC '*'); unit(seq(c '*',notC ')'))]),
+             seq(star (alts [unit(notC '*'); unit(seq(c '*',notC '/'))]),
                  (seq(c '*', c '/')))))
 
   (* [whitespace] matches zero or more comments, spaces, tabs, etc. *)

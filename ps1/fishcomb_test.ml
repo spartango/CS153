@@ -25,7 +25,7 @@ let test_int_alone =
         "Standalone Int Test",
         (fun () ->
             let input_tokens = [ (Comblexer.Int(1), 0);] in
-            let parsed = (parse_int_init input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(((Ast.Int(1), 0), []), _) -> true
             | _ -> false
@@ -38,7 +38,7 @@ let test_var_alone =
         "Standalone Var Test",
         (fun () ->
             let input_tokens = [ (Comblexer.Id("x"), 0);] in
-            let parsed = (parse_var_init input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(((Ast.Var("x"), 0), []), _) -> true
             | _ -> false
@@ -52,7 +52,7 @@ let test_paren_alone =
         (fun () ->
             let input_tokens = 
                 [ (LParen, 0); (Comblexer.Id("x"), 0); (RParen, 0);] in
-            let parsed = (parse_paren_expr input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(((Ast.Var("x"), 0), []), _) -> true
             | _ -> false
@@ -68,7 +68,7 @@ let test_negative_int =
                 [   (Comblexer.Minus, 0);
                     (Comblexer.Int(1), 0);
                 ] in
-            let parsed = (parse_int_init input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(((Ast.Int(-1), 0), []), _) -> true
             | _ -> false
@@ -85,7 +85,7 @@ let test_int_simple_op =
                 [ (Comblexer.Int(1), 0); 
                   (Comblexer.Plus, 0);
                   (Comblexer.Int(1), 0);] in
-            let parsed = (parse_int_init input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(
                     (
@@ -111,7 +111,7 @@ let test_var_simple_op =
                 [ (Comblexer.Id("x"), 0); 
                   (Comblexer.Plus, 0);
                   (Comblexer.Int(1), 0);] in
-            let parsed = (parse_var_init input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(
                     (
@@ -136,7 +136,7 @@ let test_var_var_simple_op =
                 [ (Comblexer.Id("x"), 0); 
                   (Comblexer.Plus, 0);
                   (Comblexer.Id("x"), 0);] in
-            let parsed = (parse_var_init input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(
                     (
@@ -161,7 +161,7 @@ let test_var_neg_simple_op =
                 [ (Comblexer.Id("x"), 0); 
                   (Comblexer.Minus, 0);
                   (Comblexer.Int(1), 0);] in
-            let parsed = (parse_var_init input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(
                     (
@@ -186,7 +186,7 @@ let test_var_and_op =
                 [ (Comblexer.Id("x"), 0); 
                   (Comblexer.And, 0);
                   (Comblexer.Int(1), 0);] in
-            let parsed = (parse_var_init input_tokens) in
+            let parsed = (parse_expression input_tokens) in
             match parsed with 
             | Cons(
                     (
@@ -651,6 +651,9 @@ let mk_parse_test (file: string) =
                                  try 
                                      let ic  = (open_in file) in 
                                      let file_contents = (read_file ic "") in
+                                     let _ = print_string 
+                                            ((format_string "[ RUNNING  ] " Bright Cyan) ^ (String.escaped file_contents) ^ "\n") 
+                                     in 
                                      let rslt = eval (parse (tokenize ( explode file_contents ))) in
                                          (true, "Parsed with answer " ^ string_of_int rslt)
                                  with  LexError        -> 

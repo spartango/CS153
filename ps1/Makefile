@@ -2,7 +2,7 @@
 # enough to recompile at will.
 
 # change to a different ocamlc if you prefer (e.g., ocamlopt)
-COMPILER=ocamlc
+COMPILER=ocamlc -g 
  
 all: clean comb testall
 
@@ -42,8 +42,8 @@ yacctest: testf yacc
 	$(COMPILER) -c fishyacc_test.ml
 	$(COMPILER) -o testyacc pretty_print.cmo test_framework.cmo ast.cmo parse.cmo lex.cmo eval.cmo fishyacc_helpers.cmo fishyacc_test.cmo 
 
-combtoplevel: comb
-	ocamlmktop -o toplvl explode.cmo lcombinators.cmo comblexer.cmo ast.cmo combparser.cmo 
+combtoplevel: combtest
+	ocamlmktop -o toplvl explode.cmo pretty_print.cmo test_framework.cmo lcombinators.cmo comblexer.cmo ast.cmo combparser.cmo eval.cmo 
 
 runcombtest: combtest
 	./testcomb
