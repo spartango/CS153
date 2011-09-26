@@ -26,7 +26,6 @@ let parse_error s =
 %type <Ast.program> program
 %type <Ast.stmt> stmt
 %type <Ast.stmt> ctrl_stmt
-%type <Ast.stmt> loop
 %type <Ast.exp> exp
 %type <Ast.stmt> bstmt
 
@@ -66,24 +65,25 @@ program:
   stmt EOF { $1 }
 
 stmt :
-    | ctrl_stmt stmt { (Ast.Seq($1, $2), (rhs 1)) } 
+    | ctrl_stmt stmt        { (Ast.Seq($1, $2), (rhs 1)) } 
+    | ctrl_stmt             { $1 }
     | LCURLY stmt RCURLY    { ($2) } 
-    | exp SEMI stmt    { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
+    | exp SEMI stmt         { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
+    | exp SEMI          { (Ast.Exp($1), (rhs 1)) }
     | RETURN exp SEMI   { (Ast.Return($2), (rhs 1)) }
-    | /* empty */      { (Ast.skip, 0) }   
+    | SEMI stmt         { (Seq((Ast.skip, 0), $2), (rhs 1)) }  
+    | LCURLY RCURLY       { (Ast.skip, 0) }
 
 bstmt :
     | LCURLY stmt RCURLY    { ($2) } 
     | RETURN exp SEMI       { (Ast.Return($2), (rhs 1)) }
     | exp SEMI              { (Ast.Exp($1), (rhs 1)) }
+    | SEMI                  { (Ast.skip, 0) } 
     | ctrl_stmt             { $1 }  
 
-loop :
+ctrl_stmt :
     | FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (Ast.For($3,$5,$7,$9), (rhs 1)) }
     | WHILE LPAREN exp RPAREN bstmt                 { (Ast.While($3, $5), (rhs 1)) }
-
-ctrl_stmt :
-    | loop         { $1 }
     | IF LPAREN exp RPAREN bstmt %prec LOWER_THAN_ELSE          { (Ast.If($3, $5, (Ast.skip, 0)), (rhs 1)) }
     | IF LPAREN exp RPAREN bstmt ELSE bstmt          { (Ast.If($3, $5, $7), (rhs 1)) }
 
