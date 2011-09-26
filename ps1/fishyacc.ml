@@ -11,7 +11,7 @@ let parse_file() =
     if Array.length argv != 2
     then (prerr_string ("usage: " ^ argv.(0) ^ " [file-to-parse]\n");
     exit 1) in
-      parse_code argv.(1)
+      parse_code (argv.(1))
 
 let parse_stdin() =
   Parse.program Lex.lexer (Lexing.from_channel stdin)
