@@ -103,21 +103,21 @@ let pkg_var_init (target : (token option * (token * (token * exp) option))) : ex
             | None    -> 1
     in
     match (snd target) with
-    | ((Id(name), position), Some((Comblexer.Plus,   _), t_expr)) -> (Binop( (Var(name), position), Plus,  t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Minus,  _), t_expr)) -> (Binop( (Var(name), position), Minus, t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Times,  _), t_expr)) -> (Binop( (Var(name), position), Times, t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Div,    _), t_expr)) -> (Binop( (Var(name), position), Div,   t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Gt,     _), t_expr)) -> (Binop( (Var(name), position), Gt,    t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Gte,    _), t_expr)) -> (Binop( (Var(name), position), Gte,   t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Lte,    _), t_expr)) -> (Binop( (Var(name), position), Lte,   t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Lt,     _), t_expr)) -> (Binop( (Var(name), position), Lt,    t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Eq,     _), t_expr)) -> (Binop( (Var(name), position), Eq,    t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Neq,    _), t_expr)) -> (Binop( (Var(name), position), Neq,   t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Or,     _), t_expr)) -> (Or(    (Var(name), position),        t_expr), position)
-    | ((Id(name), position), Some((Comblexer.And,    _), t_expr)) -> (And(   (Var(name), position),        t_expr), position)
-    | ((Id(name), position), Some((Comblexer.Assign, _), t_expr)) -> (Assign(name, t_expr), position)
-    | ((Id(name), position), None)                                -> (Var(name), position)
-    | _                                                               -> raise VarInvalidSyntax
+    | ((Id(name), position), Some((Comblexer.Plus,   _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Plus,  t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Minus,  _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Minus, t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Times,  _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Times, t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Div,    _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Div,   t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Gt,     _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Gt,    t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Gte,    _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Gte,   t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Lte,    _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Lte,   t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Lt,     _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Lt,    t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Eq,     _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Eq,    t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Neq,    _), t_expr)) -> (Binop( (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)), Neq,   t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Or,     _), t_expr)) -> (Or(    (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)),        t_expr), position)
+    | ((Id(name), position), Some((Comblexer.And,    _), t_expr)) -> (And(   (if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)),        t_expr), position)
+    | ((Id(name), position), Some((Comblexer.Assign, _), t_expr)) ->  (Assign(name, t_expr), position)
+    | ((Id(name), position), None)                                -> ((if sign = -1 then (Binop((Int(sign), position), Times, (Var(name), position)), position) else (Var(name), position)))
+    | _                                                           -> raise VarInvalidSyntax
 
 
 (* Function packaging For Statement          *)        
