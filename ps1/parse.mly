@@ -45,6 +45,10 @@ let parse_error s =
 %token FOR IF ELSE WHILE RETURN
 %token NOT
 
+/* Suggestion for dealing with danling else from
+ http://stackoverflow.com/questions/1737460/how-to-find-shift-reduce-
+     conflict-in-this-yacc-file
+*/
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 
@@ -65,21 +69,21 @@ program:
   stmt EOF { $1 }
 
 stmt :
-    | ctrl_stmt stmt        { (Ast.Seq($1, $2), (rhs 1)) } 
-    | ctrl_stmt             { $1 }
-    | LCURLY stmt RCURLY    { ($2) } 
-    | exp SEMI stmt         { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
-    | exp SEMI          { (Ast.Exp($1), (rhs 1)) }
-    | RETURN exp SEMI   { (Ast.Return($2), (rhs 1)) }
-    | SEMI stmt         { (Seq((Ast.skip, 0), $2), (rhs 1)) }  
-    | LCURLY RCURLY       { (Ast.skip, 0) }
+    | ctrl_stmt stmt                   { (Ast.Seq($1, $2), (rhs 1)) } 
+    | ctrl_stmt                        { $1 }
+    | LCURLY stmt RCURLY               { ($2) } 
+    | exp SEMI stmt                    { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
+    | exp SEMI                         { (Ast.Exp($1), (rhs 1)) }
+    | RETURN exp SEMI                  { (Ast.Return($2), (rhs 1)) }
+    | SEMI stmt                        { (Seq((Ast.skip, 0), $2), (rhs 1)) }  
+    | LCURLY RCURLY                    { (Ast.skip, 0) }
 
 bstmt :
-    | LCURLY stmt RCURLY    { ($2) } 
-    | RETURN exp SEMI       { (Ast.Return($2), (rhs 1)) }
-    | exp SEMI              { (Ast.Exp($1), (rhs 1)) }
-    | SEMI                  { (Ast.skip, 0) } 
-    | ctrl_stmt             { $1 }  
+    | LCURLY stmt RCURLY               { ($2) } 
+    | RETURN exp SEMI                  { (Ast.Return($2), (rhs 1)) }
+    | exp SEMI                         { (Ast.Exp($1), (rhs 1)) }
+    | SEMI                             { (Ast.skip, 0) } 
+    | ctrl_stmt                        { $1 }  
 
 ctrl_stmt :
     | FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (Ast.For($3,$5,$7,$9), (rhs 1)) }
