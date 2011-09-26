@@ -51,7 +51,7 @@ runcombtest: combtest
 runyacctest: yacctest
 	./testyacc
 	
-testall: combtest runcombtest
+testall: combtest runcombtest runyacctest
 	
 clean:
 	-rm *.cmo *.cmi toplvl ps1comb ps1yacc testyacc testcomb parse.ml parse.mli lex.ml
