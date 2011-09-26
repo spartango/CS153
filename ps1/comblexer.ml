@@ -115,7 +115,7 @@ let rcurly_combinator = c_combinator '}' RCurly
 
 (* End of file *)
 (* HACK HACK HACK*)
-let eof_combinator = map (fun _ -> Semi) eof
+let eof_combinator = map (fun _ -> EOF) eof
 
 (* Complete combinator *)
 let complete_combinator = 

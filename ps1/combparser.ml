@@ -482,7 +482,7 @@ and parse_s_expression : (token, stmt) parser =
 let rec select_parse parses =
     match parses with 
     | Cons((prog, []), _) -> prog
-    | Cons((prog, [(Comblexer.Semi, 0)]), _) -> prog
+    | Cons((prog, [(Comblexer.EOF, 0)]), _) -> prog
     | Cons((_, _), rest)  ->
             select_parse (Lazy.force rest) 
     | Nil -> raise NoParses
