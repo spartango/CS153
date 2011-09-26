@@ -158,11 +158,12 @@ let pkg_s_expression (target : exp) : stmt =
 (* Parser matching Expressions                *)
 let rec parse_expression : (token, exp) parser = 
     fun cs ->
-        (alts [ parse_aexp_init;
+        (alts [ parse_not_init;
+                parse_aexp_init;
                 parse_bint_init; 
                 parse_bvar_init; 
                 parse_bparen_expr;
-                parse_not_init ])
+              ])
     cs
     
 (* Expression Parsers *) 
@@ -256,8 +257,8 @@ and parse_bint_init : (token, exp) parser =
                        (parse_half_binop Comblexer.Neq);
                        (parse_half_binop Comblexer.Gt);
                        (parse_half_binop Comblexer.Gte);
+                       (parse_half_binop Comblexer.And);
                        (parse_half_binop Comblexer.Or);
-                       (parse_half_binop Comblexer.And)
                      ] )
                 ) )))))
     cs
@@ -296,7 +297,7 @@ and parse_bvar_init : (token, exp) parser =
                         let subrtoken = get_token_rtoken t_token in
                         match subrtoken with
                         | Id(_) -> true
-                        | _                -> false 
+                        | _     -> false 
                     )),
                  (opt 
                      (alts 
