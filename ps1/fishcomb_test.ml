@@ -651,9 +651,9 @@ let mk_parse_test (file: string) =
                                  try 
                                      let ic  = (open_in file) in 
                                      let file_contents = (read_file ic "") in
-                                     let _ = print_string 
+                                     (*let _ = print_string 
                                             ((format_string "[ RUNNING  ] " Bright Cyan) ^ (String.escaped file_contents) ^ "\n") 
-                                     in 
+                                     in *)
                                      let rslt = eval (parse (tokenize ( explode file_contents ))) in
                                          (true, "Parsed with answer " ^ string_of_int rslt)
                                  with  LexError        -> 
