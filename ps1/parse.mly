@@ -25,12 +25,10 @@ let parse_error s =
  */
 %type <Ast.program> program
 %type <Ast.stmt> stmt
-%type <Ast.stmt> stmt_open
-%type <Ast.stmt> stmt_closed
-%type <Ast.stmt> loop_open
-%type <Ast.stmt> loop_closed
+%type <Ast.stmt> ctrl_stmt
+%type <Ast.stmt> loop
 %type <Ast.exp> exp
-%type <Ast.exp> bexp
+%type <Ast.stmt> bstmt
 
 /* The %token directive gives a definition of all of the terminals
  * (i.e., tokens) in the grammar. This will be used to generate the
@@ -48,6 +46,8 @@ let parse_error s =
 %token FOR IF ELSE WHILE RETURN
 %token NOT
 
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 
 %right ASSIGN
 %left OR
@@ -66,49 +66,26 @@ program:
   stmt EOF { $1 }
 
 stmt :
-    | stmt_open { $1 }
-    | stmt_closed { $1 }
-
-stmt_open :
-    | IF bexp stmt  { (Ast.If($2, $3, (Ast.skip, 0)), (rhs 1)) }
-    | IF bexp stmt_closed ELSE stmt_open { (Ast.If($2, $3, $5), (rhs 1)) }
-    | loop_open  { $1 }
-
-loop_open:
-    | FOR LPAREN exp SEMI exp SEMI exp RPAREN stmt_open { (Ast.For($3, $5, $7, $9), (rhs 1)) }
-    | WHILE bexp stmt_open   { (Ast.While($2, $3), (rhs 1)) }
-
-stmt_closed :
+    | ctrl_stmt stmt { (Ast.Seq($1, $2), (rhs 1)) } 
     | LCURLY stmt RCURLY    { ($2) } 
     | exp SEMI stmt    { (Ast.Seq((Ast.Exp($1), (rhs 1)), $3), (rhs 2)) }
     | RETURN exp SEMI   { (Ast.Return($2), (rhs 1)) }
     | /* empty */      { (Ast.skip, 0) }   
-    | IF bexp stmt_closed     { (Ast.If($2, $3, (Ast.skip, 0)), (rhs 1)) }
-    | IF bexp stmt_closed ELSE stmt_closed { (Ast.If($2, $3, $5), (rhs 1)) }
-    | loop_closed { $1 }
 
-loop_closed :
-    | FOR LPAREN exp SEMI exp SEMI exp RPAREN stmt_closed { (Ast.For($3, $5, $7, $9), (rhs 1)) }
-    | WHILE bexp stmt_closed   { (Ast.While($2, $3), (rhs 1)) }
+bstmt :
+    | LCURLY stmt RCURLY    { ($2) } 
+    | RETURN exp SEMI       { (Ast.Return($2), (rhs 1)) }
+    | exp SEMI              { (Ast.Exp($1), (rhs 1)) }
+    | ctrl_stmt             { $1 }  
 
-/*
-    -> open statement
-    -> closed statement
-   
-  open statement
-    -> if clause, statement
-    -> if clause, closed statement, "else", open statement
-    -> loop header, open statement
+loop :
+    | FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (Ast.For($3,$5,$7,$9), (rhs 1)) }
+    | WHILE LPAREN exp RPAREN bstmt                 { (Ast.While($3, $5), (rhs 1)) }
 
-  closed statement
-    -> simple statement
-    -> if clause, closed statement, "else", closed statement
-    -> loop header, closed statement
-
-*/
-
-bexp :
-    | LPAREN exp RPAREN { $2 }
+ctrl_stmt :
+    | loop         { $1 }
+    | IF LPAREN exp RPAREN bstmt %prec LOWER_THAN_ELSE          { (Ast.If($3, $5, (Ast.skip, 0)), (rhs 1)) }
+    | IF LPAREN exp RPAREN bstmt ELSE bstmt          { (Ast.If($3, $5, $7), (rhs 1)) }
 
 exp:
     /* Terminals */
@@ -116,7 +93,7 @@ exp:
     /* Assignment */
     | ID ASSIGN exp         { (Ast.Assign($1,$3), (rhs 2)) }
     | ID                    { (Ast.Var($1), (rhs 1)) }
-    | bexp  { $1 }
+  | LPAREN exp RPAREN     {  ( $2 ) }
     /* Binary operators */
     | exp PLUS exp          { (Ast.Binop($1,Plus,$3), (rhs 2)) }
     | exp MINUS exp         { (Ast.Binop($1,Minus,$3), (rhs 2)) }
