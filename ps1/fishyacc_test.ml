@@ -27,9 +27,20 @@ let parse_test_files_list =
                    then tests
                    else (mk_parse_test ("test/" ^ case))::tests)
          [] (Array.to_list (Sys.readdir "test"))
+  
+let file_answers =
+    [ ("01cexpr_01add.fish", 16);
+      ("01cexpr_02sub.fish", 8);
+      ("03stmt_05if.fish", 7);
+      ("03stmt_06for.fish", 715);
+      ("09all_02fibo.fish", 1597);
+      ("09all_01adder.fish", 5);
+      ("04opt_02cfoldif.fish", 5);
+      ("04opt_01cfoldif.fish", 3)]
 
-let test_silly =
-    (mk_file_test "silly.fish" 8);;
-    
-run_test_set [test_silly] "Lex/Yacc Parser";;
+let tests_file_answers =
+    List.map (fun case -> let(file,answer) = case in mk_file_test file answer) file_answers;;
+
+
 run_test_set parse_test_files_list "Lex/Yacc Parse of Test Files";;
+run_test_set tests_file_answers "Lex/Yacc Correct Eval of Test Files";;
