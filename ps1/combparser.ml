@@ -19,6 +19,9 @@ let token_equal(target_token: rtoken) : (token, token) parser =
 let pkg_stmt (target : (stmt * token option)) : stmt = 
     (fst target)
 
+let pkg_empty (target : token) : stmt =
+    (skip, (get_token_position target))
+
 (* Function packaging If Statement           *)         
 let pkg_if (target : (token * (exp * (stmt * (token * stmt) option)))) : stmt = 
     let position = get_token_position (fst target) in
@@ -169,9 +172,10 @@ and parse_int_init : (token, exp) parser =
                     )),
                 (opt
                     (alts 
-                     [ (parse_half_binop Comblexer.Plus);
+                     [ 
                        (parse_half_binop Comblexer.Times);
                        (parse_half_binop Comblexer.Div);
+                       (parse_half_binop Comblexer.Plus);
                        (parse_half_binop Comblexer.Minus);
                        (parse_half_binop Comblexer.Lte);
                        (parse_half_binop Comblexer.Lt);
@@ -269,10 +273,17 @@ let rec parse_statement: (token, stmt) parser =
                         parse_return;
                         parse_seq;
                         parse_s_expression;
+                        parse_empty;
                       ] ), 
                 (opt (token_equal Comblexer.Semi))
         )))
     cs
+
+and parse_empty : (token, stmt) parser =
+    fun cs -> 
+        (map pkg_empty 
+            (token_equal Comblexer.Semi))
+    cs 
 
 (* Parser matching Return Statement          *) 
 and parse_return : (token, stmt) parser = 
