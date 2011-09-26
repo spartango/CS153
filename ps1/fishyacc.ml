@@ -1,17 +1,17 @@
-open Ast
+open Fishyacc_helpers
 open Eval
 
 (* This magic is used to glue the generated lexer and parser together.
  * Expect one command-line argument, a file to parse.
  * You do not need to understand this interaction with the system. *)
+
 let parse_file() =
   let argv = Sys.argv in
   let _ = 
     if Array.length argv != 2
     then (prerr_string ("usage: " ^ argv.(0) ^ " [file-to-parse]\n");
     exit 1) in
-  let ch = open_in argv.(1) in
-  Parse.program Lex.lexer (Lexing.from_channel ch)
+      parse_code (argv.(1))
 
 let parse_stdin() =
   Parse.program Lex.lexer (Lexing.from_channel stdin)
