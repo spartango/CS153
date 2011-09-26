@@ -6,7 +6,7 @@ open Combparser
 open Lcombinators.CharParsing
 open Explode
 open Eval
-    
+open Pretty_print    
 (* Tests for the Parser *) 
 
 let test_token_equal = 
@@ -649,19 +649,21 @@ let mk_parse_test (file: string) =
     let label = "Lexing & Parsing " ^ file in
         Verbose_Test(label, (fun()->
                                  try 
-                                     let ic  = (open_in file) in
-                                     let rec read_file accum = 
-                                        try 
-                                            (read_file accum ^ "\n" ^ (input_line ic))
-                                        with End_of_file -> accum
-                                     in 
-                                     let file_contents = (read_file "") in
+                                     let ic  = (open_in file) in 
+                                     let file_contents = (read_file ic "") in
                                      let rslt = eval (parse (tokenize ( explode file_contents ))) in
                                          (true, "Parsed with answer " ^ string_of_int rslt)
                                  with  LexError        -> 
-                                                (false, "Lexer Failed")
-                                       | InvalidSyntax -> 
-                                                 (false, "Parser Failed")))
+                                                (false, ( format_string "Lexer Failed" Bright Red))
+                                      | IntInvalidSyntax -> 
+                                                (false, ( format_string "Int Parser Failed" Bright Red)) 
+                                      | VarInvalidSyntax -> 
+                                                (false, ( format_string "Var Parser Failed" Bright Red))
+                                      | ParenInvalidSyntax -> 
+                                                (false, ( format_string "Paren Parser Failed" Bright Red))
+                                      | NoParses ->
+                                                (false, (format_string "No parses" Bright Red))
+                                             ))
 
 let file_list = 
 [

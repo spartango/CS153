@@ -170,3 +170,9 @@ let rec tokenize_debug(cs: char list) : token list =
                 | '\n'::tail -> tail
                 | hd::tl
 *)
+
+let rec read_file chan accum = 
+   try 
+       (read_file chan (accum ^ "\n" ^(input_line chan)))
+   with End_of_file -> accum
+;;
