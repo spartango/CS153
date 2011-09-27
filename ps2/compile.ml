@@ -1,5 +1,6 @@
 (* Compile Fish AST to MIPS AST *)
 open Mips
+open Ast
 
 exception IMPLEMENT_ME
 
@@ -20,12 +21,15 @@ module VarSet = Set.Make(struct
 (* a table of variables that we need for the code segment *)
 let variables : VarSet.t ref = ref (VarSet.empty)
 
+let add_var (v: string) : unit =
+    variables := VarSet.add v (!variables); ()
+
 (* generate a fresh temporary variable and store it in the variables set. *)
-let rec new_temp() = 
+let rec new_temp() : string= 
     let t = "T" ^ (string_of_int (new_int())) in
     (* make sure we don't already have a variable with the same name! *)
     if VarSet.mem t (!variables) then new_temp()
-    else (variables := VarSet.add t (!variables); t)
+    else let _ = add_var t in t
 
 (* reset internal state *)
 let reset() = (label_counter := 0; variables := VarSet.empty)
@@ -34,7 +38,22 @@ let reset() = (label_counter := 0; variables := VarSet.empty)
  * the set variables *)
 let rec collect_vars (p : Ast.program) : unit = 
     (*************************************************************)
-    raise IMPLEMENT_ME
+    let stip_pos r = let(v,_) = r in v in
+    let rec collect_vars_e (e: Ast.exp) : unit =
+        match (stip_pos e) with
+            | Var v -> add_var v
+            | Assign (v, e1) -> add_var v
+            | Int _ -> ()
+            | Binop(e1, _, e2) -> collect_vars_e e1;
+                  collect_vars_e e2
+            | Not e -> collect_vars_e e;
+            | And (e1, e2) -> collect_vars_e e1;
+                  collect_vars_e e2
+            | Or (e1, e2) -> collect_vars_e e1;
+                  collect_vars_e e2 in
+    match (stip_pos p) with
+        | Exp e -> collect_vars_e e
+        | _ -> raise IMPLEMENT_ME
     (*************************************************************)
 
 (* compiles a Fish statement down to a list of MIPS instructions.
