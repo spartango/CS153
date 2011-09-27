@@ -53,7 +53,18 @@ let rec collect_vars (p : Ast.program) : unit =
                   collect_vars_e e2 in
     match (stip_pos p) with
         | Exp e -> collect_vars_e e
-        | _ -> raise IMPLEMENT_ME
+        | Seq (s1, s2) -> collect_vars s1;
+              collect_vars s2
+        | If (e, s1, s2) -> collect_vars_e e;
+              collect_vars s1;
+              collect_vars s2
+        | While (e, s) -> collect_vars_e e;
+              collect_vars s
+        | For (e1, e2, e3, s) -> collect_vars_e e1;
+              collect_vars_e e2;
+              collect_vars_e e3;
+              collect_vars s
+        | Return e -> collect_vars_e e
     (*************************************************************)
 
 (* compiles a Fish statement down to a list of MIPS instructions.

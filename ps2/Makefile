@@ -6,7 +6,7 @@ COMPILER=ocamlc
  
 all: clean
 	$(COMPILER) -c ast.ml
-	ocamlyacc parse.mly
+	ocamlyacc -v parse.mly
 	$(COMPILER) -c parse.mli
 	$(COMPILER) -c parse.ml
 	ocamllex lex.mll
@@ -16,7 +16,7 @@ all: clean
 	$(COMPILER) -c mips.ml
 	$(COMPILER) -c compile.ml
 	$(COMPILER) -c fish.ml
-	$(COMPILER) -o ps3 ast.cmo parse.cmo lex.cmo eval.cmo  word32.cmo mips.cmo compile.cmo fish.cmo
+	$(COMPILER) -o ps2 ast.cmo parse.cmo lex.cmo eval.cmo  word32.cmo mips.cmo compile.cmo fish.cmo
 
 clean:
 	-rm *.cmo *.cmi ps3 parse.ml parse.mli lex.ml
