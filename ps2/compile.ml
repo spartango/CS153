@@ -67,14 +67,63 @@ let rec collect_vars (p : Ast.program) : unit =
         | Return e -> collect_vars_e e
     (*************************************************************)
 
+(* Appends x onto the end of lst. lst is a reversed list*)
+let rec revapp (x: 'a list) (lst: 'a list) : 'a list=
+    match x with
+        | [] -> lst
+        | head::tail -> revapp tail (head::lst)
+
+let rev x = revapp x []
+
+let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list = 
+    match e with
+        | Var v -> revapp [La(R2, v); Lw(R2,R2, Int32.zero)] is
+        | Int i -> Li(R2, Word32.fromInt i)::is
+        | Binop(e1,op,e2) ->
+              let oper = (match op with 
+                  | Plus  -> Add(R2, R2, Reg(R3))
+                  | Minus -> Sub(R2, R2, R3)
+                  | Times -> Mul(R2, R2, R3)
+                  | Div   -> Mips.Div(R2, R2, R3)) in
+              let t = new_temp() in
+                  (* This list must be reversed *)
+                  revapp [oper] (revapp (compile_exp_r e2 []) 
+                                     (revapp [La(R3,t); Lw(R3,R3, Int32.zero)]
+                                          (revapp [La(R3,t); Sw(R2,R3, Int32.zero)]
+                                               (compile_exp_r e1 is))))
+                                         
+        | _ -> raise IMPLEMENT_ME
+(*
+              let oper = (match op with
+                  (* Reg for third parameter b/c operand definition *)
+                  | Plus  -> Add(R2, R2, Reg(R3))
+                  | Minus -> Sub(R2, R2, R3)
+                  | Times -> Mul(R2, R2, R3)
+                  | Div   -> Mips.Div(R2, R2, R3)) in
+              let t = new_temp() in
+                  compile_exp_r e1
+                      (revapp [La(R3,t); Sw(R2,R3, Int32.zero)] 
+                           (compile_exp_r e2
+                                (revapp [La(R3,t); Lw(R3,R3, Int32.zero)]
+                                (oper::is))))
+*)
+
+let compile_exp (e: Ast.exp) : inst list =
+    rev (compile_exp_r e [])
+
+let rec compile_stmt_r ((s,_): Ast.stmt) (is: inst list) : inst list =
+    match s with
+        | Exp e -> revapp (compile_exp e) is
+        | Seq (s1, s2) ->
+              compile_stmt_r s2 (compile_stmt_r s1 is)
+        | _ -> raise IMPLEMENT_ME
+
 (* compiles a Fish statement down to a list of MIPS instructions.
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
  *)
-let rec compile_stmt ((s,_):Ast.stmt) : inst list = 
-    (*************************************************************)
-    raise IMPLEMENT_ME
-    (*************************************************************)
+let compile_stmt (s :Ast.stmt) : inst list = 
+    rev (compile_stmt_r s [])
 
 (* compiles Fish AST down to MIPS instructions and a list of global vars *)
 let compile (p : Ast.program) : result = 

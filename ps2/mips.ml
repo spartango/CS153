@@ -19,7 +19,7 @@ type reg = R0
      | R28
             | R29 | R30 |R31  (* used for special purposes... *)
 
-type operand = reg | Word32.word
+type operand = Reg of reg | Immed of Word32.word
 
 type inst =
   Add of reg * reg * operand  
