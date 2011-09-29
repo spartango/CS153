@@ -81,18 +81,38 @@ let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list =
         | Int i -> Li(R2, Word32.fromInt i)::is
         | Binop(e1,op,e2) ->
               let oper = (match op with 
-                  | Plus  -> Add(R2, R2, Reg(R3))
-                  | Minus -> Sub(R2, R2, R3)
-                  | Times -> Mul(R2, R2, R3)
-                  | Div   -> Mips.Div(R2, R2, R3)) in
+                  | Plus  -> Add(R2, R3, Reg(R2))
+                  | Minus -> Sub(R2, R3, R2)
+                  | Times -> Mul(R2, R3, R2)
+                  | Div   -> Mips.Div(R2, R3, R2)
+                  | Eq    -> Mips.Seq(R2, R3, R2)
+                  | Neq   -> Sne(R2, R3, R2)
+                  | Lt    -> Slt(R2, R3, R2)
+                  | Lte   -> Sle(R2, R3, R2)
+                  | Gt    -> Sgt(R2, R3, R2)
+                  | Gte   -> Sge(R2, R3, R2)) in
               let t = new_temp() in
                   (* This list must be reversed *)
                   revapp [oper] (revapp (compile_exp_r e2 []) 
                                      (revapp [La(R3,t); Lw(R3,R3, Int32.zero)]
                                           (revapp [La(R3,t); Sw(R2,R3, Int32.zero)]
                                                (compile_exp_r e1 is))))
-                                         
-        | _ -> raise IMPLEMENT_ME
+        (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
+        | Not(e1) -> compile_exp_r e1 (Mips.Seq(R2, R3, R0)::is)
+        | And(e1, e2) -> 
+              let t = new_temp() in
+                  revapp [La(R3, t); Lw(R3, R3, Int32.zero); 
+                          Mips.And(R2, R3, Reg R2)] 
+                      (compile_exp_r e2
+                           (revapp [La(R3, t); Sw(R2, R3, Int32.zero)]
+                                     (compile_exp_r e1 is)))
+
+        | Or(e1, e2) -> revapp [Mips.Or(R2, R3, Reg R2)] 
+                                     (revapp (compile_exp_r e2 []) 
+                                     (compile_exp_r e1 is))
+        | Assign(v, e) -> revapp [Sw(R2,R3, Int32.zero)] 
+              (compile_exp_r e (revapp [La(R3, v)] is))
+
 (*
               let oper = (match op with
                   (* Reg for third parameter b/c operand definition *)
@@ -116,6 +136,9 @@ let rec compile_stmt_r ((s,_): Ast.stmt) (is: inst list) : inst list =
         | Exp e -> revapp (compile_exp e) is
         | Seq (s1, s2) ->
               compile_stmt_r s2 (compile_stmt_r s1 is)
+        | Return (e) ->
+              revapp [Jr(R31)] 
+                  (revapp (compile_exp e) is)
         | _ -> raise IMPLEMENT_ME
 
 (* compiles a Fish statement down to a list of MIPS instructions.
