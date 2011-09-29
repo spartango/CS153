@@ -107,9 +107,13 @@ let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list =
                            (revapp [La(R3, t); Sw(R2, R3, Int32.zero)]
                                      (compile_exp_r e1 is)))
 
-        | Or(e1, e2) -> revapp [Mips.Or(R2, R3, Reg R2)] 
-                                     (revapp (compile_exp_r e2 []) 
-                                     (compile_exp_r e1 is))
+        | Or(e1, e2) ->
+              let t = new_temp() in
+                  revapp [La(R3, t); Lw(R3, R3, Int32.zero); 
+                          Mips.Or(R2, R3, Reg R2)] 
+                      (compile_exp_r e2
+                           (revapp [La(R3, t); Sw(R2, R3, Int32.zero)]
+                                     (compile_exp_r e1 is)))
         | Assign(v, e) -> revapp [Sw(R2,R3, Int32.zero)] 
               (compile_exp_r e (revapp [La(R3, v)] is))
 
