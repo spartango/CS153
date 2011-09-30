@@ -68,14 +68,14 @@ let rec collect_vars (p : Ast.program) : unit =
     (*************************************************************)
 
 (* Appends x onto the end of lst. lst is a reversed list*)
-let rec revapp (x: 'a list) (lst: 'a list) : 'a list=
+let rec revapp (accum: 'a list) (x: 'a list) : 'a list=
     match x with
-        | [] -> lst
-        | head::tail -> revapp tail (head::lst)
+        | [] -> accum
+        | head::tail -> revapp (head::accum) tail
 
-let rev x = revapp x []
+let rev x = revapp [] x
 
-let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list =
+let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
     (* Factors out common code for compiling two nested expressions and
      * carrying out some instruction. The result of e1 is stored in R3,
      * the result of e2 in R2. in is the instruction to carry out on these
@@ -83,16 +83,12 @@ let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list =
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
         let t = new_temp() in
             (* Load result of first expression and carry out instruction *)
-            revapp [La(R3, t); Lw(R3, R3, Int32.zero); 
-                    instruction] 
-                (* Compile second expression *)
-                (compile_exp_r e2
-                     (* Store result of first expression *)
-                     (revapp [La(R3, t); Sw(R2, R3, Int32.zero)]
-                          (* Compile e1 and append to accumulator *)
-                          (compile_exp_r e1 is))) in  
+            revapp (compile_exp_r 
+                        (revapp (compile_exp_r is e1) [La(R3, t); Sw(R2, R3, Int32.zero)])
+                        e2)
+                [La(R3, t); Lw(R3, R3, Int32.zero); instruction] in  
         match e with
-        | Var v -> revapp [La(R2, v); Lw(R2,R2, Int32.zero)] is
+        | Var v -> revapp is [La(R2, v); Lw(R2,R2, Int32.zero)]
         | Int i -> Li(R2, Word32.fromInt i)::is
         | Binop(e1,op,e2) ->
               let oper = (match op with 
@@ -106,28 +102,26 @@ let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list =
                   | Lte   -> Sle(R2, R3, R2)
                   | Gt    -> Sgt(R2, R3, R2)
                   | Gte   -> Sge(R2, R3, R2)) in
-              let t = new_temp() in
                   dual_op e1 e2 oper
         (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
-        | Not(e1) -> compile_exp_r e1 (Mips.Seq(R2, R3, R0)::is)
+        | Not(e) -> revapp (compile_exp_r is e) [Mips.Seq(R2, R3, R0)]
         | And(e1, e2) -> 
               dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
         | Or(e1, e2) ->
               dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
-        | Assign(v, e) -> revapp [Sw(R2,R3, Int32.zero)] 
-              (compile_exp_r e (revapp [La(R3, v)] is))
-
+        | Assign(v, e) -> revapp (compile_exp_r is e) [La(R3, v); Sw(R2,R3, Int32.zero)] 
+              
 let compile_exp (e: Ast.exp) : inst list =
-    rev (compile_exp_r e [])
+    rev (compile_exp_r [] e)
 
-let rec compile_stmt_r ((s,_): Ast.stmt) (is: inst list) : inst list =
+let rec compile_stmt_r (is: inst list) ((s,_): Ast.stmt)  : inst list =
     match s with
-        | Exp e -> revapp (compile_exp e) is
+        | Exp e -> revapp is (compile_exp e)
         | Seq (s1, s2) ->
-              compile_stmt_r s2 (compile_stmt_r s1 is)
+              compile_stmt_r (compile_stmt_r is s1) s2
         | Return (e) ->
-              revapp [Jr(R31)] 
-                  (revapp (compile_exp e) is)
+              revapp (revapp is (compile_exp e)) [Jr(R31)] 
+                 
         | _ -> raise IMPLEMENT_ME
 
 (* compiles a Fish statement down to a list of MIPS instructions.
@@ -135,7 +129,7 @@ let rec compile_stmt_r ((s,_): Ast.stmt) (is: inst list) : inst list =
  * value in R2 and then doing a Jr R31.
  *)
 let compile_stmt (s :Ast.stmt) : inst list = 
-    rev (compile_stmt_r s [])
+    rev (compile_stmt_r [] s)
 
 (* compiles Fish AST down to MIPS instructions and a list of global vars *)
 let compile (p : Ast.program) : result = 
