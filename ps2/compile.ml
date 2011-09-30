@@ -114,7 +114,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
 let compile_exp (e: Ast.exp) : inst list =
     rev (compile_exp_r [] e)
 
-let rec compile_stmt_r (is: inst list) ((s,_): Ast.stmt)  : inst list =
+let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
         | Exp e -> compile_exp_r is e
@@ -131,12 +131,29 @@ let rec compile_stmt_r (is: inst list) ((s,_): Ast.stmt)  : inst list =
                                    [J(end_l); Label(else_l)])
                                else_s)
                           [Label(end_l)])
-                               
+        | While(e, s) ->
+              let test_l = new_label () in
+              let top_l = new_label () in
+              revapp 
+                  (compile_exp_r (
+                       revapp 
+                           (compile_stmt_r 
+                           (revapp is [J(test_l); Label(top_l)]) 
+                           s)
+                           [Label(test_l)])
+                       e)
+                  [Bne(R2,R0,top_l)]
+        | For(e1, e2, e3, s) ->
+              let get_pos s = let (_,p) = s in p in 
+              compile_stmt_r is ((Ast.Seq(
+                                      (Ast.Exp e1, (get_pos e1)),
+                                         (While(
+                                              e2,
+                                              (Ast.Seq(s, (Ast.Exp e3, (get_pos e3))), get_pos s)),
+                                          pos))),
+                                 pos)
         | Return (e) ->
               revapp (compile_exp_r is e) [Jr(R31)] 
-                 
-        | _ -> raise IMPLEMENT_ME
-
 (* compiles a Fish statement down to a list of MIPS instructions.
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
