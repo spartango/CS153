@@ -67,7 +67,8 @@ let rec collect_vars (p : Ast.program) : unit =
         | Return e -> collect_vars_e e
     (*************************************************************)
 
-(* Appends x onto the end of lst. lst is a reversed list*)
+(* Prepends reversed x onto accum. Order of parameters for 
+ * readability of code *)
 let rec revapp (accum: 'a list) (x: 'a list) : 'a list=
     match x with
         | [] -> accum
@@ -110,9 +111,6 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
         | Or(e1, e2) ->
               dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
         | Assign(v, e) -> revapp (compile_exp_r is e) [La(R3, v); Sw(R2,R3, Int32.zero)] 
-              
-let compile_exp (e: Ast.exp) : inst list =
-    rev (compile_exp_r [] e)
 
 let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
     match s with
@@ -121,6 +119,7 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
         | Seq (s1, s2) ->
               compile_stmt_r (compile_stmt_r is s1) s2
         | If(e, then_s, else_s) ->
+              (* Test e, branch to else_s if not equal *)
               let else_l = new_label() in
               let end_l = new_label () in
               revapp (compile_exp_r is e) 
@@ -143,8 +142,11 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
                            [Label(test_l)])
                        e)
                   [Bne(R2,R0,top_l)]
+        (* Transform for loops into while loops *)
         | For(e1, e2, e3, s) ->
+              (* Helper to get position out of statement *)
               let get_pos s = let (_,p) = s in p in 
+              (* Nastiness due to necesity of having position informaiton *)
               compile_stmt_r is ((Ast.Seq(
                                       (Ast.Exp e1, (get_pos e1)),
                                          (While(
