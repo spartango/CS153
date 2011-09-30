@@ -75,8 +75,23 @@ let rec revapp (x: 'a list) (lst: 'a list) : 'a list=
 
 let rev x = revapp x []
 
-let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list = 
-    match e with
+let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list =
+    (* Factors out common code for compiling two nested expressions and
+     * carrying out some instruction. The result of e1 is stored in R3,
+     * the result of e2 in R2. in is the instruction to carry out on these
+     * results *)
+    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
+        let t = new_temp() in
+            (* Load result of first expression and carry out instruction *)
+            revapp [La(R3, t); Lw(R3, R3, Int32.zero); 
+                    instruction] 
+                (* Compile second expression *)
+                (compile_exp_r e2
+                     (* Store result of first expression *)
+                     (revapp [La(R3, t); Sw(R2, R3, Int32.zero)]
+                          (* Compile e1 and append to accumulator *)
+                          (compile_exp_r e1 is))) in  
+        match e with
         | Var v -> revapp [La(R2, v); Lw(R2,R2, Int32.zero)] is
         | Int i -> Li(R2, Word32.fromInt i)::is
         | Binop(e1,op,e2) ->
@@ -92,45 +107,15 @@ let rec compile_exp_r ((e,_): Ast.exp) (is: inst list) : inst list =
                   | Gt    -> Sgt(R2, R3, R2)
                   | Gte   -> Sge(R2, R3, R2)) in
               let t = new_temp() in
-                  (* This list must be reversed *)
-                  revapp [oper] (revapp (compile_exp_r e2 []) 
-                                     (revapp [La(R3,t); Lw(R3,R3, Int32.zero)]
-                                          (revapp [La(R3,t); Sw(R2,R3, Int32.zero)]
-                                               (compile_exp_r e1 is))))
+                  dual_op e1 e2 oper
         (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
         | Not(e1) -> compile_exp_r e1 (Mips.Seq(R2, R3, R0)::is)
         | And(e1, e2) -> 
-              let t = new_temp() in
-                  revapp [La(R3, t); Lw(R3, R3, Int32.zero); 
-                          Mips.And(R2, R3, Reg R2)] 
-                      (compile_exp_r e2
-                           (revapp [La(R3, t); Sw(R2, R3, Int32.zero)]
-                                     (compile_exp_r e1 is)))
-
+              dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
         | Or(e1, e2) ->
-              let t = new_temp() in
-                  revapp [La(R3, t); Lw(R3, R3, Int32.zero); 
-                          Mips.Or(R2, R3, Reg R2)] 
-                      (compile_exp_r e2
-                           (revapp [La(R3, t); Sw(R2, R3, Int32.zero)]
-                                     (compile_exp_r e1 is)))
+              dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
         | Assign(v, e) -> revapp [Sw(R2,R3, Int32.zero)] 
               (compile_exp_r e (revapp [La(R3, v)] is))
-
-(*
-              let oper = (match op with
-                  (* Reg for third parameter b/c operand definition *)
-                  | Plus  -> Add(R2, R2, Reg(R3))
-                  | Minus -> Sub(R2, R2, R3)
-                  | Times -> Mul(R2, R2, R3)
-                  | Div   -> Mips.Div(R2, R2, R3)) in
-              let t = new_temp() in
-                  compile_exp_r e1
-                      (revapp [La(R3,t); Sw(R2,R3, Int32.zero)] 
-                           (compile_exp_r e2
-                                (revapp [La(R3,t); Lw(R3,R3, Int32.zero)]
-                                (oper::is))))
-*)
 
 let compile_exp (e: Ast.exp) : inst list =
     rev (compile_exp_r e [])
