@@ -116,11 +116,24 @@ let compile_exp (e: Ast.exp) : inst list =
 
 let rec compile_stmt_r (is: inst list) ((s,_): Ast.stmt)  : inst list =
     match s with
-        | Exp e -> revapp is (compile_exp e)
+         (* Using compile_exp_r directly eliminates redundant reversing the list *)
+        | Exp e -> compile_exp_r is e
         | Seq (s1, s2) ->
               compile_stmt_r (compile_stmt_r is s1) s2
+        | If(e, then_s, else_s) ->
+              let else_l = new_label() in
+              let end_l = new_label () in
+              revapp (compile_exp_r is e) 
+                  (revapp 
+                          (compile_stmt_r (
+                               revapp 
+                                   (compile_stmt_r [Beq(R2,R0,else_l)] then_s)
+                                   [J(end_l); Label(else_l)])
+                               else_s)
+                          [Label(end_l)])
+                               
         | Return (e) ->
-              revapp (revapp is (compile_exp e)) [Jr(R31)] 
+              revapp (compile_exp_r is e) [Jr(R31)] 
                  
         | _ -> raise IMPLEMENT_ME
 
