@@ -4,7 +4,7 @@
 # change to a different ocamlc if you prefer (e.g., ocamlopt)
 COMPILER=ocamlc
  
-all: clean compile test
+all: clean compile test run_tests
 
 test: compile
 	./tests

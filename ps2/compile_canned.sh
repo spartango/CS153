@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "Compiling Canned Fish Tests\n---"
+echo "[==========] Compiling Canned Fish Tests"
 
 rm -rf compiled_tests
 
@@ -11,7 +11,7 @@ if [[ -e ps2 ]]; then
 		target=${filename%.fish}
 		output_file="compiled_tests/${target:5}.asm"
 
-		echo "Compiling: ${filename:5}"
+		echo "\x1b\x5b1;36m[COMPILING ]\x1b\x5b0m ${filename:5}"
 		# Tags on the debug print stuff at the header of the program so we can actually test
 		cat print.asm > $output_file
 		echo "\n" >> $output_file
@@ -25,7 +25,7 @@ if [[ -e ps2 ]]; then
 		rm $output_file
 	done 
 else 
-	echo "Error: Compiler not found"
+	echo "\x1b\x5b1;31m[  ERROR   ]\x1b\x5b0m: Compiler  not found"
 fi
 
-echo "---\nCompleted"
+echo "[==========] Complete"
