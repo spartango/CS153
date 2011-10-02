@@ -14,7 +14,7 @@ let collect_assign_test =
 		in 
 		let _ = reset () in
 		let _ = (collect_vars prog) in
-		VarSet.exists (fun x -> x = "V_y") !variables 
+		(find_var "Vy")
 	in
 	Test("Assignment Var Collect", test)
 ;;
@@ -30,7 +30,7 @@ let collect_rec_assign_test =
 		in 
 		let _ = reset () in
 		let _ = (collect_vars prog) in
-		VarSet.exists (fun x -> x = "V_x") !variables 
+		find_var "Vx" 
 	in
 	Test("Nested Assign Var Collect", test)
 ;;
@@ -46,7 +46,7 @@ let collect_exp_assign_test =
 		in 
 		let _ = reset () in
 		let _ = (collect_vars prog) in
-		VarSet.exists (fun x -> x = "V_x") !variables 
+		find_var "Vx" 
 	in
 	Test("Expression Assign Var Collect", test)
 ;;
