@@ -40,9 +40,9 @@ let rec collect_vars (p : Ast.program) : unit =
     let stip_pos r = let(v,_) = r in v in
     let rec collect_vars_e (e: Ast.exp) : unit =
         match (stip_pos e) with
-            | Var v -> add_var v
+            | Var v -> add_var ("V_"^v)
             | Assign (v, e1) ->
-                  let _ = add_var v in collect_vars_e e1
+                  let _ = add_var ("V_"^v) in collect_vars_e e1
             | Int _ -> ()
             | Binop(e1, _, e2) -> collect_vars_e e1;
                   collect_vars_e e2
@@ -89,7 +89,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
                         e2)
                 [La(R3, t); Lw(R3, R3, Int32.zero); instruction] in  
         match e with
-        | Var v -> revapp is [La(R2, v); Lw(R2,R2, Int32.zero)]
+        | Var v -> revapp is [La(R2, "V_"^v); Lw(R2,R2, Int32.zero)]
         | Int i -> Li(R2, Word32.fromInt i)::is
         | Binop(e1,op,e2) ->
               let oper = (match op with 
@@ -110,7 +110,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
               dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
         | Or(e1, e2) ->
               dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
-        | Assign(v, e) -> revapp (compile_exp_r is e) [La(R3, v); Sw(R2,R3, Int32.zero)] 
+        | Assign(v, e) -> revapp (compile_exp_r is e) [La(R3, "V_"^v); Sw(R2,R3, Int32.zero)] 
 
 (* Compiles a statement in reverse order *)
 let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
