@@ -94,8 +94,38 @@ let compile_assign_test =
 ;;
 
 (* Tests for compiling specific statements *)
-
-(* Tests for compiling compound statements *)
+let compile_if_assign_test = 
+	let if_cond     = (Int(0), 0) in
+	let then_assign = (Ast.Exp(
+						(Ast.Assign("y", 
+								    (Int(1), 0)
+									), 0)
+								), 0)
+	in
+	let else_c      = (skip, 0) in
+	let if_stmt = (Ast.If(
+						  if_cond,
+						  then_assign,
+						  else_c), 0)
+	in 
+	let test = fun () -> 
+		let compiled = (compile_stmt if_stmt) in
+		let success  = 
+			(compiled =
+			[ Li(R2, 0l); 
+			  Beq(R2, R0, "L1");
+			  Li(R2, 1l); 
+			  La(R3, "Vy"); 
+			  Sw(R2,R3, 0l);
+			  J("L2");
+			  Label("L1");
+			  Li(R2, 0l); 
+			  Label("L2"); ]
+			)
+		in success
+	in 
+	Test("Compile If-Assign hybrid", test) 
+;;
 
 
 (* TODO: Implement tests *)
@@ -110,10 +140,8 @@ run_test_set [ collect_assign_test;
 			   collect_exp_assign_test; ] 
 			 "Collect Var Tests";;
 
-run_test_set [compile_assign_test] "Compile Expression Tests";;
+run_test_set [ compile_assign_test ] "Compile Expression Tests";;
 
-run_test_set [stub] "Compile Statment Tests";;
-
-run_test_set [stub] "Compile Block Statement Tests";;
+run_test_set [ compile_if_assign_test ] "Compile Statment Tests";;
 
 

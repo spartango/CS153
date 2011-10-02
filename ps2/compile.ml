@@ -96,16 +96,16 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
         | Int i -> Li(R2, Word32.fromInt i)::is
         | Binop(e1,op,e2) ->
               let oper = (match op with 
-                  | Plus  -> Add(R2, R3, Reg(R2))
-                  | Minus -> Sub(R2, R3, R2)
-                  | Times -> Mul(R2, R3, R2)
+                  | Plus  -> Mips.Add(R2, R3, Reg(R2))
+                  | Minus -> Mips.Sub(R2, R3, R2)
+                  | Times -> Mips.Mul(R2, R3, R2)
                   | Div   -> Mips.Div(R2, R3, R2)
                   | Eq    -> Mips.Seq(R2, R3, R2)
-                  | Neq   -> Sne(R2, R3, R2)
-                  | Lt    -> Slt(R2, R3, R2)
-                  | Lte   -> Sle(R2, R3, R2)
-                  | Gt    -> Sgt(R2, R3, R2)
-                  | Gte   -> Sge(R2, R3, R2)) in
+                  | Neq   -> Mips.Sne(R2, R3, R2)
+                  | Lt    -> Mips.Slt(R2, R3, R2)
+                  | Lte   -> Mips.Sle(R2, R3, R2)
+                  | Gt    -> Mips.Sgt(R2, R3, R2)
+                  | Gte   -> Mips.Sge(R2, R3, R2)) in
                   dual_op e1 e2 oper
         (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
         | Not(e) -> revapp (compile_exp_r is e) [Mips.Seq(R2, R3, R0)]
@@ -127,14 +127,14 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
               let else_l = new_label () in
               let end_l  = new_label () in
               revapp (compile_exp_r is e) 
-                  (revapp 
+                     (rev (revapp 
                           (compile_stmt_r 
                             (revapp 
                                    (compile_stmt_r [Beq(R2,R0,else_l)] then_s)
                                    [J(end_l); Label(else_l)]
                             )
                             else_s)
-                          [Label(end_l)])
+                          [Label(end_l)]))
         | While(e, s) ->
               let test_l = new_label () in
               let top_l  = new_label () in
