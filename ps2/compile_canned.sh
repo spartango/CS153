@@ -11,7 +11,7 @@ if [[ -e ps2 ]]; then
 		target=${filename%.fish}
 		output_file="compiled_tests/${target:5}.asm"
 
-		echo "\x1b\x5b1;36m[COMPILING ]\x1b\x5b0m ${filename:5}"
+		echo "\x1b\x5b1;36m[ COMPILE  ]\x1b\x5b0m ${filename:5}"
 		# Tags on the debug print stuff at the header of the program so we can actually test
 		cat print.asm > $output_file
 		echo "\n" >> $output_file
