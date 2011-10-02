@@ -9,6 +9,9 @@ all: clean compile test
 test: compile
 	./tests
 
+canned_tests: compile
+	./compile_canned.sh
+
 compile:
 	$(COMPILER) -c ast.ml
 	ocamlyacc -v parse.mly
@@ -28,4 +31,4 @@ compile:
 	$(COMPILER) -o tests ast.cmo parse.cmo lex.cmo eval.cmo  word32.cmo mips.cmo compile.cmo pretty_print.cmo test_framework.cmo compile_tests.cmo
 
 clean:
-	-rm *.cmo *.cmi ps2 parse.ml parse.mli lex.ml tests parse.output
+	rm -rf *.cmo *.cmi ps2 parse.ml parse.mli lex.ml tests parse.output compiled_tests

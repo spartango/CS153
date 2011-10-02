@@ -37,7 +37,6 @@ let reset() = (label_counter := 0; variables := VarSet.empty)
 (* find all of the variables in a program and add them to
  * the set variables *)
 let rec collect_vars (p : Ast.program) : unit = 
-    (*************************************************************)
     let stip_pos r = let(v,_) = r in v in
     let rec collect_vars_e (e: Ast.exp) : unit =
         match (stip_pos e) with
@@ -50,7 +49,8 @@ let rec collect_vars (p : Ast.program) : unit =
             | And (e1, e2) -> collect_vars_e e1;
                   collect_vars_e e2
             | Or (e1, e2) -> collect_vars_e e1;
-                  collect_vars_e e2 in
+                  collect_vars_e e2 
+    in
     match (stip_pos p) with
         | Exp e -> collect_vars_e e
         | Seq (s1, s2) -> collect_vars s1;
@@ -65,7 +65,6 @@ let rec collect_vars (p : Ast.program) : unit =
               collect_vars_e e3;
               collect_vars s
         | Return e -> collect_vars_e e
-    (*************************************************************)
 
 (* Prepends reversed x onto accum. Order of parameters for 
  * readability of code *)
@@ -76,11 +75,11 @@ let rec revapp (accum: 'a list) (x: 'a list) : 'a list=
 
 let rev x = revapp [] x
 
+(* Factors out common code for compiling two nested expressions and
+ * carrying out some instruction. The result of e1 is stored in R3,
+ * the result of e2 in R2. in is the instruction to carry out on these
+ * results *)
 let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
-    (* Factors out common code for compiling two nested expressions and
-     * carrying out some instruction. The result of e1 is stored in R3,
-     * the result of e2 in R2. in is the instruction to carry out on these
-     * results *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
         let t = new_temp() in
             (* Load result of first expression and carry out instruction *)
@@ -112,6 +111,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
               dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
         | Assign(v, e) -> revapp (compile_exp_r is e) [La(R3, v); Sw(R2,R3, Int32.zero)] 
 
+(* Compiles a statement in reverse order *)
 let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
@@ -156,6 +156,7 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
                                  pos)
         | Return (e) ->
               revapp (compile_exp_r is e) [Jr(R31)] 
+             
 (* compiles a Fish statement down to a list of MIPS instructions.
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
