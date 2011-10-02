@@ -1,6 +1,5 @@
 open Mips
 open Ast
-open Compile
 
 (* Functions that optimize *)
 
@@ -13,4 +12,5 @@ let thread_jumps (insts : inst list) : inst list =
 		(* If the target starts with a jump *)
 		(* Change this jump to the second target *)
 		(* Inspect *)
+	[]
 
