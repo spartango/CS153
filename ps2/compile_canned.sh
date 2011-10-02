@@ -8,9 +8,21 @@ mkdir compiled_tests
 
 if [[ -e ps2 ]]; then
 	for filename in `ls test/*.fish`; do
-		output=${filename%.fish}
-		echo "Compiling: ${filename:4}"
-		./ps2 $filename > compiled_tests/${output:4}.asm
+		target=${filename%.fish}
+		output_file="compiled_tests/${target:5}.asm"
+
+		echo "Compiling: ${filename:5}"
+		# Tags on the debug print stuff at the header of the program so we can actually test
+		cat print.asm > $output_file
+		echo "\n" >> $output_file
+		# Compile
+		./ps2 $filename >> $output_file
+
+		# Tag on little bits to print out the results of the program
+		awk -v modified="${output_file%.asm}_test.asm" '{sub(/jr\t\$31/,"move $a0, $2\n\tj printInt");print > modified}' $output_file
+
+		# We don't need to keep the leftovers
+		rm $output_file
 	done 
 fi
 
