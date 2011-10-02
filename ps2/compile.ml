@@ -1,6 +1,7 @@
 (* Compile Fish AST to MIPS AST *)
 open Mips
 open Ast
+open Optimize
 
 exception IMPLEMENT_ME
 
@@ -174,7 +175,8 @@ let compile (p : Ast.program) : result =
     let _ = reset() in
     let _ = collect_vars(p) in
     let insts = (Label "main") :: (compile_stmt p) in
-    { code = insts; data = VarSet.elements (!variables) }
+    let optimized = (thread_jumps insts) in
+    { code = optimized; data = VarSet.elements (!variables) }
 
 let code_to_string code = 
   List.map (fun x -> (Mips.inst2string x) ^ "\n") code
