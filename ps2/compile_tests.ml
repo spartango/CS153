@@ -12,6 +12,7 @@ let collect_assign_test =
 									), 0)
 								), 0)
 		in 
+		let _ = reset () in
 		let _ = (collect_vars prog) in
 		VarSet.exists (fun x -> x = "y") !variables 
 	in
@@ -20,7 +21,6 @@ let collect_assign_test =
 
 let collect_rec_assign_test = 
 	let test = fun () -> 
-		let variables : VarSet.t ref = ref (VarSet.empty) in
 		let prog = (Ast.Exp(
 						(Ast.Assign("y", 
 								  ((Ast.Assign("x", 
@@ -28,10 +28,27 @@ let collect_rec_assign_test =
 									), 0)
 								), 0)
 		in 
+		let _ = reset () in
 		let _ = (collect_vars prog) in
-		VarSet.exists (fun x -> x = "y") !variables 
+		VarSet.exists (fun x -> x = "x") !variables 
 	in
 	Test("Nested Assign Var Collect", test)
+;;
+
+let collect_exp_assign_test = 
+	let test = fun () -> 
+		let prog = (Ast.Exp(
+						(Ast.Binop((Int(5), 0), Ast.Plus, 
+								  ((Ast.Assign("x", 
+									  (Ast.Int(2), 0))), 0)
+									), 0)
+								), 0)
+		in 
+		let _ = reset () in
+		let _ = (collect_vars prog) in
+		VarSet.exists (fun x -> x = "x") !variables 
+	in
+	Test("Expression Assign Var Collect", test)
 ;;
 
 (* Tests for compiling expressions *)
@@ -46,7 +63,8 @@ let stub = Test("Implemented", (fun () -> false)  )
 ;;
 
 run_test_set [ collect_assign_test; 
-			   collect_rec_assign_test ] 
+			   collect_rec_assign_test;
+			   collect_exp_assign_test; ] 
 			 "Collect Var Tests";;
 
 run_test_set [stub] "Compile Expression Tests";;

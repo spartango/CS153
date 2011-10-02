@@ -41,7 +41,8 @@ let rec collect_vars (p : Ast.program) : unit =
     let rec collect_vars_e (e: Ast.exp) : unit =
         match (stip_pos e) with
             | Var v -> add_var v
-            | Assign (v, e1) -> add_var v
+            | Assign (v, e1) ->
+                  let _ = add_var v in collect_vars_e e1
             | Int _ -> ()
             | Binop(e1, _, e2) -> collect_vars_e e1;
                   collect_vars_e e2
