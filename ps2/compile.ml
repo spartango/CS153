@@ -9,7 +9,7 @@ type result = { code : Mips.inst list;
 
 (* generate fresh labels *)
 let label_counter = ref 0
-let new_int() = (label_counter := (!label_counter) + 1; !label_counter)
+let new_int()   = (label_counter := (!label_counter) + 1; !label_counter)
 let new_label() = "L" ^ (string_of_int (new_int()))
 
 (* sets of variables -- Ocaml Set and Set.S *)
@@ -74,7 +74,7 @@ let rec collect_vars (p : Ast.program) : unit =
  * readability of code *)
 let rec revapp (accum: 'a list) (x: 'a list) : 'a list=
     match x with
-        | [] -> accum
+        | []         -> accum
         | head::tail -> revapp (head::accum) tail
 
 let rev x = revapp [] x
@@ -124,19 +124,20 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
               compile_stmt_r (compile_stmt_r is s1) s2
         | If(e, then_s, else_s) ->
               (* Test e, branch to else_s if not equal *)
-              let else_l = new_label() in
-              let end_l = new_label () in
+              let else_l = new_label () in
+              let end_l  = new_label () in
               revapp (compile_exp_r is e) 
                   (revapp 
-                          (compile_stmt_r (
-                               revapp 
+                          (compile_stmt_r 
+                            (revapp 
                                    (compile_stmt_r [Beq(R2,R0,else_l)] then_s)
-                                   [J(end_l); Label(else_l)])
-                               else_s)
+                                   [J(end_l); Label(else_l)]
+                            )
+                            else_s)
                           [Label(end_l)])
         | While(e, s) ->
               let test_l = new_label () in
-              let top_l = new_label () in
+              let top_l  = new_label () in
               revapp 
                   (compile_exp_r (
                        revapp 
@@ -175,11 +176,14 @@ let compile (p : Ast.program) : result =
     let insts = (Label "main") :: (compile_stmt p) in
     { code = insts; data = VarSet.elements (!variables) }
 
+let code_to_string code = 
+  List.map (fun x -> (Mips.inst2string x) ^ "\n") code
+
 (* converts the output of the compiler to a big string which can be 
  * dumped into a file, assembled, and run within the SPIM simulator
  * (hopefully). *)
 let result2string ({code;data}:result) : string = 
-    let strs = List.map (fun x -> (Mips.inst2string x) ^ "\n") code in
+    let strs = code_to_string code in
     let var2decl x = x ^ ":\t.word 0\n" in
     "\t.text\n" ^
     "\t.align\t2\n" ^
