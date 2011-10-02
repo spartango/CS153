@@ -9,8 +9,11 @@ all: clean compile test
 test: compile
 	./tests
 
-canned_tests: compile
+compile_tests: compile
 	./compile_canned.sh
+
+run_tests: compile_tests
+	./run_tests.sh 
 
 compile:
 	$(COMPILER) -c ast.ml

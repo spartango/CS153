@@ -24,6 +24,8 @@ if [[ -e ps2 ]]; then
 		# We don't need to keep the leftovers
 		rm $output_file
 	done 
+else 
+	echo "Error: Compiler not found"
 fi
 
 echo "---\nCompleted"
