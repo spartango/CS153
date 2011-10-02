@@ -4,9 +4,9 @@
 # change to a different ocamlc if you prefer (e.g., ocamlopt)
 COMPILER=ocamlc
  
-all: clean compile
+all: clean compile test
 
-test: mips
+test: compile
 	./tests
 
 compile:
