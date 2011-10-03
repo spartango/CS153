@@ -25,13 +25,14 @@ compile:
 	$(COMPILER) -c eval.ml
 	$(COMPILER) -c word32.ml
 	$(COMPILER) -c mips.ml
+	$(COMPILER) -c optimize.ml
 	$(COMPILER) -c compile.ml
 	$(COMPILER) -c fish.ml
 	$(COMPILER) -c pretty_print.ml
 	$(COMPILER) -c test_framework.ml
 	$(COMPILER) -c compile_tests.ml
-	$(COMPILER) -o ps2 ast.cmo parse.cmo lex.cmo eval.cmo  word32.cmo mips.cmo compile.cmo fish.cmo
-	$(COMPILER) -o tests ast.cmo parse.cmo lex.cmo eval.cmo  word32.cmo mips.cmo compile.cmo pretty_print.cmo test_framework.cmo compile_tests.cmo
+	$(COMPILER) -o ps2 ast.cmo parse.cmo lex.cmo eval.cmo  word32.cmo mips.cmo optimize.cmo compile.cmo fish.cmo
+	$(COMPILER) -o tests ast.cmo parse.cmo lex.cmo eval.cmo  word32.cmo mips.cmo optimize.cmo compile.cmo pretty_print.cmo test_framework.cmo compile_tests.cmo
 
 clean:
 	rm -rf *.cmo *.cmi ps2 parse.ml parse.mli lex.ml tests parse.output compiled_tests

@@ -1,6 +1,7 @@
 open Test_framework
 open Pretty_print
 open Compile
+open Optimize
 open Ast
 open Mips
 
@@ -127,10 +128,43 @@ let compile_if_assign_test =
 	Test("Compile If-Assign hybrid", test) 
 ;;
 
-
-(* TODO: Implement tests *)
-let stub = Test("Implemented", (fun () -> false)  )
+let jump_thread_test = 
+	let code = 
+		[ 
+			Li(R2, 0l);
+			J("L2");
+			Label("L1");
+			J("L3");
+			Li(R2, 2l);
+			Label("L2");
+			J("L1");
+			Li(R2, 4l);
+			Label("L3");
+			Li(R2, 8l);
+		]
+	in 
+	let test = fun () -> 
+		let thin_code = thread_jumps code in
+		let success = 
+			(thin_code = 
+				[ 
+					Li(R2, 0l);
+					J("L3");
+					Label("L1");
+					J("L3");
+					Li(R2, 2l);
+					Label("L2");
+					J("L3");
+					Li(R2, 4l);
+					Label("L3");
+					Li(R2, 8l);
+				])
+		in 
+		success
+	in 
+	Test("Thread Jumps Test", test)
 ;;
+		
 
 run_test_set [ revapp_test;
 			   rev_test    ] "Utility Tests";;
@@ -144,4 +178,4 @@ run_test_set [ compile_assign_test ] "Compile Expression Tests";;
 
 run_test_set [ compile_if_assign_test ] "Compile Statment Tests";;
 
-
+run_test_set [ jump_thread_test ] "Jump threading Tests";;
