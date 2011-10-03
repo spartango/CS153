@@ -40,19 +40,38 @@ let thread_jumps (insts : inst list) : inst list =
 
 (* Constant folding: cutting constant-constant ops out of the AST *)
 let rec constant_fold  (statment : Ast.stmt) : Ast.stmt =
+	
+	(* Combine binary operations if possible *)
+	let combine_binop exp1 op exp2 =
+		let (rexp1, _) = exp1 in
+		let (rexp2, _) = exp2 in
+		match (rexp1, rexp2) with
+		| (Int(i1), Int(i2)) ->
+			match op with 
+			| Plus  -> Int(i1 +  i2)   
+			| Minus -> Int(i1 -  i2)   
+			| Times -> Int(i1 *  i2)   
+			| Div   -> Int(i1 /  i2) 
+			| Eq    -> Int(i1 =  i2)
+			| Neq   -> Int(i1 != i2) 
+			| Lt    -> Int(i1 <  i2)
+			| Lte   -> Int(i1 <= i2) 
+			| Gt    -> Int(i1 >  i2)
+			| Gte   -> Int(i1 >= i2) 
+		| _ -> Binop(exp1, op, exp2)
 
 	(* Handle expressions *)
 	let rec constant_fold_e (expression : Ast.exp) : Ast.exp =
 		let (rexpr, position) = expression in
 		let folded_expr = 
 			match rexpr with 
-			| Int 
-			| Var 
-			| Binop
-			| Not 
-			| And
-			| Or 
-			| Assign 
+			| Int(_)                -> rexpr
+			| Var(_)                -> rexpr
+			| Binop(exp1, op, exp2) -> (combine_binop (constant_fold_e exp1) op (constant_fold_e exp2))
+			| Not(t_exp) 			-> Not(constant_fold_e t_exp)
+			| And(exp1, exp2)		->
+			| Or(exp1, exp2)		-> 
+			| Assign(v, t_exp)		-> Assign(v, (constant_fold_e t_exp))
 		in 
 		(folded_expr, position)
 	in
