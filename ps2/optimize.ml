@@ -38,3 +38,34 @@ let thread_jumps (insts : inst list) : inst list =
 	thread_jumps_r [] insts
 ;; 
 
+(* Constant folding: cutting constant-constant ops out of the AST *)
+let rec constant_fold  (statment : Ast.stmt) : Ast.stmt =
+
+	(* Handle expressions *)
+	let rec constant_fold_e (expression : Ast.exp) : Ast.exp =
+		let (rexpr, position) = expression in
+		let folded_expr = 
+			match rexpr with 
+			| Int 
+			| Var 
+			| Binop
+			| Not 
+			| And
+			| Or 
+			| Assign 
+		in 
+		(folded_expr, position)
+	in
+
+	(* Break statements down *)
+	let (rstatement, position) = statement in
+	let folded_statement = 
+		match rstatement with 
+		| Seq(s1, s2)                    -> Seq((constant_fold s1), (constant_fold s2))
+		| Exp(expr)                      -> Exp(constant_fold_e expr)
+		| Return(expr)                   -> Return(constant_fold_e expr)
+		| If(expr, then_s, else_s)       -> If((constant_fold_e expr), (constant_fold then_s), (constant_fold else_s))
+		| While(expr, do_s)  	         -> While((constant_fold_e expr), (constant_fold do_s))
+		| For(expr1, expr2, expr3, do_s) -> For((constant_fold_e expr1), (constant_fold_e expr2), (constant_fold_e expr3), (constant_fold do_s))
+	in
+	(folded_statement, position)
