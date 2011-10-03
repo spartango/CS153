@@ -15,6 +15,9 @@ compile_tests: compile
 run_tests: compile_tests
 	./run_tests.sh 
 
+benchmark: compile_tests
+	./benchmark.sh
+
 compile:
 	$(COMPILER) -c ast.ml
 	ocamlyacc -v parse.mly
