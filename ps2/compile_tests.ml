@@ -164,7 +164,31 @@ let jump_thread_test =
 	in 
 	Test("Thread Jumps Test", test)
 ;;
+
+let constant_folding_test = 
+	let program = (Ast.Exp(
+						(Ast.Binop( 
+								    (Int(1), 0), 
+								    Ast.Plus, 
+								    (Int(1), 0)
+									), 0)
+								), 0)
 		
+	in
+	let test = fun () -> 
+		let folded = (constant_fold program) in
+		let success = 
+			(folded =
+				(Ast.Exp(
+						(Ast.Int(2), 0)
+								), 0)
+			)
+		in 
+		success
+	in
+	Test("Constant Folding Test", test)
+;;
+			
 
 run_test_set [ revapp_test;
 			   rev_test    ] "Utility Tests";;
@@ -178,4 +202,5 @@ run_test_set [ compile_assign_test ] "Compile Expression Tests";;
 
 run_test_set [ compile_if_assign_test ] "Compile Statment Tests";;
 
-run_test_set [ jump_thread_test ] "Optimization Tests";;
+run_test_set [ jump_thread_test;
+			   constant_folding_test; ] "Optimization Tests";;
