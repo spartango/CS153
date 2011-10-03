@@ -27,17 +27,19 @@ let thread_jumps (insts : inst list) : inst list =
 		| J(label_name)::_ -> (inspect_jump label_name)
 		| _ 			   -> last_label
 	in 
-	
-	(* For each instruction *)
-	let rec thread_jumps_r (upper_segment : inst list)  (lower_segment : inst list) =
-		(* Check if its a jump *)
-		match lower_segment with 
-		| []                  -> upper_segment
-		| J(label_name)::rest -> thread_jumps_r (upper_segment @ [J(inspect_jump label_name)]) rest
-	    | inst::rest          -> thread_jumps_r (upper_segment @ [inst]) rest
-	in
-	thread_jumps_r [] insts
+	(List.fold_left 
+					(fun accum t_inst ->
+						match t_inst with 
+						| J(label_name) -> accum @ [J(inspect_jump label_name)]
+						| _  			-> accum @ [t_inst]
+					)
+					[]
+					insts
+				)
 ;; 
+
+(* Conditional optimization: compressing slt + beq -> blt *)
+
 
 (* Constant folding: cutting constant-constant ops out of the AST *)
 let rec constant_fold  (statement : Ast.stmt) : Ast.stmt =
@@ -110,3 +112,5 @@ let rec constant_fold  (statement : Ast.stmt) : Ast.stmt =
 		| For(expr1, expr2, expr3, do_s) -> For((constant_fold_e expr1), (constant_fold_e expr2), (constant_fold_e expr3), (constant_fold do_s))
 	in
 	(folded_statement, position)
+;;
+
