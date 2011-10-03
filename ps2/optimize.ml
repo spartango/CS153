@@ -42,6 +42,11 @@ let thread_jumps (insts : inst list) : inst list =
 (* Constant folding: cutting constant-constant ops out of the AST *)
 let rec constant_fold  (statement : Ast.stmt) : Ast.stmt =
 	
+	let simple_not t_exp = 
+		match t_exp with
+		| (Int(i), pos) -> Int(bool2int (i != 0))
+		| _ 			-> Not(t_exp)
+	in
 	(* Combine and *)
 	let combine_and exp1 exp2 = 
 		let (rexp1, _) = exp1 in
@@ -85,7 +90,7 @@ let rec constant_fold  (statement : Ast.stmt) : Ast.stmt =
 			| Int(_)                -> rexpr
 			| Var(_)                -> rexpr
 			| Binop(exp1, op, exp2) -> (combine_binop (constant_fold_e exp1) op (constant_fold_e exp2))
-			| Not(t_exp) 			-> Not(constant_fold_e t_exp)
+			| Not(t_exp) 			-> simple_not (constant_fold_e t_exp)
 			| And(exp1, exp2)		-> (combine_and (constant_fold_e exp1) (constant_fold_e exp2))
 			| Or(exp1, exp2)		-> (combine_or  (constant_fold_e exp1) (constant_fold_e exp2))
 			| Assign(v, t_exp)		-> Assign(v, (constant_fold_e t_exp))
