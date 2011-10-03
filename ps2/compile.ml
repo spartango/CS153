@@ -172,9 +172,10 @@ let compile_stmt (s :Ast.stmt) : inst list =
 
 (* compiles Fish AST down to MIPS instructions and a list of global vars *)
 let compile (p : Ast.program) : result = 
+    let preoptimized = (constant_fold p) in
     let _ = reset() in
-    let _ = collect_vars(p) in
-    let insts = (Label "main") :: (compile_stmt p) in
+    let _ = collect_vars(preoptimized) in
+    let insts = (Label "main") :: (compile_stmt preoptimized) in
     let optimized = (thread_jumps insts) in
     { code = optimized; data = VarSet.elements (!variables) }
 
