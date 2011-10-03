@@ -178,4 +178,4 @@ run_test_set [ compile_assign_test ] "Compile Expression Tests";;
 
 run_test_set [ compile_if_assign_test ] "Compile Statment Tests";;
 
-run_test_set [ jump_thread_test ] "Jump threading Tests";;
+run_test_set [ jump_thread_test ] "Optimization Tests";;
