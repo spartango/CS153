@@ -34,4 +34,4 @@ run_tests: compile_tests
 benchmark: compile_tests
 
 clean:
-	rm -rf *.cmo *.cmi ps4 parse.ml parse.mli lex.ml compiled_tests
+	rm -rf *.cmo *.cmi ps4 tests parse.ml parse.mli lex.ml compiled_tests
