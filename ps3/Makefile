@@ -4,7 +4,10 @@
 # change to a different ocamlc if you prefer (e.g., ocamlopt)
 COMPILER=ocamlc
  
-all: clean
+all: clean compile test
+
+
+compile:
 	$(COMPILER) -c ast.ml
 	ocamlyacc parse.mly
 	$(COMPILER) -c parse.mli
@@ -18,5 +21,13 @@ all: clean
 	$(COMPILER) -c cish.ml
 	$(COMPILER) -o ps4 ast.cmo parse.cmo lex.cmo eval.cmo word32.cmo mips.cmo compile.cmo cish.cmo
 
+test: compile 
+
+compile_tests: test
+
+run_tests: compile_tests
+
+benchmark: compile_tests
+
 clean:
-	-rm *.cmo *.cmi ps4 parse.ml parse.mli lex.ml
+	rm -rf *.cmo *.cmi ps4 parse.ml parse.mli lex.ml compiled_tests
