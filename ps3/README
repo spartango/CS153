@@ -1,0 +1,62 @@
+Your job for this assignment is to implement a compiler that maps Cish
+source code down to MIPS assembly.  Cish is quite similar to Fish
+except that it adds functions, function calls, and local variables.
+
+A Cish program is a list of functions.  Each function is of the form
+
+  var(var1,...,varn) { stmt_list }
+
+mimicking functions in C.  Here, var is the name of the function and
+var1,...,varn are the formal parameters of the functions.  The {
+stmt_list } is a statement which should return an integer value to the
+caller.  The distinguished function main is used to launch the
+program.  For Cish, main should take no arguments.
+
+To statements, we have added a new form:
+
+   stmt ::= ... | let var = exp; stmt
+
+The intention is that this evaluates the expression exp, then declares
+a new, locally-scoped variables var, and assigns the value of exp to
+var as its initial value.  The scope of var extends across the
+adjacent statement, and becomes unavailable outside.
+
+To expressions, we have added a new form var(exp1,...,expn) which
+represents a function call.  Here, var is the name of the function.
+
+The file test.cish contains a sample program but you'll obviously want
+to create more.
+
+I've provided the abstract syntax, lexer, parser, and updated
+interpreter.  You have to provide the compiler.  You'll want to follow
+the MIPS standard calling convention (see the MIPS manual and lecture
+notes for details) except that you do not need to worry about keeping
+the stack-pointer double-word aligned.  In particular, when calling a
+function, make sure to save any caller-saves registers that you need
+preserved across the call, and within a function, make sure to save
+any caller-saves registers used by the function.
+
+A simple strategy for compilation is to keep an environment around
+that maps variables (including formal parameters and local variables)
+to integer offsets relative to the frame-pointer.  One option is to
+make a pass over the code and determine how many distinct variables
+and where they will live before compiling the code.  After this pass,
+you will be able to generate the prologue and epilogue.  Another
+strategy is to "push" locally-defined variables on the stack and "pop"
+them off as you encounter them.  Regardless, you'll need to keep track
+of where each variable lives relative to either the stack or the frame
+pointer.
+
+I would suggest pushing temporary values on the stack and popping them
+off instead of trying to do something fancier (as sketched in the
+class notes.)  Get this working first before you move on to something
+more sophisticated!
+
+Finally, to help in debugging, you might want to write some
+assembly-language functions as wrappers for the system calls that
+print integers and strings.  Then you could just "call" these
+functions to get some output.  See section A-44 of the spim manual for
+details.
+
+Running make in the current directory generates an exectuable ps4, which
+expects a file to compile.
