@@ -6,7 +6,6 @@ COMPILER=ocamlc
  
 all: clean compile test
 
-
 compile:
 	$(COMPILER) -c ast.ml
 	ocamlyacc parse.mly
@@ -19,9 +18,14 @@ compile:
 	$(COMPILER) -c mips.ml
 	$(COMPILER) -c compile.ml
 	$(COMPILER) -c cish.ml
+	$(COMPILER) -c pretty_print.ml
+	$(COMPILER) -c test_framework.ml
+	$(COMPILER) -c compile_tests.ml
 	$(COMPILER) -o ps4 ast.cmo parse.cmo lex.cmo eval.cmo word32.cmo mips.cmo compile.cmo cish.cmo
+	$(COMPILER) -o tests ast.cmo parse.cmo lex.cmo eval.cmo word32.cmo mips.cmo compile.cmo pretty_print.cmo test_framework.cmo compile_tests.cmo
 
 test: compile 
+	./tests
 
 compile_tests: test
 
