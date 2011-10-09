@@ -21,15 +21,15 @@ type VirtualStack = {  last_offset : int;
 (* Code Gen *)
 
 (* Function prologue generation *)
-let generate_prologue (stack : VirtualStack) : (VirtualStack, inst list) =
+let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
     raise TODO
 
 (* Function epilogue generation *)
-let generate_epilogue (stack : VirtualStack) : (VirtualStack, inst list) =
+let generate_epilogue (stack : VirtualStack) : VirtualStack * inst list =
     raise TODO
 
 (* Generates code to push a variable on to the stack *)
-let add_local_var (v : string) (stack : VirtualStack) : (VirtualStack, inst list) =
+let add_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list =
     (* Push variable on to stack *)
     (* Variable is an aligned 32 bit int *)
     let new_contents = Map.add v stack.last_offset stack.contents in
@@ -42,7 +42,7 @@ let find_local_var v (stack : VirtualStack) : int =
     raise TODO
 
 (* Generates code to create a new temporary var *)
-let rec new_temp (stack : VirtualStack) : (VirtualStack, inst list) = 
+let rec new_temp (stack : VirtualStack) : VirtualStack * inst list = 
     (* Create a variable, add it *)
     raise TODO
 
@@ -50,7 +50,7 @@ let rec new_temp (stack : VirtualStack) : (VirtualStack, inst list) =
  * carrying out some instruction. The result of e1 is stored in R3,
  * the result of e2 in R2. in is the instruction to carry out on these
  * results *)
-let rec compile_exp_r (is: inst list) ((e,_): Ast.exp) (stack : VirtualStack) : (VirtualStack, inst list) =
+let rec compile_exp_r (is: inst list) ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
 
     (* Load result of first expression and carry out instruction *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
@@ -93,7 +93,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp) (stack : VirtualStack) : 
         raise TODO
 
 (* Compiles a statement in reverse order *)
-let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack) : (VirtualStack, inst list) =
+let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack) : VirtualStack * inst list =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
         | Exp e -> compile_exp_r is e
@@ -148,7 +148,7 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
  *)
-let compile_stmt (s : Ast.stmt) (stack : VirtualStack) : (VirtualStack, inst list) = 
+let compile_stmt (s : Ast.stmt) (stack : VirtualStack) : VirtualStack * inst list = 
     rev (compile_stmt_r [] s stack)
 
 let compile_function (f : func) : inst list = 
