@@ -46,7 +46,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
                   | Div   -> Mips.Div(R2, R3, R2)
                   | Eq    -> Mips.Seq(R2, R3, R2)
                   | Neq   -> Mips.Sne(R2, R3, R2)
-                  | Lt    -> Mips.Slt(R2, R3, R2)
+                  | Lt    -> Mips.Slt(R2, R3, Reg(R2))
                   | Lte   -> Mips.Sle(R2, R3, R2)
                   | Gt    -> Mips.Sgt(R2, R3, R2)
                   | Gte   -> Mips.Sge(R2, R3, R2)) in
