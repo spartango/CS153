@@ -21,11 +21,15 @@ type VirtualStack = { last_offset : int;
 (* Code Gen *)
 
 (* Function prologue generation *)
+let generate_prologue (stack : VirtualStack) : (VirtualStack, inst list) =
+    raise TODO
 
 (* Function epilogue generation *)
+let generate_epilogue (stack : VirtualStack) : (VirtualStack, inst list) =
+    raise TODO
 
 (* Generates code to push a variable on to the stack *)
-let add_local_var (stack : VirtualStack) : (VirtualStack, inst list)=
+let add_local_var (stack : VirtualStack) : (VirtualStack, inst list) =
     (* Push variable on to stack *)
     raise TODO
 
@@ -42,7 +46,7 @@ let rec new_temp (stack : VirtualStack) : (VirtualStack, inst list) =
  * carrying out some instruction. The result of e1 is stored in R3,
  * the result of e2 in R2. in is the instruction to carry out on these
  * results *)
-let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
+let rec compile_exp_r (is: inst list) ((e,_): Ast.exp) (stack : VirtualStack) : (VirtualStack, inst list) =
 
     (* Load result of first expression and carry out instruction *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
@@ -85,7 +89,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
         raise TODO
 
 (* Compiles a statement in reverse order *)
-let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
+let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack) : (VirtualStack, inst list) =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
         | Exp e -> compile_exp_r is e
@@ -140,16 +144,28 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
  *)
-let compile_stmt (s :Ast.stmt) : inst list = 
-    rev (compile_stmt_r [] s)
+let compile_stmt (s : Ast.stmt) (stack : VirtualStack) : (VirtualStack, inst list) = 
+    rev (compile_stmt_r [] s stack)
 
-let compile_function (f : func) = 
+let compile_function (f : func) : inst list = 
+    let Fn(signature) = f in
     (* Allocate a local "stack" (Map) to simulate the real stack *)
-    (* Generate a label for the function *)
-    (* Generate a prologue for the function *)
-    (* Code gen for the function *)
-    (* Generate an epilogue for the function *)
-    (* Append the whole mess to the end of the instruction list *)
+    let local_stack = { last_offset = 0; contents = StringMap.empty } in
+
+        (* Generate a label for the function *)
+        let f_label = Label(signature.name) in
+
+        (* Generate a prologue for the function *)
+        let prologue = generate_prologue local_stack in
+
+        (* Code gen for the function *)
+        let body_code = compile_stmt signature.body local_stack in
+
+        (* Generate an epilogue for the function *)
+        let epilogue = generate_epilogue local_stack in
+
+        (* Concate code blocks together *)
+
     raise TODO
 
 let rec compile (p:Ast.program) : result =
