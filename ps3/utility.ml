@@ -6,3 +6,6 @@ let rec revapp (accum: 'a list) (x: 'a list) : 'a list=
         | head::tail -> revapp (head::accum) tail
 
 let rev x = revapp [] x
+
+module IntMap    = Map.Make(struct type t = int    let compare = compare end)
+module StringMap = Map.Make(struct type t = String let compare = String.compare end)

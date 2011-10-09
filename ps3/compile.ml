@@ -15,20 +15,26 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 
 (* Stack Manipulation *)
 
+type VirtualStack = { last_offset : int; 
+                       contents   : StringMap }
+
 (* Code Gen *)
 
 (* Function prologue generation *)
 
 (* Function epilogue generation *)
 
-let add_local_var (v: string) : unit =
+(* Generates code to push a variable on to the stack *)
+let add_local_var (stack : VirtualStack) : (VirtualStack, inst list)=
     (* Push variable on to stack *)
     raise TODO
 
-let find_local_var (v: string) = 
+(* Provides the offset of a variable relative to the stack ptr *)
+let find_local_var v (stack : VirtualStack) : int = 
     raise TODO
 
-let rec new_temp() : string = 
+(* Generates code to create a new temporary var *)
+let rec new_temp (stack : VirtualStack) : (VirtualStack, inst list) = 
     (* Create a variable, add it *)
     raise TODO
 
@@ -37,39 +43,46 @@ let rec new_temp() : string =
  * the result of e2 in R2. in is the instruction to carry out on these
  * results *)
 let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
+
+    (* Load result of first expression and carry out instruction *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
         let t = new_temp() in
-            (* Load result of first expression and carry out instruction *)
             revapp (compile_exp_r 
                         (revapp (compile_exp_r is e1) [ (* TODO: do a lookup here *) Sw(R2, R3, Int32.zero)])
                         e2)
-                [(* TODO: do a lookup here *) Lw(R3, R3, Int32.zero); instruction] in  
-        match e with
-        | Var v -> raise TODO (* Load from the correct stack offset *)
-        | Int i -> Li(R2, Word32.fromInt i)::is
-        | Binop(e1,op,e2) ->
-              let oper = (match op with 
-                  | Plus  -> Mips.Add(R2, R3, Reg(R2))
-                  | Minus -> Mips.Sub(R2, R3, R2)
-                  | Times -> Mips.Mul(R2, R3, R2)
-                  | Div   -> Mips.Div(R2, R3, R2)
-                  | Eq    -> Mips.Seq(R2, R3, R2)
-                  | Neq   -> Mips.Sne(R2, R3, R2)
-                  | Lt    -> Mips.Slt(R2, R3, Reg(R2))
-                  | Lte   -> Mips.Sle(R2, R3, R2)
-                  | Gt    -> Mips.Sgt(R2, R3, R2)
-                  | Gte   -> Mips.Sge(R2, R3, R2)) in
-                  dual_op e1 e2 oper
-        (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
-        | Not(e) -> revapp (compile_exp_r is e) [Mips.Seq(R2, R3, R0)]
-        | And(e1, e2) -> 
-              dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
-        | Or(e1, e2) ->
-              dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
-        | Assign(v, e) -> revapp (compile_exp_r is e) [(* TODO: do a lookup here *) Sw(R2,R3, Int32.zero)] 
-        | Call(f, exp_list) -> 
-            (* Follow calling conventions to invoke a function, setting up a new frame for it etc *)
-            raise TODO
+                [(* TODO: do a lookup here *) Lw(R3, R3, Int32.zero); instruction] 
+    in  
+    match e with
+    | Var v -> raise TODO (* Load from the correct stack offset *)
+    | Int i -> Li(R2, Word32.fromInt i)::is
+    | Binop(e1,op,e2) ->
+          let oper = (match op with 
+              | Plus  -> Mips.Add(R2, R3, Reg(R2))
+              | Minus -> Mips.Sub(R2, R3, R2)
+              | Times -> Mips.Mul(R2, R3, R2)
+              | Div   -> Mips.Div(R2, R3, R2)
+              | Eq    -> Mips.Seq(R2, R3, R2)
+              | Neq   -> Mips.Sne(R2, R3, R2)
+              | Lt    -> Mips.Slt(R2, R3, Reg(R2))
+              | Lte   -> Mips.Sle(R2, R3, R2)
+              | Gt    -> Mips.Sgt(R2, R3, R2)
+              | Gte   -> Mips.Sge(R2, R3, R2)) in
+              dual_op e1 e2 oper
+    (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
+    | Not(e) -> revapp (compile_exp_r is e) [Mips.Seq(R2, R3, R0)]
+    | And(e1, e2) -> 
+          dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
+    | Or(e1, e2) ->
+          dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
+    | Assign(v, e) -> 
+        (* Check if the variable is already on the stack *)
+        (* If its there, pull it up *)
+        (* otherwise push a new variable *)
+        revapp (compile_exp_r is e) [(* TODO: do a lookup here *) Sw(R2,R3, Int32.zero)] 
+    | Call(f, exp_list) -> 
+        (* Follow calling conventions to invoke a function *)
+        (* *)
+        raise TODO
 
 (* Compiles a statement in reverse order *)
 let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
@@ -131,7 +144,7 @@ let compile_stmt (s :Ast.stmt) : inst list =
     rev (compile_stmt_r [] s)
 
 let compile_function (f : func) = 
-    (* Allocate a local stack to simulate the real stack *)
+    (* Allocate a local "stack" (Map) to simulate the real stack *)
     (* Generate a label for the function *)
     (* Generate a prologue for the function *)
     (* Code gen for the function *)
