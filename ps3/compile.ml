@@ -77,7 +77,9 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
         | Exp e -> compile_exp_r is e
         | Let(t_var, t_exp, t_stmt) -> 
-            (* Push a variable on to the stack, exec the statement, then pop it *)
+            (* Push a variable on to the stack *)
+            (* Code gen the statement *)
+            (* Pop the stack *)
             raise TODO 
         | Seq (s1, s2) ->
               compile_stmt_r (compile_stmt_r is s1) s2
