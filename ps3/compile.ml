@@ -21,11 +21,14 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 
 (* Function epilogue generation *)
 
-let add_var (v: string) : unit =
+let add_local_var (v: string) : unit =
     (* Push variable on to stack *)
     raise TODO
 
-let rec new_temp() : string= 
+let find_local_var (v: string) = 
+    raise TODO
+
+let rec new_temp() : string = 
     (* Create a variable, add it *)
     raise TODO
 
@@ -38,11 +41,11 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
         let t = new_temp() in
             (* Load result of first expression and carry out instruction *)
             revapp (compile_exp_r 
-                        (revapp (compile_exp_r is e1) [La(R3, t); Sw(R2, R3, Int32.zero)])
+                        (revapp (compile_exp_r is e1) [ (* TODO: do a lookup here *) Sw(R2, R3, Int32.zero)])
                         e2)
-                [La(R3, t); Lw(R3, R3, Int32.zero); instruction] in  
+                [(* TODO: do a lookup here *) Lw(R3, R3, Int32.zero); instruction] in  
         match e with
-        | Var v -> revapp is [La(R2, "V"^v); Lw(R2,R2, Int32.zero)]
+        | Var v -> raise TODO (* Load from the correct stack offset *)
         | Int i -> Li(R2, Word32.fromInt i)::is
         | Binop(e1,op,e2) ->
               let oper = (match op with 
@@ -63,7 +66,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
               dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
         | Or(e1, e2) ->
               dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
-        | Assign(v, e) -> revapp (compile_exp_r is e) [La(R3, "V"^v); Sw(R2,R3, Int32.zero)] 
+        | Assign(v, e) -> revapp (compile_exp_r is e) [(* TODO: do a lookup here *) Sw(R2,R3, Int32.zero)] 
         | Call(f, exp_list) -> 
             (* Follow calling conventions to invoke a function, setting up a new frame for it etc *)
             raise TODO
@@ -125,12 +128,18 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
 let compile_stmt (s :Ast.stmt) : inst list = 
     rev (compile_stmt_r [] s)
 
-let rec compile (p:Ast.program) : result =
-    (* For each function *)
+let compile_function (f : func) = 
+    (* Allocate a local stack to simulate the real stack *)
     (* Generate a label for the function *)
     (* Generate a prologue for the function *)
     (* Code gen for the function *)
     (* Generate an epilogue for the function *)
+    (* Append the whole mess to the end of the instruction list *)
+    raise TODO
+
+let rec compile (p:Ast.program) : result =
+    (* For each function *)
+    (* Compile function *)
     raise TODO
 
 let result2string (res:result) : string = 
