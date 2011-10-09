@@ -7,4 +7,4 @@ for file in `ls *.ml`; do
     fgrep -n TODO $file | awk '{print "[   >>>>   ]",$0}'
 done
 
-echo "[==========]"
+echo "[==========]\n"
