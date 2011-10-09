@@ -16,7 +16,7 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 (* Stack Manipulation *)
 
 (* Offset is with respect to the Frame Pointer (FP) *)
-type VirtualStack = {  last_offset : int; 
+type VirtualStack = {  last_offset : int32; 
                        contents    : StringMap }
 
 (* Code Gen *)
@@ -71,21 +71,21 @@ let add_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list
     (* Push variable on to stack *)
     (* Variable is an aligned 32 bit int *)
     let new_contents = Map.add v stack.last_offset stack.contents in
-    let new_stack = { last_offset = stack.last_offset - 4 ; contents = new_contents } in
+    let new_stack = { last_offset = (Int32.add stack.last_offset -4l) ; contents = new_contents } in
     (* Generate corresponding instructions *)
     (* Move $sp *)
-    let insts = [ Add(SP, SP, -4); ] in
+    let insts = [ Add(SP, SP, -4l); ] in
     (new_stack, insts)
 
 (* Generates code to pop a variable off the stack *)
 let pop_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list =
     let new_contents = Map.remove v stack.contents in
-    let new_stack = { last_offset = stack.last_offset + 4 ; contents = new_contents } in
-    let insts = [ Add(SP, SP, 4); ] in
+    let new_stack = { last_offset = (Int32.add stack.last_offset 4l) ; contents = new_contents } in
+    let insts = [ Add(SP, SP, 4l); ] in
     (new_stack, insts)
 
 (* Provides the offset of a variable relative to the stack ptr *)
-let find_local_var (v : string) (stack : VirtualStack) : int = 
+let find_local_var (v : string) (stack : VirtualStack) : int32 = 
     Map.find v stack
 
 (* Generates code to create a new temporary var *)
