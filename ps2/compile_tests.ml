@@ -11,10 +11,10 @@ module IList = RevList(struct type element = int end)
 let revapp_test = 
     let (<@) a b = IList.app_list a b in
     let test = fun () ->
-	let init_list   = IList.rev_list [3; 2; 1]    in
-	let target_list = [4; 5]                  in
-	let result = init_list <@ target_list in
-	    result = [5;4;3;2;1]
+	let init_list   = IList.rev_list [1;2;3]    in
+	let target_list = [4;5]                  in
+	let result = IList.to_list (init_list <@ target_list) in
+	    result = [1;2;3;4;5]
     in 
 	Test("Revapp Test", test)
 ;;

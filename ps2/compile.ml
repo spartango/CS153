@@ -80,15 +80,19 @@ module type RLIST =
   sig
       type element
       type rlist
-      val revapp : element list -> element list -> rlist
-      val (<@) : element list -> element list -> rlist
-      val rev : rlist -> element list
+      val empty    : rlist
+      val app_list : rlist -> element list -> rlist
+      val rev_list : element list -> rlist
+      val to_list  : rlist -> element list
   end
 
-module RevList (L: LISTARGS) = 
+(* Reverse list module *) 
+module RevList (L: LISTARGS) : (RLIST with
+                                          type element = L.element)=  
     struct
         type element = L.element
         type rlist = (element list) 
+        let empty = []
         let rec app_list (accum: rlist) (x: element list) : rlist=
             match x with
                 | []         -> accum
@@ -99,7 +103,7 @@ module RevList (L: LISTARGS) =
 
 module RL = RevList(struct type element = inst end)
 
-let (<@) a b = RL.app_list a b
+let (<@) (a: RL.rlist) (b: RL.element list) : RL.rlist = RL.app_list a b
 
 (* Prepends reversed x onto accum. Order of parameters for 
  * readability of code *)
@@ -186,7 +190,7 @@ let rec compile_stmt_r (is: RL.rlist) ((s,pos): Ast.stmt) : RL.rlist =
  * value in R2 and then doing a Jr R31.
  *)
 let compile_stmt (s :Ast.stmt) : inst list = 
-    RL.to_list (compile_stmt_r [] s)
+    RL.to_list (compile_stmt_r RL.empty s)
 
 (* compiles Fish AST down to MIPS instructions and a list of global vars *)
 let compile (p : Ast.program) : result = 
