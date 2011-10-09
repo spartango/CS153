@@ -218,8 +218,7 @@ let compile_function (f : func) : inst list =
         let (new_stack, epilogue_code) = generate_epilogue new_stack in
 
         (* Concate code blocks together *)
-
-    raise TODO
+        ([ f_label; ] @ prologue_code @ body_code @ epilogue_code)
 
 let rec compile (p:Ast.program) : result =
     let rec compile_prog (prog : Ast.program) (compiled : result) =
