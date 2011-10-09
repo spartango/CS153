@@ -66,7 +66,12 @@ let rec new_temp (stack : VirtualStack) : string * VirtualStack * inst list =
  * carrying out some instruction. The result of e1 is stored in R3,
  * the result of e2 in R2. in is the instruction to carry out on these
  * results *)
-let rec compile_exp_r (is: inst list) ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
+
+(* Returns assembly code to load var from stack *)
+let load_var (s: VirtualStack) (v: string) (dest: Mip.reg) : inst = 
+    Lw(dest, 
+
+let rec compile_exp_r ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
 
     (* Load result of first expression and carry out instruction *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
