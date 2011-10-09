@@ -222,13 +222,13 @@ let compile_function (f : func) : inst list =
     raise TODO
 
 let rec compile (p:Ast.program) : result =
-    let rec compil
-    match p with 
-    | [] -> 
-    (* For each function *)
-    (* Compile function *)
-    (* Append its instructions *)
-    raise TODO
+    let rec compile_prog (prog : Ast.program) (compiled : result) =
+        match p with 
+        | [] -> compiled
+        | f::rest -> 
+            let new_insts = compile_function f in
+            compile_prog rest { code = compiled.code @ new_insts; compiled.data }
+    in compile_prog p { code = []; data = [] }
 
 let result2string (res:result) : string = 
     let code = res.code in
