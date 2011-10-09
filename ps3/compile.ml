@@ -23,10 +23,14 @@ type VirtualStack = {  last_offset : int;
 
 (* Function prologue generation *)
 let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
+    (* Save Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
+    (* Set new FP *)
     raise TODO
 
 (* Function epilogue generation *)
 let generate_epilogue (stack : VirtualStack) : VirtualStack * inst list =
+    (* Restore Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
+    (* Reset the SP to our FP (frame pop) *)
     raise TODO
 
 (* Generates code to push a variable on to the stack *)
