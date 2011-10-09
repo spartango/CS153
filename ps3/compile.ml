@@ -15,8 +15,8 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 
 (* Stack Manipulation *)
 
-type VirtualStack = { last_offset : int; 
-                       contents   : StringMap }
+type VirtualStack = {  last_offset : int; 
+                       contents    : StringMap }
 
 (* Code Gen *)
 
@@ -29,8 +29,12 @@ let generate_epilogue (stack : VirtualStack) : (VirtualStack, inst list) =
     raise TODO
 
 (* Generates code to push a variable on to the stack *)
-let add_local_var (stack : VirtualStack) : (VirtualStack, inst list) =
+let add_local_var (v : string) (stack : VirtualStack) : (VirtualStack, inst list) =
     (* Push variable on to stack *)
+    (* Variable is an aligned 32 bit int *)
+    let new_contents = Map.add v stack.last_offset stack.contents in
+    let new_stack = { last_offset = stack.last_offset + 4 ; contents = new_contents } in
+    (* Generate corresponding instructions *)
     raise TODO
 
 (* Provides the offset of a variable relative to the stack ptr *)
