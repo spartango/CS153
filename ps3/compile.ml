@@ -222,8 +222,12 @@ let compile_function (f : func) : inst list =
     raise TODO
 
 let rec compile (p:Ast.program) : result =
+    let rec compil
+    match p with 
+    | [] -> 
     (* For each function *)
     (* Compile function *)
+    (* Append its instructions *)
     raise TODO
 
 let result2string (res:result) : string = 
