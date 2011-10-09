@@ -24,6 +24,8 @@ type VirtualStack = {  last_offset : int;
 (* Function prologue generation *)
 let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
     (* Save Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
+    let (new_stack, insts) =  add_local_var "FP" stack
+
     (* Set new FP *)
     raise TODO
 
@@ -105,7 +107,7 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp) (stack : VirtualStack) : 
         revapp (compile_exp_r is e) [(* TODO: do a lookup here *) Sw(R2,R3, Int32.zero)] 
     | Call(f, exp_list) -> 
         (* Follow calling conventions to invoke a function *)
-        (* *)
+        (* Map arguments to expressions *)
         raise TODO
 
 (* Compiles a statement in reverse order *)
