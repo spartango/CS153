@@ -15,6 +15,7 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 
 (* Stack Manipulation *)
 
+(* Offset is with respect to the Frame Pointer (FP) *)
 type VirtualStack = {  last_offset : int; 
                        contents    : StringMap }
 
@@ -36,19 +37,19 @@ let add_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list
     let new_stack = { last_offset = stack.last_offset + 4 ; contents = new_contents } in
     (* Generate corresponding instructions *)
     (* Move $sp *)
-    let insts = [ Add(R29, R29, -4); ] in
+    let insts = [ Add(SP, SP, -4); ] in
     (new_stack, insts)
 
 (* Generates code to pop a variable off the stack *)
 let pop_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list =
     let new_contents = Map.remove v stack.contents in
     let new_stack = { last_offset = stack.last_offset - 4 ; contents = new_contents } in
-    let insts = [ Add(R29, R29, 4); ] in
+    let insts = [ Add(SP, SP, 4); ] in
     (new_stack, insts)
 
 (* Provides the offset of a variable relative to the stack ptr *)
-let find_local_var v (stack : VirtualStack) : int = 
-    raise TODO
+let find_local_var (v : string) (stack : VirtualStack) : int = 
+    Map.find v stack
 
 (* Generates code to create a new temporary var *)
 let rec new_temp (stack : VirtualStack) : string * VirtualStack * inst list = 
@@ -56,7 +57,6 @@ let rec new_temp (stack : VirtualStack) : string * VirtualStack * inst list =
     let name = "T"^(new_int ()) in
     let (new_stack, insts) = add_local_var name stack in
     (name, new_stack, insts)
-
 
 (* Factors out common code for compiling two nested expressions and
  * carrying out some instruction. The result of e1 is stored in R3,
@@ -171,11 +171,11 @@ let compile_function (f : func) : inst list =
         (* Generate a label for the function *)
         let f_label = Label(signature.name) in
 
-        (* Code gen for the function *)
-        let (new_stack, body_code) = compile_stmt signature.body local_stack in
-
         (* Generate a prologue for the function *)
-        let (new_stack, prologue_code) = generate_prologue new_stack in
+        let (new_stack, prologue_code) = generate_prologue local_stack in
+
+        (* Code gen for the function *)
+        let (new_stack, body_code) = compile_stmt signature.body new_stack in
 
         (* Generate an epilogue for the function *)
         let (new_stack, epilogue_code) = generate_epilogue new_stack in
