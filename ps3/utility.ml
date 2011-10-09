@@ -7,5 +7,8 @@ let rec revapp (accum: 'a list) (x: 'a list) : 'a list=
 
 let rev x = revapp [] x
 
+(* Infix operator for revapp *)
+let (@>) a b = revapp a b
+
 module IntMap    = Map.Make(struct type t = int    let compare = compare end)
 module StringMap = Map.Make(struct type t = String let compare = String.compare end)
