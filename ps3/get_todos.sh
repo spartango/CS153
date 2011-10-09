@@ -1,10 +1,10 @@
 #!/bin/sh
 
-echo "[   TODO   ]\n[==========]"
+echo "\n[   TODO   ]\n[==========]"
 
 for file in `ls *.ml`; do
     echo "[----------] $file"
-    fgrep TODO $file 
+    fgrep -n TODO $file | awk '{print "[   >>>>   ]",$0}'
 done
 
 echo "[==========]"
