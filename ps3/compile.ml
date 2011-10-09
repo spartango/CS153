@@ -24,32 +24,47 @@ type VirtualStack = {  last_offset : int;
 (* Function prologue generation *)
 let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
     (* Set new FP *)
-    let insts = [ 
-                  SW(FP, SP, -4); 
-                  Add(FP, SP, 0); 
-                ]
+    let insts = [ Sw(FP, SP, -4); 
+                  Add(FP, SP, 0); ]
     in
     (* Save Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
     let (new_stack, fp_insts) =  add_local_var "FP" stack in
     let (new_stack, ra_insts) =  add_local_var "RA" new_stack in
+    let ra_insts = ra_insts @ [ Sw(RA, FP, (find_local_var "RA" new_stack)); ] in
 
     let rec save_sregs (num : int) (t_stack : VirtualStack) (t_insts : inst list) =
         if num < 0 
         then (t_stack, t_insts) 
         else 
-            let (new_stack, new_insts) = add_local_var "S"^(string_of_int num) t_stack in
+            let name = "S"^(string_of_int num) in
+            let (new_stack, s_insts) = add_local_var name t_stack in
+            let new_insts = s_insts @ [ Sw((string2reg name), FP, (find_local_var name)); ] in
             save_sregs (num - 1) new_stack (t_insts @ new_insts)
     in 
 
-    let (new_stack, new_insts) = save_sregs 7 new_stack (insts @ fp_insts @ ra_insts) in
+    let (new_stack, s_insts) = save_sregs 7 new_stack [] in
+    let new_insts = (insts @ fp_insts @ ra_insts @ s_insts) in
     (new_stack, new_insts)
 
 
 (* Function epilogue generation *)
 let generate_epilogue (stack : VirtualStack) : VirtualStack * inst list =
-    (* Restore Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
+
+    (* Restore Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *) 
+    let rec load_sregs (num : int) (t_insts : inst list) =
+        if num < 0 
+        then t_insts
+        else
+            let name = "S"^(string_of_int num) in
+            load_sregs (num - 1) t_insts @ [ Lw((string2reg name), FP, (find_local_var name)); ] 
+    in
+
+    let s_insts = load_sregs 7 stack [] in
+    let ra_fp_insts = [ Lw(RA, FP, (find_local_var "RA"));
+                        Lw(FP, FP, (find_local_var "FP")); ] in
+    let new_insts = s_insts @ ra_fp_insts in 
     (* Reset the SP to our FP (frame pop) *)
-    raise TODO
+    (stack, new_insts)
 
 (* Generates code to push a variable on to the stack *)
 let add_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list =
