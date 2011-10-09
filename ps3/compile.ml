@@ -17,10 +17,16 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 
 (* Code Gen *)
 
+(* Function prologue generation *)
+
+(* Function epilogue generation *)
+
 let add_var (v: string) : unit =
-	raise TODO
+    (* Push variable on to stack *)
+    raise TODO
 
 let rec new_temp() : string= 
+    (* Create a variable, add it *)
     raise TODO
 
 (* Factors out common code for compiling two nested expressions and
@@ -58,14 +64,18 @@ let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
         | Or(e1, e2) ->
               dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
         | Assign(v, e) -> revapp (compile_exp_r is e) [La(R3, "V"^v); Sw(R2,R3, Int32.zero)] 
-        | Call(f, exp_list) -> raise TODO
+        | Call(f, exp_list) -> 
+            (* Follow calling conventions to invoke a function, setting up a new frame for it etc *)
+            raise TODO
 
 (* Compiles a statement in reverse order *)
 let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
         | Exp e -> compile_exp_r is e
-        | Let(t_var, t_exp, t_stmt) -> raise TODO
+        | Let(t_var, t_exp, t_stmt) -> 
+            (* Push a variable on to the stack, exec the statement, then pop it *)
+            raise TODO 
         | Seq (s1, s2) ->
               compile_stmt_r (compile_stmt_r is s1) s2
         | If(e, then_s, else_s) ->
@@ -116,6 +126,11 @@ let compile_stmt (s :Ast.stmt) : inst list =
     rev (compile_stmt_r [] s)
 
 let rec compile (p:Ast.program) : result =
+    (* For each function *)
+    (* Generate a label for the function *)
+    (* Generate a prologue for the function *)
+    (* Code gen for the function *)
+    (* Generate an epilogue for the function *)
     raise TODO
 
 let result2string (res:result) : string = 
@@ -128,16 +143,16 @@ let result2string (res:result) : string =
       let size = in_channel_length stream in
       let text = String.create size in
       let _ = really_input stream text 0 size in
-		  let _ = close_in stream in 
+          let _ = close_in stream in 
       text in
-	  let debugcode = readfile "print.asm" in
-	    "\t.text\n" ^
-	    "\t.align\t2\n" ^
-	    "\t.globl main\n" ^
-	    (String.concat "" strs) ^
-	    "\n\n" ^
-	    "\t.data\n" ^
-	    "\t.align 0\n"^
-	    (String.concat "" (List.map vaR8decl data)) ^
-	    "\n" ^
-	    debugcode
+      let debugcode = readfile "print.asm" in
+        "\t.text\n" ^
+        "\t.align\t2\n" ^
+        "\t.globl main\n" ^
+        (String.concat "" strs) ^
+        "\n\n" ^
+        "\t.data\n" ^
+        "\t.align 0\n"^
+        (String.concat "" (List.map vaR8decl data)) ^
+        "\n" ^
+        debugcode
