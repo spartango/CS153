@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "\n[   TODO   ]\n[==========]"
+echo "\n[==========]\n[   TODO   ]"
 
 for file in `ls *.ml`; do
     echo "[----------] $file"
