@@ -88,28 +88,31 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualSta
         (* Load e1 result and execute instruction *)
             (stack2, insts2 <@ [(load_var stack 2 t R3; instruction]) in
         match e with
-        | Var v -> is <@ [La(R2, "V"^v); Lw(R2,R2, Int32.zero)]
-        | Int i -> is <@ [Li(R2, Word32.fromInt i)]
-        | Binop(e1,op,e2) ->
-              let oper = (match op with 
-                  | Plus  -> Mips.Add(R2, R2, Reg(R3))
-                  | Minus -> Mips.Sub(R2, R2, R3)
-                  | Times -> Mips.Mul(R2, R2, R3)
-                  | Div   -> Mips.Div(R2, R2, R3)
-                  | Eq    -> Mips.Seq(R2, R2, R3)
-                  | Neq   -> Mips.Sne(R2, R2, R3)
-                  | Lt    -> Mips.Slt(R2, R2, R3)
-                  | Lte   -> Mips.Sle(R2, R2, R3)
-                  | Gt    -> Mips.Sgt(R2, R2, R3)
-                  | Gte   -> Mips.Sge(R2, R2, R3)) in
-                  dual_op e1 e2 oper
-        (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
-        | Not(e) -> (compile_exp_r is e) <@ [Mips.Seq(R2, R3, R0)]
-        | And(e1, e2) -> 
-              dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
-        | Or(e1, e2) ->
-              dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
-        | Assign(v, e) -> (compile_exp_r is e) <@ [La(R3, "V"^v); Sw(R2,R3, Int32.zero)] 
+            | Var v -> is <@ [(load_var v stack R2)] (* Load from the correct stack offset *)
+            | Int i -> is <@ [Li(R2, Word32.fromInt i)]
+            | Binop(e1,op,e2) ->
+                  let oper = (match op with 
+                                  | Plus  -> Mips.Add(R2, R2, Reg(R3))
+                                  | Minus -> Mips.Sub(R2, R2, R3)
+                                  | Times -> Mips.Mul(R2, R2, R3)
+                                  | Div   -> Mips.Div(R2, R2, R3)
+                                  | Eq    -> Mips.Seq(R2, R2, R3)
+                                  | Neq   -> Mips.Sne(R2, R2, R3)
+                                  | Lt    -> Mips.Slt(R2, R2, R3)
+                                  | Lte   -> Mips.Sle(R2, R2, R3)
+                                  | Gt    -> Mips.Sgt(R2, R2, R3)
+                                  | Gte   -> Mips.Sge(R2, R2, R3)) in
+                      dual_op e1 e2 oper
+            (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
+            | Not(e) -> (compile_exp_r is e) <@ [Mips.Seq(R2, R3, R0)]
+            | And(e1, e2) -> 
+                  dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
+            | Or(e1, e2) ->
+                  dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
+            (* Assumes variable has already been delcared; if not allows exception to fall through *)
+            | Assign(v, e) -> 
+                  let 
+(compile_exp_r is e) <@ [La(R3, "V"^v); Sw(R2,R3, Int32.zero)] 
 
 
 
@@ -120,7 +123,7 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualSta
                         e2) <@  [(store_var stack t R3); instruction] 
     in  
     match e with
-    | Var v -> raise TODO (* Load from the correct stack offset *)
+
     | Int i -> Li(R2, Word32.fromInt i)::is
     | Binop(e1,op,e2) ->
           let oper = (match op with 
