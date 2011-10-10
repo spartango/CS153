@@ -12,8 +12,7 @@ def search_file(filename):
     in_main = False
 
     # Pull open file
-    t_file = ls
-    open(filename, 'r')
+    t_file = open(filename, 'r')
     # Line by line read
     for line in t_file:
         # Conditional inject
