@@ -43,5 +43,11 @@ toplevel: compile
 xcompile:
 	./xcompile_js.sh
 
+run_js_tests: xcompile
+	./run_js_tests.sh
+
+compare_results:
+	./compare_results.sh
+
 clean:
 	rm -rf *.cmo *.cmi ps3 tests parse.ml parse.mli lex.ml compiled_tests toplvl compiled_js

@@ -5,7 +5,7 @@ echo "[==========] Running Javascript Canned Tests"
 if [[ -e compiled_js ]]; then
     for test_file in `ls compiled_js/*_test.js`; do
         echo "\x1b\x5b1;36m[ RUNNING  ]\x1b\x5b0m ${test_file:12}"
-        log_file=${test_file%.asm}.log
+        log_file=${test_file%.js}.log
         node $test_file  > $log_file 2>&1
         count=`wc -l $log_file | awk '{print $1}'`
         if (($count > 2)); then
