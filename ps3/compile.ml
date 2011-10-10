@@ -92,16 +92,16 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualSta
         | Int i -> is <@ [Li(R2, Word32.fromInt i)]
         | Binop(e1,op,e2) ->
               let oper = (match op with 
-                  | Plus  -> Mips.Add(R2, R3, Reg(R2))
-                  | Minus -> Mips.Sub(R2, R3, R2)
-                  | Times -> Mips.Mul(R2, R3, R2)
-                  | Div   -> Mips.Div(R2, R3, R2)
-                  | Eq    -> Mips.Seq(R2, R3, R2)
-                  | Neq   -> Mips.Sne(R2, R3, R2)
-                  | Lt    -> Mips.Slt(R2, R3, R2)
-                  | Lte   -> Mips.Sle(R2, R3, R2)
-                  | Gt    -> Mips.Sgt(R2, R3, R2)
-                  | Gte   -> Mips.Sge(R2, R3, R2)) in
+                  | Plus  -> Mips.Add(R2, R2, Reg(R3))
+                  | Minus -> Mips.Sub(R2, R2, R3)
+                  | Times -> Mips.Mul(R2, R2, R3)
+                  | Div   -> Mips.Div(R2, R2, R3)
+                  | Eq    -> Mips.Seq(R2, R2, R3)
+                  | Neq   -> Mips.Sne(R2, R2, R3)
+                  | Lt    -> Mips.Slt(R2, R2, R3)
+                  | Lte   -> Mips.Sle(R2, R2, R3)
+                  | Gt    -> Mips.Sgt(R2, R2, R3)
+                  | Gte   -> Mips.Sge(R2, R2, R3)) in
                   dual_op e1 e2 oper
         (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
         | Not(e) -> (compile_exp_r is e) <@ [Mips.Seq(R2, R3, R0)]
