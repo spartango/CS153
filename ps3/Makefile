@@ -7,7 +7,6 @@ COMPILER=ocamlc
 all: clean compile test
 
 compile:
-	$(COMPILER) -c utility.ml
 	$(COMPILER) -c ast.ml
 	ocamlyacc parse.mly
 	$(COMPILER) -c parse.mli
@@ -17,6 +16,7 @@ compile:
 	$(COMPILER) -c eval.ml
 	$(COMPILER) -c word32.ml
 	$(COMPILER) -c mips.ml
+	$(COMPILER) -c utility.ml
 	$(COMPILER) -c compile.ml
 	$(COMPILER) -c cish.ml
 	$(COMPILER) -c pretty_print.ml
