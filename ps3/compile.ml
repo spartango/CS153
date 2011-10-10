@@ -55,6 +55,11 @@ let generate_prologue (f_sig : funcsig) (stack : VirtualStack) : VirtualStack * 
             match arg_names with
             | []       -> (t_stack, t_insts)
             | hd::rest -> let (new_stack, new_insts) = add_local_var hd t_stack in
+                          let new_insts = new_insts @ 
+                                          [ Sw((string2reg ("A"^touched_num)), 
+                                                FP, 
+                                                (find_local_var hd new_stack)); ]
+                          in
                           save_low_args (touched_num + 1) rest new_stack (t_insts @ new_insts)
     in 
 
