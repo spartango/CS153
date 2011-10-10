@@ -99,15 +99,22 @@ let rec new_temp (stack : VirtualStack) : string * VirtualStack * inst list =
  * carrying out some instruction. The result of e1 is stored in R3,
  * the result of e2 in R2. in is the instruction to carry out on these
  * results *)
-let rec compile_exp_r (is: inst list) ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
+
+(* Returns assembly code to store var from stack *)
+let store_var (stack: VirtualStack) (v: string) (dest: Mip.reg) : inst = 
+    Sw(dest, Utility.FP, (find_local_var v stack))
+
+(* Returns assembly code to load var from stack *)
+let load_var (stack: VirtualStack) (v: string) (dest: Mip.reg) : inst = 
+    Lw(dest, Utility.FP, (find_local_var v stack))
+
+let rec compile_exp_r ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
 
     (* Load result of first expression and carry out instruction *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
-        let t = new_temp() in
-            revapp (compile_exp_r 
-                        (revapp (compile_exp_r is e1) [ (* TODO: do a lookup here *) Sw(R2, R3, Int32.zero)])
-                        e2)
-                [(* TODO: do a lookup here *) Lw(R3, R3, Int32.zero); instruction] 
+        let (t, stack, stack_inst) = new_temp() in
+            (compile_exp_r ((compile_exp_r (is <@ stack_inst) e1) <@ [(store_var stack t R2)])
+                        e2) <@  [(store_var stack t R3); instruction] 
     in  
     match e with
     | Var v -> raise TODO (* Load from the correct stack offset *)
