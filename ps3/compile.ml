@@ -299,22 +299,14 @@ let compile_function (f : func) : inst list =
         (* Generate a label for the function *)
         let f_label = Label(signature.name) in
 
-        let _ = print_string "Generating Prologue\n" in
-
         (* Generate a prologue for the function *)
         let (new_stack, prologue_code) = generate_prologue signature local_stack in
-
-        let _ = print_string "Generating Body\n" in
 
         (* Code gen for the function *)
         let (new_stack, body_code) = compile_stmt signature.body new_stack in
 
-        let _ = print_string "Generating Epilogue\n" in
-
         (* Generate an epilogue for the function *)
         let (new_stack, epilogue_code) = generate_epilogue new_stack in
-
-        let _ = print_string ("Compiled Function: "^signature.name^" \n") in
 
         (* Concate code blocks together *)
         ([ f_label; ] @ prologue_code @ body_code @ epilogue_code)
