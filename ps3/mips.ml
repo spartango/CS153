@@ -156,9 +156,9 @@ let inst2string(i:inst):string =
   | Sw (r1,r2,w) -> i2as "sw" (r1,r2,w)
   | Label x -> x ^ ":" 
       
-let SP = R29;;
-let FP = R30;;
-let RA = R31;;
+let sp = R29;;
+let fp = R30;;
+let ra = R31;;
 
 exception UnknownRegister
 
