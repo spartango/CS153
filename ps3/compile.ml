@@ -124,7 +124,7 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualSta
 let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack) : VirtualStack * inst list =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
-        | Exp e -> compile_exp_r is e
+        | Exp e -> compile_exp_r is e stack
         | Let(t_var, t_exp, t_stmt) -> 
             (* Push a variable on to the stack *)
             (* Code gen the statement *)
