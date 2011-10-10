@@ -60,7 +60,7 @@ let generate_prologue (f_sig : funcsig) (stack : virtualStack) : virtualStack * 
 
     (* Save the old FP and set new FP *)
     let insts = [ Sw (fp, sp, arg_offset); 
-                  Add(fp, sp, (Immed(0l))); ]
+                  Add(fp, sp, Reg(R0)); ]
     in
 
     let rec mark_high_args skipped_num arg_names t_stack t_insts =
@@ -142,8 +142,6 @@ let generate_epilogue (stack : virtualStack) : virtualStack * inst list =
     (* Reset the SP to our FP (frame pop) *)
     (stack, new_insts)
 
-
-
 (* Factors out common code for compiling two nested expressions and
  * carrying out some instruction. The result of e1 is stored in R3,
  * the result of e2 in R2. in is the instruction to carry out on these
@@ -200,8 +198,25 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
             | Assign(v, e) -> 
                   let (stack1, insts1) = compile_exp_r is e stack in
                       (stack1, insts1 <@ [(store_var stack1 v R2)])
-            | Call(f, exp_list) ->
-                  raise TODO
+            | Call(f, exp_list) -> compile_call f exp_list stack 
+
+and compile_call f exp_list (stack : virtualStack) : virtualStack * RInstList.rlist =
+    (* helper to deal with groups of args *)
+    let rec compile_call_r argno exps t_stack t_insts =
+        (* For each expression *)
+        match exps with 
+        | []          -> (t_stack, t_insts <@ [ Jal(f); ]) (* Jump and Link *)
+        | t_exp::rest -> 
+            (* Compile expression *)
+            let (new_stack, new_insts) = compile_exp_r t_insts t_exp t_stack in
+            (* Move result into aX OR If n_arg > 3 then push arg into next frame (past sp) *)
+            let mv_insts = if argno < 4 
+                            then [ Add((string2reg ("A"^(string_of_int argno))), R2, Reg(R0)); ]
+                            else [ Sw(R2, sp, (Int32.mul (-4l) (Int32.of_int argno)));            ]
+            in
+            compile_call_r (argno + 1) rest new_stack ( new_insts <@ mv_insts )
+    in
+    compile_call_r 0 exp_list stack RInstList.empty
 
 (* Compiles a statement in reverse order *)
 let rec compile_stmt_r (is: RInstList.rlist) ((s,pos): Ast.stmt) (stack : virtualStack) : virtualStack * RInstList.rlist =

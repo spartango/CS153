@@ -29,10 +29,13 @@ test: compile
 	./tests
 
 compile_tests: test
+	./compile_canned.sh
 
 run_tests: compile_tests
+	./run_tests.sh
 
 benchmark: compile_tests
+	./benchmark.sh
 
 clean:
 	rm -rf *.cmo *.cmi ps3 tests parse.ml parse.mli lex.ml compiled_tests
