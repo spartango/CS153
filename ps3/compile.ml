@@ -15,7 +15,7 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 
 (* Stack Manipulation *)
 
-(* Offset is with respect to the Frame Pointer (FP) *)
+(* Offset is with respect to the Frame Pointer (fp) *)
 type VirtualStack = {  last_offset : int32; 
                        contents    : StringMap }
 
@@ -24,13 +24,13 @@ type VirtualStack = {  last_offset : int32;
 (* Function prologue generation *)
 let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
     (* Set new FP *)
-    let insts = [ Sw(FP, SP, -4); 
-                  Add(FP, SP, 0); ]
+    let insts = [ Sw( Utility.fp, Utility.sp, -4); 
+                  Add(Utility.fp, Utility.sp, 0); ]
     in
     (* Save Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
     let (new_stack, fp_insts) =  add_local_var "FP" stack in
     let (new_stack, ra_insts) =  add_local_var "RA" new_stack in
-    let ra_insts = ra_insts @ [ Sw(RA, FP, (find_local_var "RA" new_stack)); ] in
+    let ra_insts = ra_insts @ [ Sw(Utility.ra, Utility.fp, (find_local_var "RA" new_stack)); ] in
 
     let rec save_sregs (num : int) (t_stack : VirtualStack) (t_insts : inst list) =
         if num < 0 
@@ -38,7 +38,7 @@ let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
         else 
             let name = "S"^(string_of_int num) in
             let (new_stack, s_insts) = add_local_var name t_stack in
-            let new_insts = s_insts @ [ Sw((string2reg name), FP, (find_local_var name)); ] in
+            let new_insts = s_insts @ [ Sw((string2reg name), Utility.fp, (find_local_var name)); ] in
             save_sregs (num - 1) new_stack (t_insts @ new_insts)
     in 
 
@@ -56,12 +56,12 @@ let generate_epilogue (stack : VirtualStack) : VirtualStack * inst list =
         then t_insts
         else
             let name = "S"^(string_of_int num) in
-            load_sregs (num - 1) t_insts @ [ Lw((string2reg name), FP, (find_local_var name)); ] 
+            load_sregs (num - 1) t_insts @ [ Lw((string2reg name), Utility.fp, (find_local_var name)); ] 
     in
 
     let s_insts = load_sregs 7 stack [] in
-    let ra_fp_insts = [ Lw(RA, FP, (find_local_var "RA"));
-                        Lw(FP, FP, (find_local_var "FP")); ] in
+    let ra_fp_insts = [ Lw(Utility.ra, Utility.fp, (find_local_var "RA"));
+                        Lw(Utility.fp, Utility.fp, (find_local_var "FP")); ] in
     let new_insts = s_insts @ ra_fp_insts in 
     (* Reset the SP to our FP (frame pop) *)
     (stack, new_insts)
@@ -74,14 +74,14 @@ let add_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list
     let new_stack = { last_offset = (Int32.add stack.last_offset -4l) ; contents = new_contents } in
     (* Generate corresponding instructions *)
     (* Move $sp *)
-    let insts = [ Add(SP, SP, -4l); ] in
+    let insts = [ Add(Utility.sp, Utility.sp, -4l); ] in
     (new_stack, insts)
 
 (* Generates code to pop a variable off the stack *)
 let pop_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list =
     let new_contents = Map.remove v stack.contents in
     let new_stack = { last_offset = (Int32.add stack.last_offset 4l) ; contents = new_contents } in
-    let insts = [ Add(SP, SP, 4l); ] in
+    let insts = [ Add(Utility.sp, Utility.sp, 4l); ] in
     (new_stack, insts)
 
 (* Provides the offset of a variable relative to the stack ptr *)
@@ -102,11 +102,11 @@ let rec new_temp (stack : VirtualStack) : string * VirtualStack * inst list =
 
 (* Returns assembly code to store var from stack *)
 let store_var (stack: VirtualStack) (v: string) (dest: Mip.reg) : inst = 
-    Sw(dest, Utility.FP, (find_local_var v stack))
+    Sw(dest, Utility.fp, (find_local_var v stack))
 
 (* Returns assembly code to load var from stack *)
 let load_var (stack: VirtualStack) (v: string) (dest: Mip.reg) : inst = 
-    Lw(dest, Utility.FP, (find_local_var v stack))
+    Lw(dest, Utility.fp, (find_local_var v stack))
 
 (* Places result in R2 *)
 let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
@@ -224,7 +224,7 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack
  * value in R2 and then doing a Jr R31.
  *)
 let compile_stmt (s : Ast.stmt) (stack : VirtualStack) : VirtualStack * inst list = 
-    rev (compile_stmt_r [] s stack)
+    rev (compile_stmt_r RInstList.empty s stack)
 
 let compile_function (f : func) : inst list = 
     let Fn(signature) = f in
