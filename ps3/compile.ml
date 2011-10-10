@@ -153,7 +153,7 @@ let load_var (stack: virtualStack) (v: string) (dest: Mips.reg) : inst =
     Lw(dest, fp, (find_local_var v stack))
 
 (* Places result in R2 *)
-let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualStack) : virtualStack * inst list =
+let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualStack) : virtualStack * RInstList.rlist =
 
     (* HELPER: Compiles e1 and e2. Result of e1 goes in R2, e2 in R3 *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : virtualStack * RInstList.rlist =
@@ -163,14 +163,14 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
         (* Store result of e2; compile e1 *)
         let (stack3, insts3) = compile_exp_r (insts2 <@ [(store_var stack1 t R2)]) e1 stack1 in
         (* Load e2 into R3 and execute instruction *)
-        let insts4 = insts2 <@ [(load_var stack 2 t R3; instruction)] in
+        let insts4 = insts2 <@ [(load_var stack2 t R3); instruction] in
         (* Pop temp var *)
         let (stack4, pop_inst) = pop_local_var t stack2 in
             (stack3, insts4 <@ pop_inst) in
 
         match e with
-            | Var v -> is <@ [(load_var v stack R2)] (* Load from the correct stack offset *)
-            | Int i -> is <@ [Li(R2, Word32.fromInt i)]
+            | Var v -> (stack, is <@ [(load_var stack v R2)]) (* Load from the correct stack offset *)
+            | Int i -> (stack, is <@ [Li(R2, Word32.fromInt i)])
             | Binop(e1,op,e2) ->
                   let oper = (match op with 
                                   | Plus  -> Mips.Add(R2, R2, Reg(R3))
@@ -179,7 +179,7 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
                                   | Div   -> Mips.Div(R2, R2, R3)
                                   | Eq    -> Mips.Seq(R2, R2, R3)
                                   | Neq   -> Mips.Sne(R2, R2, R3)
-                                  | Lt    -> Mips.Slt(R2, R2, R3)
+                                  | Lt    -> Mips.Slt(R2, R2, Reg(R3))
                                   | Lte   -> Mips.Sle(R2, R2, R3)
                                   | Gt    -> Mips.Sgt(R2, R2, R3)
                                   | Gte   -> Mips.Sge(R2, R2, R3)) in
@@ -193,13 +193,13 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
                   dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
             (* Assumes variable has already been delcared; if not allows exception to fall through *)
             | Assign(v, e) -> 
-                  let (stack1, insts1) = compile_expr_r is e stack in
+                  let (stack1, insts1) = compile_exp_r is e stack in
                       (stack1, insts1 <@ [(store_var stack1 v R2)])
             | Call(f, exp_list) ->
                   raise TODO
 
 (* Compiles a statement in reverse order *)
-let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : virtualStack) : virtualStack * inst list =
+let rec compile_stmt_r (is: RInstList.rlist) ((s,pos): Ast.stmt) (stack : virtualStack) : virtualStack * RInstList.rlist =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
         | Exp e -> compile_exp_r is e stack
@@ -211,10 +211,10 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : virtualStack
             (* Store the expression in the var *)
             let sw_insts = [(store_var stack2 t_var R2)] in
             (* Compile the statment *)
-            let (stack3, insts3) = compile_stmt (insts2 <@ sw_insts) t_stmt stack2 in
+            let (stack3, insts3) = compile_stmt_r (insts2 <@ sw_insts) t_stmt stack2 in
             (* Pop the variable *)
             let (stack4, pop_insts)  = pop_local_var t_var stack3 in
-            (new_stack, insts4 <@ pop_insts)
+            (stack4, insts3 <@ pop_insts)
         | Seq (s1, s2) ->
               let(stack1, insts1) = compile_stmt_r is s1 stack in
                   compile_stmt_r insts1 s2 stack1
@@ -259,21 +259,22 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : virtualStack
                                               e2,
                                               (Ast.Seq(s, (Ast.Exp e3, (get_pos e3))), get_pos s)),
                                           pos))),
-                                 pos)
+                                 pos) stack
         | Return (e) ->
-              (compile_exp_r is e stack) <@ [Jr(R31)] 
+              compile_exp_r is e stack
              
 (* compiles a Fish statement down to a list of MIPS instructions.
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
  *)
 let compile_stmt (s : Ast.stmt) (stack : virtualStack) : virtualStack * inst list = 
-    rev (compile_stmt_r RInstList.empty s stack)
+let(stack1, insts1) = compile_stmt_r RInstList.empty s stack in
+    (stack1, RInstList.to_list insts1)
 
 let compile_function (f : func) : inst list = 
     let Fn(signature) = f in
     (* Allocate a local "stack" (Map) to simulate the real stack *)
-    let local_stack = { last_offset = 0; contents = StringMap.empty } in
+    let local_stack = { last_offset = 0l; contents = StringMap.empty } in
 
         (* Generate a label for the function *)
         let f_label = Label(signature.name) in
