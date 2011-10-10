@@ -16,45 +16,76 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 (* Stack Manipulation *)
 
 (* Offset is with respect to the Frame Pointer (FP) *)
-type VirtualStack = {  last_offset : int; 
+type VirtualStack = {  last_offset : int32; 
                        contents    : StringMap }
 
 (* Code Gen *)
 
 (* Function prologue generation *)
 let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
-    (* Save Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
-    let (new_stack, insts) =  add_local_var "FP" stack
-
     (* Set new FP *)
-    raise TODO
+    let insts = [ Sw(FP, SP, -4); 
+                  Add(FP, SP, 0); ]
+    in
+    (* Save Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
+    let (new_stack, fp_insts) =  add_local_var "FP" stack in
+    let (new_stack, ra_insts) =  add_local_var "RA" new_stack in
+    let ra_insts = ra_insts @ [ Sw(RA, FP, (find_local_var "RA" new_stack)); ] in
+
+    let rec save_sregs (num : int) (t_stack : VirtualStack) (t_insts : inst list) =
+        if num < 0 
+        then (t_stack, t_insts) 
+        else 
+            let name = "S"^(string_of_int num) in
+            let (new_stack, s_insts) = add_local_var name t_stack in
+            let new_insts = s_insts @ [ Sw((string2reg name), FP, (find_local_var name)); ] in
+            save_sregs (num - 1) new_stack (t_insts @ new_insts)
+    in 
+
+    let (new_stack, s_insts) = save_sregs 7 new_stack [] in
+    let new_insts = (insts @ fp_insts @ ra_insts @ s_insts) in
+    (new_stack, new_insts)
+
 
 (* Function epilogue generation *)
 let generate_epilogue (stack : VirtualStack) : VirtualStack * inst list =
-    (* Restore Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
+
+    (* Restore Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *) 
+    let rec load_sregs (num : int) (t_insts : inst list) =
+        if num < 0 
+        then t_insts
+        else
+            let name = "S"^(string_of_int num) in
+            load_sregs (num - 1) t_insts @ [ Lw((string2reg name), FP, (find_local_var name)); ] 
+    in
+
+    let s_insts = load_sregs 7 stack [] in
+    let ra_fp_insts = [ Lw(RA, FP, (find_local_var "RA"));
+                        Lw(FP, FP, (find_local_var "FP")); ] in
+    let new_insts = s_insts @ ra_fp_insts in 
     (* Reset the SP to our FP (frame pop) *)
-    raise TODO
+    (stack, new_insts)
 
 (* Generates code to push a variable on to the stack *)
 let add_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list =
     (* Push variable on to stack *)
     (* Variable is an aligned 32 bit int *)
     let new_contents = Map.add v stack.last_offset stack.contents in
-    let new_stack = { last_offset = stack.last_offset + 4 ; contents = new_contents } in
+    let new_stack = { last_offset = (Int32.add stack.last_offset -4l) ; contents = new_contents } in
     (* Generate corresponding instructions *)
     (* Move $sp *)
-    let insts = [ Add(SP, SP, -4); ] in
+    let insts = [ Add(SP, SP, -4l); ] in
     (new_stack, insts)
 
 (* Generates code to pop a variable off the stack *)
 let pop_local_var (v : string) (stack : VirtualStack) : VirtualStack * inst list =
     let new_contents = Map.remove v stack.contents in
-    let new_stack = { last_offset = stack.last_offset - 4 ; contents = new_contents } in
-    let insts = [ Add(SP, SP, 4); ] in
+    let new_stack = { last_offset = (Int32.add stack.last_offset 4l) ; contents = new_contents } in
+    let insts = [ Add(SP, SP, 4l); ] in
     (new_stack, insts)
 
 (* Provides the offset of a variable relative to the stack ptr *)
-let find_local_var (v : string) (stack : VirtualStack) : int = 
+let find_local_var (v : string) (stack : VirtualStack) : int32 = 
     Map.find v stack
 
 (* Generates code to create a new temporary var *)
@@ -127,9 +158,16 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack
         | Exp e -> compile_exp_r is e stack
         | Let(t_var, t_exp, t_stmt) -> 
             (* Push a variable on to the stack *)
-            (* Code gen the statement *)
-            (* Pop the stack *)
-            raise TODO 
+            let (new_stack, push_insts) = add_local_var t_var stack in
+            (* Compile the expression *)
+            let (new_stack, exp_insts)  = compile_exp_r is t_exp new_stack in
+            (* Store the expression in the var *)
+            let sw_insts = [Sw(R2, FP, (find_local_var t_var new_stack)); ] in
+            (* Compile the statment *)
+            let (new_stack, stmt_insts) = compile_stmt t_stmt new_stack in
+            (* Pop the variable *)
+            let (new_stack, pop_insts)  = pop_local_var t_var new_stack in
+            (new_stack, (push_insts @ exp_insts @ sw_insts @ pop_insts)
         | Seq (s1, s2) ->
               compile_stmt_r (compile_stmt_r is s1) s2
         | If(e, then_s, else_s) ->
@@ -197,13 +235,16 @@ let compile_function (f : func) : inst list =
         let (new_stack, epilogue_code) = generate_epilogue new_stack in
 
         (* Concate code blocks together *)
-
-    raise TODO
+        ([ f_label; ] @ prologue_code @ body_code @ epilogue_code)
 
 let rec compile (p:Ast.program) : result =
-    (* For each function *)
-    (* Compile function *)
-    raise TODO
+    let rec compile_prog (prog : Ast.program) (compiled : result) =
+        match p with 
+        | [] -> compiled
+        | f::rest -> 
+            let new_insts = compile_function f in
+            compile_prog rest { code = compiled.code @ new_insts; compiled.data }
+    in compile_prog p { code = []; data = [] }
 
 let result2string (res:result) : string = 
     let code = res.code in
