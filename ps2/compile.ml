@@ -105,8 +105,6 @@ module RL = RevList(struct type element = inst end)
 
 let (<@) (a: RL.rlist) (b: RL.element list) : RL.rlist = RL.app_list a b
 
-(* Prepends reversed x onto accum. Order of parameters for 
- * readability of code *)
 
 
 (* Factors out common code for compiling two nested expressions and
@@ -116,32 +114,26 @@ let (<@) (a: RL.rlist) (b: RL.element list) : RL.rlist = RL.app_list a b
 let rec compile_exp_r (is: RL.rlist) ((e,_): Ast.exp): RL.rlist =
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : RL.rlist =
         let t = new_temp() in
-            (* First expression compiled to rlist; second compiled to list *)
-            (compile_exp_r ((compile_exp_r is e1) <@ [La(R3, t); Sw(R2, R3, Int32.zero)])
-                e2) <@ 
+            (* Compile e2 so its result ends up in R3 *)
+            (compile_exp_r ((compile_exp_r is e2) <@ [La(R3, t); Sw(R2, R3, Int32.zero)])
+                e1) <@ 
                 (* Load result of first expression and carry out instruction *)
                 [La(R3, t); Lw(R3, R3, Int32.zero); instruction] in
-           
-         (*   revapp (compile_exp_r 
-                        (revapp (compile_exp_r is e1) [La(R3, t); Sw(R2, R3, Int32.zero)])
-                        e2)
-                [La(R3, t); Lw(R3, R3, Int32.zero); instruction] in  *)
-
         match e with
         | Var v -> is <@ [La(R2, "V"^v); Lw(R2,R2, Int32.zero)]
         | Int i -> is <@ [Li(R2, Word32.fromInt i)]
         | Binop(e1,op,e2) ->
               let oper = (match op with 
-                  | Plus  -> Mips.Add(R2, R3, Reg(R2))
-                  | Minus -> Mips.Sub(R2, R3, R2)
-                  | Times -> Mips.Mul(R2, R3, R2)
-                  | Div   -> Mips.Div(R2, R3, R2)
-                  | Eq    -> Mips.Seq(R2, R3, R2)
-                  | Neq   -> Mips.Sne(R2, R3, R2)
-                  | Lt    -> Mips.Slt(R2, R3, R2)
-                  | Lte   -> Mips.Sle(R2, R3, R2)
-                  | Gt    -> Mips.Sgt(R2, R3, R2)
-                  | Gte   -> Mips.Sge(R2, R3, R2)) in
+                  | Plus  -> Mips.Add(R2, R2, Reg(R3))
+                  | Minus -> Mips.Sub(R2, R2, R3)
+                  | Times -> Mips.Mul(R2, R2, R3)
+                  | Div   -> Mips.Div(R2, R2, R3)
+                  | Eq    -> Mips.Seq(R2, R2, R3)
+                  | Neq   -> Mips.Sne(R2, R2, R3)
+                  | Lt    -> Mips.Slt(R2, R2, R3)
+                  | Lte   -> Mips.Sle(R2, R2, R3)
+                  | Gt    -> Mips.Sgt(R2, R2, R3)
+                  | Gte   -> Mips.Sge(R2, R2, R3)) in
                   dual_op e1 e2 oper
         (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
         | Not(e) -> (compile_exp_r is e) <@ [Mips.Seq(R2, R3, R0)]

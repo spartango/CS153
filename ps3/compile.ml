@@ -77,7 +77,41 @@ let store_var (stack: VirtualStack) (v: string) (dest: Mip.reg) : inst =
 let load_var (stack: VirtualStack) (v: string) (dest: Mip.reg) : inst = 
     Lw(dest, Utility.FP, (find_local_var v stack))
 
-let rec compile_exp_r ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
+let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
+    (* Compiles e1 and e2. Result of e1 goes in R2, e2 in R3 *)
+    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : RL.rlist =
+        let (t, stack0, insts0) = new_temp() in
+        (* Compile e2 first so result goes in R3, getting resulting instructions and stack *)
+        let (stack1, insts1) = compile_exp_r (is <@ insts0) e2 in
+        (* Store result of e2; compile e1 *)
+        let (stack2, insts2) = compile_exp_r (insts1 <@ [(store_var stack1 t R2)]) e1 in
+        (* Load e1 result and execute instruction *)
+            (stack2, insts2 <@ [(load_var stack 2 t R3; instruction]) in
+        match e with
+        | Var v -> is <@ [La(R2, "V"^v); Lw(R2,R2, Int32.zero)]
+        | Int i -> is <@ [Li(R2, Word32.fromInt i)]
+        | Binop(e1,op,e2) ->
+              let oper = (match op with 
+                  | Plus  -> Mips.Add(R2, R3, Reg(R2))
+                  | Minus -> Mips.Sub(R2, R3, R2)
+                  | Times -> Mips.Mul(R2, R3, R2)
+                  | Div   -> Mips.Div(R2, R3, R2)
+                  | Eq    -> Mips.Seq(R2, R3, R2)
+                  | Neq   -> Mips.Sne(R2, R3, R2)
+                  | Lt    -> Mips.Slt(R2, R3, R2)
+                  | Lte   -> Mips.Sle(R2, R3, R2)
+                  | Gt    -> Mips.Sgt(R2, R3, R2)
+                  | Gte   -> Mips.Sge(R2, R3, R2)) in
+                  dual_op e1 e2 oper
+        (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
+        | Not(e) -> (compile_exp_r is e) <@ [Mips.Seq(R2, R3, R0)]
+        | And(e1, e2) -> 
+              dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
+        | Or(e1, e2) ->
+              dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
+        | Assign(v, e) -> (compile_exp_r is e) <@ [La(R3, "V"^v); Sw(R2,R3, Int32.zero)] 
+
+
 
     (* Load result of first expression and carry out instruction *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
