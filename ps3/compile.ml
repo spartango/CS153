@@ -113,13 +113,16 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualSta
 
     (* HELPER: Compiles e1 and e2. Result of e1 goes in R2, e2 in R3 *)
     let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : VirtualStack * RL.rlist =
-        let (t, stack0, insts0) = new_temp() in
+        let (t, stack1, insts1) = new_temp() in
         (* Compile e2 first so result goes in R3, getting resulting instructions and stack *)
-        let (stack1, insts1) = compile_exp_r (is <@ insts0) e2 stack0 in
+        let (stack2, insts2) = compile_exp_r (is <@ insts0) e2 stack0 in
         (* Store result of e2; compile e1 *)
-        let (stack2, insts2) = compile_exp_r (insts1 <@ [(store_var stack1 t R2)]) e1 stack1 in
-        (* Load e1 result and execute instruction *)
-            (stack2, insts2 <@ [(load_var stack 2 t R3; instruction]) in
+        let (stack3, insts3) = compile_exp_r (insts1 <@ [(store_var stack1 t R2)]) e1 stack1 in
+        (* Load e2 into R3 and execute instruction *)
+        let insts4 = insts2 <@ [(load_var stack 2 t R3; instruction] in
+        (* Pop temp var *)
+        let (stack4, pop_inst) = pop_local_var t stack2 in
+            (stack3, insts3 <@ pop_inst) in
 
         match e with
             | Var v -> is <@ [(load_var v stack R2)] (* Load from the correct stack offset *)
@@ -158,43 +161,49 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack
         | Exp e -> compile_exp_r is e stack
         | Let(t_var, t_exp, t_stmt) -> 
             (* Push a variable on to the stack *)
-            let (new_stack, push_insts) = add_local_var t_var stack in
+            let (stack1, insts1) = add_local_var t_var stack in
             (* Compile the expression *)
-            let (new_stack, exp_insts)  = compile_exp_r is t_exp new_stack in
+            let (stack2, insts2)  = compile_exp_r (is <@ insts1) t_exp stack1 in
             (* Store the expression in the var *)
-            let sw_insts = [Sw(R2, FP, (find_local_var t_var new_stack)); ] in
+            let sw_insts = [(store_var stack2 t_var R2)] in
             (* Compile the statment *)
-            let (new_stack, stmt_insts) = compile_stmt t_stmt new_stack in
+            let (stack3, insts3) = compile_stmt (insts2 <@ sw_insts) t_stmt stack2 in
             (* Pop the variable *)
-            let (new_stack, pop_insts)  = pop_local_var t_var new_stack in
-            (new_stack, (push_insts @ exp_insts @ sw_insts @ pop_insts)
+            let (stack4, pop_insts)  = pop_local_var t_var new_stack in
+            (new_stack, insts4 <@ pop_insts)
         | Seq (s1, s2) ->
-              compile_stmt_r (compile_stmt_r is s1) s2
+              let(stack1, insts1) = compile_stmt_r is s1 stack in
+                  compile_stmt_r insts1 s2 stack1
         | If(e, then_s, else_s) ->
-              (* Test e, branch to else_s if not equal *)
+              (* Labels *)
               let else_l = new_label () in
               let end_l  = new_label () in
-              revapp (compile_exp_r is e) 
-                     (rev (revapp 
-                          (compile_stmt_r 
-                            (revapp 
-                                   (compile_stmt_r [Beq(R2,R0,else_l)] then_s)
-                                   [J(end_l); Label(else_l)]
-                            )
-                            else_s)
-                          [Label(end_l)]))
+              (* Compile expression e*)
+              let (stack1, insts1) = compile_exp_r is e stack in
+              (* Branch is e1 evaluates to false *)
+              let branch_inst = [Beq(R2,R0,else_l)] in
+              (* Compile then_s *)
+              let (stack2, insts2) = compile_stmt_r (insts1 <@ branch_inst) then_s stack1 in
+              (* Jump to end, place else label *)
+              let else_inst = [J(end_l); Label(else_l)] in
+              (* Compile else_s *)
+              let (stack3, insts3) = compile_stmt_r (insts2 <@ else_inst) else_s stack2 in
+              (* Append end label *)
+                  (stack3, insts3 <@ [Label(end_l)])
         | While(e, s) ->
+              (* Labels *)
               let test_l = new_label () in
               let top_l  = new_label () in
-              revapp 
-                  (compile_exp_r (
-                       revapp 
-                           (compile_stmt_r 
-                           (revapp is [J(test_l); Label(top_l)]) 
-                           s)
-                           [Label(test_l)])
-                       e)
-                  [Bne(R2,R0,top_l)]
+              (* Jump and top label *)
+              let head_inst = [J(test_l); Label(top_l)] in
+              (* Compile statement *)
+              let (stack1, insts1) = compile_stmt_r (is <@ head_inst) s stack in
+              (* Test label instruction *)
+              let test_inst = [Label(test_l)] in
+              (* Compile expression *)
+              let (stack2, insts2) = compile_exp_r (insts1 <@ test_inst) e stack1 in
+              (* Append branch if expression is false *)
+                  (stack2, insts2 <@ [Bne(R2,R0,top_l)])
         (* Transform for loops into while loops *)
         | For(e1, e2, e3, s) ->
               (* Helper to get position out of statement *)
@@ -208,7 +217,7 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack
                                           pos))),
                                  pos)
         | Return (e) ->
-              revapp (compile_exp_r is e) [Jr(R31)] 
+              (compile_exp_r is e stack) <@ [Jr(R31)] 
              
 (* compiles a Fish statement down to a list of MIPS instructions.
  * Note that a "Return" is accomplished by placing the resulting
