@@ -106,7 +106,8 @@ let generate_epilogue (stack : VirtualStack) : VirtualStack * inst list =
     let s_insts = load_sregs 7 stack [] in
     let ra_fp_insts = [ Lw(RA, FP, (find_local_var "RA"));
                         Lw(FP, FP, (find_local_var "FP")); ] in
-    let new_insts = s_insts @ ra_fp_insts in 
+    let jr_inst = [ Jr(R31); ] in
+    let new_insts = s_insts @ ra_fp_insts @ jr_inst in 
     (* Reset the SP to our FP (frame pop) *)
     (stack, new_insts)
 
