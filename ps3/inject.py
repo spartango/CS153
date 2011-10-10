@@ -4,7 +4,7 @@ import sys
 import os 
 
 def inject_line(line):
-    return "move $a0, $2\n\tj printInt"
+    return "\tmove $a0, $2\n\tj printInt"
 
 # Reads file, outputting to stdout, and invoking injection on pattern match
 def search_file(filename):
@@ -18,14 +18,14 @@ def search_file(filename):
         # Conditional inject
         if in_main and line.find("jr\t$31") != -1:
             # Line check for return
-            print inject_line(line)
+            print inject_line(line),
 
         else:
             if line.find("main:") != -1 :
                 # Entering main scope
                 in_main = True
             # Stdout
-            print line
+            print line,
 
 
 
