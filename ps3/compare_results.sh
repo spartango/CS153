@@ -19,7 +19,7 @@ if [[ -e compiled_tests && -e compiled_js ]]; then
             # Something has failed, we'll log out and return a nice fail message
             echo "\x1b\x5b1;31m[  FAILED  ]\x1b\x5b0m See $log_file for error message"
         else
-            echo "\x1b\x5b1;32m[ COMPLETE ]\x1b\x5b0m Returned:" "\x1b\x5b1;36m" `tail -n 1 $log_file` "\x1b\x5b0m" " vs "  `tail -n 1 $log_file`
+            echo "\x1b\x5b1;32m[ COMPLETE ]\x1b\x5b0m Returned:" "\x1b\x5b1;36m" `tail -n 1 $jslog_file` "\x1b\x5b0m" " vs "  `tail -n 1 $log_file`
         fi
     done
 else
