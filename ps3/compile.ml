@@ -48,8 +48,6 @@ let generate_prologue (f_sig : funcsig) (stack : VirtualStack) : VirtualStack * 
                                  else mark_high_args 0 f_sig.args stack []
     in
     
-
-
     let rec save_low_args touched_num arg_names t_stack t_insts =
         if touched_num >= 4 
         then (t_stack, t_insts)
