@@ -77,16 +77,19 @@ let store_var (stack: VirtualStack) (v: string) (dest: Mip.reg) : inst =
 let load_var (stack: VirtualStack) (v: string) (dest: Mip.reg) : inst = 
     Lw(dest, Utility.FP, (find_local_var v stack))
 
+(* Places result in R2 *)
 let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualStack) : VirtualStack * inst list =
-    (* Compiles e1 and e2. Result of e1 goes in R2, e2 in R3 *)
-    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : RL.rlist =
+
+    (* HELPER: Compiles e1 and e2. Result of e1 goes in R2, e2 in R3 *)
+    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : VirtualStack * RL.rlist =
         let (t, stack0, insts0) = new_temp() in
         (* Compile e2 first so result goes in R3, getting resulting instructions and stack *)
-        let (stack1, insts1) = compile_exp_r (is <@ insts0) e2 in
+        let (stack1, insts1) = compile_exp_r (is <@ insts0) e2 stack0 in
         (* Store result of e2; compile e1 *)
-        let (stack2, insts2) = compile_exp_r (insts1 <@ [(store_var stack1 t R2)]) e1 in
+        let (stack2, insts2) = compile_exp_r (insts1 <@ [(store_var stack1 t R2)]) e1 stack1 in
         (* Load e1 result and execute instruction *)
             (stack2, insts2 <@ [(load_var stack 2 t R3; instruction]) in
+
         match e with
             | Var v -> is <@ [(load_var v stack R2)] (* Load from the correct stack offset *)
             | Int i -> is <@ [Li(R2, Word32.fromInt i)]
@@ -104,55 +107,18 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : VirtualSta
                                   | Gte   -> Mips.Sge(R2, R2, R3)) in
                       dual_op e1 e2 oper
             (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
-            | Not(e) -> (compile_exp_r is e) <@ [Mips.Seq(R2, R3, R0)]
+            | Not(e) -> let (stack1, insts1) = (compile_exp_r is e stack)
+                  (stack1, insts1 <@ [Mips.Seq(R2, R3, R0)])
             | And(e1, e2) -> 
                   dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
             | Or(e1, e2) ->
                   dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
             (* Assumes variable has already been delcared; if not allows exception to fall through *)
             | Assign(v, e) -> 
-                  let 
-(compile_exp_r is e) <@ [La(R3, "V"^v); Sw(R2,R3, Int32.zero)] 
-
-
-
-    (* Load result of first expression and carry out instruction *)
-    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
-        let (t, stack, stack_inst) = new_temp() in
-            (compile_exp_r ((compile_exp_r (is <@ stack_inst) e1) <@ [(store_var stack t R2)])
-                        e2) <@  [(store_var stack t R3); instruction] 
-    in  
-    match e with
-
-    | Int i -> Li(R2, Word32.fromInt i)::is
-    | Binop(e1,op,e2) ->
-          let oper = (match op with 
-              | Plus  -> Mips.Add(R2, R3, Reg(R2))
-              | Minus -> Mips.Sub(R2, R3, R2)
-              | Times -> Mips.Mul(R2, R3, R2)
-              | Div   -> Mips.Div(R2, R3, R2)
-              | Eq    -> Mips.Seq(R2, R3, R2)
-              | Neq   -> Mips.Sne(R2, R3, R2)
-              | Lt    -> Mips.Slt(R2, R3, Reg(R2))
-              | Lte   -> Mips.Sle(R2, R3, R2)
-              | Gt    -> Mips.Sgt(R2, R3, R2)
-              | Gte   -> Mips.Sge(R2, R3, R2)) in
-              dual_op e1 e2 oper
-    (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
-    | Not(e) -> revapp (compile_exp_r is e) [Mips.Seq(R2, R3, R0)]
-    | And(e1, e2) -> 
-          dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
-    | Or(e1, e2) ->
-          dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
-    | Assign(v, e) -> 
-        (* Check if the variable is already on the stack *)
-        (* If its there, pull it up *)
-        (* otherwise push a new variable *)
-        revapp (compile_exp_r is e) [(* TODO: do a lookup here *) Sw(R2,R3, Int32.zero)] 
-    | Call(f, exp_list) -> 
-        (* Follow calling conventions to invoke a function *)
-        (* Map arguments to expressions *)
-        raise TODO
+                  let (stack1, insts1) = compile_expr_r is e stack in
+                      (stack1, insts1 <@ [(store_var stack1 v R2)])
+            | Call(f, exp_list) ->
+                  raise TODO
 
 (* Compiles a statement in reverse order *)
 let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack) : VirtualStack * inst list =
