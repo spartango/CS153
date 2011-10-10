@@ -291,7 +291,7 @@ let compile_stmt (s : Ast.stmt) (stack : virtualStack) : virtualStack * inst lis
 let(stack1, insts1) = compile_stmt_r RInstList.empty s stack in
     (stack1, RInstList.to_list insts1)
 
-let compile_function (f : func) : inst list = 
+let compile_function (f : func) : inst list =
     let Fn(signature) = f in
     (* Allocate a local "stack" (Map) to simulate the real stack *)
     let local_stack = { last_offset = 0l; contents = StringMap.empty } in
@@ -299,21 +299,29 @@ let compile_function (f : func) : inst list =
         (* Generate a label for the function *)
         let f_label = Label(signature.name) in
 
+        let _ = print_string "Generating Prologue\n" in
+
         (* Generate a prologue for the function *)
         let (new_stack, prologue_code) = generate_prologue signature local_stack in
+
+        let _ = print_string "Generating Body\n" in
 
         (* Code gen for the function *)
         let (new_stack, body_code) = compile_stmt signature.body new_stack in
 
+        let _ = print_string "Generating Epilogue\n" in
+
         (* Generate an epilogue for the function *)
         let (new_stack, epilogue_code) = generate_epilogue new_stack in
+
+        let _ = print_string ("Compiled Function: "^signature.name^" \n") in
 
         (* Concate code blocks together *)
         ([ f_label; ] @ prologue_code @ body_code @ epilogue_code)
 
 let rec compile (p:Ast.program) : result =
     let rec compile_prog (prog : Ast.program) (compiled : result) =
-        match p with 
+        match prog with 
         | [] -> compiled
         | f::rest -> 
             let new_insts = compile_function f in
@@ -326,20 +334,20 @@ let result2string (res:result) : string =
     let strs = List.map (fun x -> (Mips.inst2string x) ^ "\n") code in
     let vaR8decl x = x ^ ":\t.word 0\n" in
     let readfile f =
-      let stream = open_in f in
-      let size = in_channel_length stream in
-      let text = String.create size in
-      let _ = really_input stream text 0 size in
-          let _ = close_in stream in 
-      text in
-      let debugcode = readfile "print.asm" in
-        "\t.text\n" ^
-        "\t.align\t2\n" ^
-        "\t.globl main\n" ^
-        (String.concat "" strs) ^
-        "\n\n" ^
-        "\t.data\n" ^
-        "\t.align 0\n"^
-        (String.concat "" (List.map vaR8decl data)) ^
-        "\n" ^
-        debugcode
+        let stream = open_in f in
+        let size = in_channel_length stream in
+        let text = String.create size in
+        let _ = really_input stream text 0 size in
+        let _ = close_in stream in 
+        text in
+        let debugcode = readfile "print.asm" in
+            "\t.text\n" ^
+            "\t.align\t2\n" ^
+            "\t.globl main\n" ^
+            (String.concat "" strs) ^
+            "\n\n" ^
+            "\t.data\n" ^
+            "\t.align 0\n"^
+            (String.concat "" (List.map vaR8decl data)) ^
+            "\n" ^
+            debugcode
