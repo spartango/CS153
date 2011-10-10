@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import os 
 
 def inject_line(line):
     return "move $a0, $2\n\tj printInt"
@@ -11,7 +12,8 @@ def search_file(filename):
     in_main = False
 
     # Pull open file
-    t_file = fopen(filename, 'r')
+    t_file = ls
+    open(filename, 'r')
     # Line by line read
     for line in t_file:
         # Conditional inject
@@ -20,7 +22,7 @@ def search_file(filename):
             print inject_line(line)
 
         else:
-            line.find("main:") != -1 :
+            if line.find("main:") != -1 :
                 # Entering main scope
                 in_main = True
             # Stdout

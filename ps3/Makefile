@@ -37,5 +37,8 @@ run_tests: compile_tests
 benchmark: compile_tests
 	./benchmark.sh
 
+toplevel: compile
+	ocamlmktop -o toplvl utility.cmo ast.cmo parse.cmo lex.cmo eval.cmo word32.cmo mips.cmo compile.cmo pretty_print.cmo test_framework.cmo
+
 clean:
 	rm -rf *.cmo *.cmi ps3 tests parse.ml parse.mli lex.ml compiled_tests

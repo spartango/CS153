@@ -75,7 +75,7 @@ let generate_prologue (f_sig : funcsig) (stack : virtualStack) : virtualStack * 
 
     (* Mark the stack positions of arguments *)
     (* First are n_arg > 3 *)
-    let (new_stack, arg_insts) = if (arg_offset < -16l) 
+    let (new_stack, arg_insts) = if (arg_offset > -16l) 
                                  then (stack, []) 
                                  else mark_high_args 0 f_sig.args stack []
     in

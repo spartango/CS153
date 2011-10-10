@@ -6,7 +6,7 @@ rm -rf compiled_tests
 
 mkdir compiled_tests
 
-if [[ -e ps3 ]]; then
+if [[ -e ps3	 ]]; then
 	for filename in `ls test/*.cish`; do
 		target=${filename%.cish}
 		output_file="compiled_tests/${target:5}.asm"
