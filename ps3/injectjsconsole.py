@@ -3,32 +3,30 @@
 import sys
 import os 
 
+def inject_line(line):
+    return line.replace("return", "console.log(").replace(";", ");")+line
+
 # Reads file, outputting to stdout, and invoking injection on pattern match
 def search_file(filename):
     # Scope tracking
-    depth  = 0
-    placed = False
+    in_main = False
 
     # Pull open file
     t_file = open(filename, 'r')
-
     # Line by line read
     for line in t_file:
         # Conditional inject
-        if depth == 0 and not placed and not line.strip(" \n\t") == "":
+        if in_main and line.find("return") != -1:
             # Line check for return
-            print "function ",
-            placed = True
-        
-        if line.find("{") != -1:
-            depth = depth +1 
-            placed = False
-        
-        if line.find("}") != -1:
-            depth = depth -1
-            placed = False;
-                    
-        print line.replace("let ", "var "),
+            print inject_line(line),
+
+        else:
+            if line.find("main") != -1 :
+                # Entering main scope
+                in_main = True
+            # Stdout
+            print line,
+    print "main()"
 
 
 if(len(sys.argv) > 1):

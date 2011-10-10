@@ -17,6 +17,9 @@ if [[ -e javascriptize.py ]]; then
         # Compile
         ./javascriptize.py $filename > $output_file
 
+        # Tag on little bits to print out the results of the program
+        ./injectjsconsole.py $output_file > ${output_file%.js}_test.js
+
     done 
 else 
     echo "\x1b\x5b1;31m[  ERROR   ]\x1b\x5b0m: Compiler  not found"
