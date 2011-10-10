@@ -155,9 +155,16 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt) (stack : VirtualStack
         | Exp e -> compile_exp_r is e
         | Let(t_var, t_exp, t_stmt) -> 
             (* Push a variable on to the stack *)
-            (* Code gen the statement *)
-            (* Pop the stack *)
-            raise TODO 
+            let (new_stack, push_insts) = add_local_var t_var stack in
+            (* Compile the expression *)
+            let (new_stack, exp_insts)  = compile_exp_r is t_exp new_stack in
+            (* Store the expression in the var *)
+            let sw_insts = [Sw(R2, FP, (find_local_var t_var new_stack)); ] in
+            (* Compile the statment *)
+            let (new_stack, stmt_insts) = compile_stmt t_stmt new_stack in
+            (* Pop the variable *)
+            let (new_stack, pop_insts)  = pop_local_var t_var new_stack in
+            (new_stack, (push_insts @ exp_insts @ sw_insts @ pop_insts)
         | Seq (s1, s2) ->
               compile_stmt_r (compile_stmt_r is s1) s2
         | If(e, then_s, else_s) ->
