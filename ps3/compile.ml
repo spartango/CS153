@@ -22,13 +22,54 @@ type VirtualStack = {  last_offset : int32;
 (* Code Gen *)
 
 (* Function prologue generation *)
-let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
-    (* Set new FP *)
-    let insts = [ Sw(FP, SP, -4); 
-                  Add(FP, SP, 0); ]
+let generate_prologue (f_sig : funcsig) (stack : VirtualStack) : VirtualStack * inst list =
+    let n_args = List.length f_sig.args in
+    let arg_offset = (Int32.mul -4l (Int32.of_int n_args)) in
+
+    (* Save the old FP and set new FP *)
+    let insts = [ Sw(FP, SP, arg_offset); 
+                  Add(FP, SP, 0l); ]
     in
-    (* Save Callee saved registers: $fp, $ra, and $s0-$s7 ($16-$23) *)
-    let (new_stack, fp_insts) =  add_local_var "FP" stack in
+
+    let rec mark_high_args skipped_num arg_names t_stack t_insts =
+        if skipped_num < 4 
+        then mark_high_args (skipped_num + 1) (List.tl arg_names) t_stack t_insts
+        else
+            match arg_names with
+            | []       -> (t_stack, t_insts)
+            | hd::rest -> let (new_stack, new_insts) = add_local_var hd t_stack in
+                          mark_high_args skipped_num rest new_stack (t_insts @ new_insts)
+    in 
+
+    (* Mark the stack positions of arguments *)
+    (* First are n_arg > 3 *)
+    let (new_stack, arg_insts) = if (arg_offset < -16l) 
+                                 then (stack, []) 
+                                 else mark_high_args 0 f_sig.args stack []
+    in
+    
+
+
+    let rec save_low_args touched_num arg_names t_stack t_insts =
+        if touched_num >= 4 
+        then (t_stack, t_insts)
+        else
+            match arg_names with
+            | []       -> (t_stack, t_insts)
+            | hd::rest -> let (new_stack, new_insts) = add_local_var hd t_stack in
+                          save_low_args (touched_num + 1) rest new_stack (t_insts @ new_insts)
+    in 
+
+    (* Then the first 4 args *)
+    (* Save the rest of the arguments a0 - a3 *)
+    let (new_stack, narg_insts) = save_low_args 0 f_sig.args new_stack []
+    in
+
+    (* Mark the Framepointer *)
+    let (new_stack, fp_insts) =  add_local_var "FP" new_stack in
+
+
+    (* Save Callee saved registers: $ra, and $s0-$s7 ($16-$23) *)
     let (new_stack, ra_insts) =  add_local_var "RA" new_stack in
     let ra_insts = ra_insts @ [ Sw(RA, FP, (find_local_var "RA" new_stack)); ] in
 
@@ -43,7 +84,7 @@ let generate_prologue (stack : VirtualStack) : VirtualStack * inst list =
     in 
 
     let (new_stack, s_insts) = save_sregs 7 new_stack [] in
-    let new_insts = (insts @ fp_insts @ ra_insts @ s_insts) in
+    let new_insts = (insts @ arg_insts @ narg_insts @ fp_insts @ ra_insts @ s_insts) in
     (new_stack, new_insts)
 
 
@@ -223,7 +264,7 @@ let compile_function (f : func) : inst list =
         let f_label = Label(signature.name) in
 
         (* Generate a prologue for the function *)
-        let (new_stack, prologue_code) = generate_prologue local_stack in
+        let (new_stack, prologue_code) = generate_prologue signature local_stack in
 
         (* Code gen for the function *)
         let (new_stack, body_code) = compile_stmt signature.body new_stack in
