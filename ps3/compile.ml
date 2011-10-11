@@ -160,14 +160,14 @@ let load_var (stack: virtualStack) (v: string) (dest: Mips.reg) : inst =
 let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualStack) : virtualStack * RInstList.rlist =
 
     (* HELPER: Compiles e1 and e2. Result of e1 goes in R2, e2 in R3 *)
-    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : virtualStack * RInstList.rlist =
+    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instructions: inst list) : virtualStack * RInstList.rlist =
         let (t, stack1, insts1) = new_temp stack in
         (* Compile e2 first so result goes in R3, getting resulting instructions and stack *)
         let (stack2, insts2) = compile_exp_r (is <@ insts1) e2 stack1 in
         (* Store result of e2; compile e1 *)
         let (stack3, insts3) = compile_exp_r (insts2 <@ [(store_var stack2 t R2)]) e1 stack2 in
         (* Load e2 into R3 and execute instruction *)
-        let insts4 = insts3 <@ [(load_var stack3 t R3); instruction] in
+        let insts4 = insts3 <@ [(load_var stack3 t R3)] <@ instructions in
         (* Pop temp var *)
         let (stack4, pop_inst) = pop_local_var t stack3 in
             (stack3, insts4 <@ pop_inst) in
@@ -187,14 +187,30 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
                                   | Lte   -> Mips.Sle(R2, R2, R3)
                                   | Gt    -> Mips.Sgt(R2, R2, R3)
                                   | Gte   -> Mips.Sge(R2, R2, R3)) in
-                      dual_op e1 e2 oper
+                      dual_op e1 e2 [oper]
             (* If R2 = 0, then set R2 = 1, else R2 = 0 *)
             | Not(e) -> let (stack1, insts1) = compile_exp_r is e stack in
                   (stack1, insts1 <@ [Mips.Seq(R2, R2, R0)])
             | And(e1, e2) -> 
-                  dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
+                  dual_op e1 e2 
+                      [
+                          (* If R2 = 0, then R2 = 0, else R2 = 1 *)
+                          Mips.Sne(R2, R2, R0);
+                          (* If R3 = 0, then R3 = 0, else R3 = 1 *)
+                          Mips.Sne(R3, R3, R0);
+                          (* If R2 = R3 = 1, then R2 = 1, else R2 = 0 *)
+                          Mips.And(R2, R2, Reg R3)
+                      ]
             | Or(e1, e2) ->
-                  dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
+                  dual_op e1 e2 
+                      [
+                          (* If R2 = 0, then R2 = 0, else R2 = 1 *)
+                          Mips.Sne(R2, R2, R0);
+                          (* If R3 = 0, then R3 = 0, else R3 = 1 *)
+                          Mips.Sne(R3, R3, R0);
+                          (* If R2 or R3 = 1, then R2 = 1, else R2 = 0 *)
+                          Mips.Or(R2, R2, Reg R3)
+                      ]
             (* Assumes variable has already been delcared; if not allows exception to fall through *)
             | Assign(v, e) -> 
                   let (stack1, insts1) = compile_exp_r is e stack in
