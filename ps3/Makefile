@@ -46,7 +46,7 @@ xcompile:
 run_js_tests: xcompile
 	./run_js_tests.sh
 
-compare_results:
+compare_results: compile_tests xcompile
 	./compare_results.sh
 
 clean:
