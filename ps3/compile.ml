@@ -167,9 +167,9 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
         (* Store result of e2; compile e1 *)
         let (stack3, insts3) = compile_exp_r (insts2 <@ [(store_var stack2 t R2)]) e1 stack2 in
         (* Load e2 into R3 and execute instruction *)
-        let insts4 = insts3 <@ [(load_var stack2 t R3); instruction] in
+        let insts4 = insts3 <@ [(load_var stack3 t R3); instruction] in
         (* Pop temp var *)
-        let (stack4, pop_inst) = pop_local_var t stack2 in
+        let (stack4, pop_inst) = pop_local_var t stack3 in
             (stack3, insts4 <@ pop_inst) in
 
         match e with
