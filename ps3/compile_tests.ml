@@ -59,11 +59,29 @@ module SAst =
                 | Let(v, e, s) ->
                       (Ast.Let(v, (transform_e e), (transform s)), 0)
         let simple_op = 
-            Exp(Binop((Binop(Int(3),Plus,Int(4))),Plus,Int(5)))
+            Exp(Binop(Int(3),Plus,Int(4)))
 
         let simple_compile_stmt (s: sstmt) : Compile.result = 
             let(_, asm) = compile_stmt (transform s) { last_offset = 0l; contents = StringMap.empty } in
                 { code = asm; data = []}
+
+        let res_to_str (res:result) : string = 
+            let code = res.code in
+            let data = res.data in
+            let strs = List.map (fun x -> (Mips.inst2string x) ^ "\n") code in
+            let vaR8decl x = x ^ ":\t.word 0\n" in
+                "\t.text\n" ^
+                    "\t.align\t2\n" ^
+                    "\t.globl main\n" ^
+                    (String.concat "" strs) ^
+                    "\n\n" ^
+                    "\t.data\n" ^
+                    "\t.align 0\n"^
+                    (String.concat "" (List.map vaR8decl data)) ^
+                    "\n"
+
+        let print_simple_statement (s: sstmt) : unit = 
+            print_endline (res_to_str (simple_compile_stmt s))
 
     end
 
@@ -87,6 +105,8 @@ let revapp_test2 =
             [1;2;3;4]
             "Reversed list test 2"
 
+
+let _ = SAst.print_simple_statement SAst.simple_op
 
 let _ = run_test_set [ revapp_test1;
                        revapp_test2;] "Reverse List Tests";;
