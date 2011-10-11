@@ -22,6 +22,10 @@ type virtualStack = {  last_offset : int32;
 
 (* Code Gen *)
 
+let sanitize_f_name (f : string) : string=
+  if (f <> "main") 
+    then "f_"^f 
+    else f
 
 (* Generates code to push a variable on to the stack *)
 let add_local_var (v : string) (stack : virtualStack) : virtualStack * inst list =
@@ -215,7 +219,7 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
             | Assign(v, e) -> 
                   let (stack1, insts1) = compile_exp_r is e stack in
                       (stack1, insts1 <@ [(store_var stack1 v R2)])
-            | Call(f, exp_list) -> compile_call f exp_list stack is
+            | Call(f, exp_list) -> compile_call (sanitize_f_name f) exp_list stack is
 
 and compile_call f exp_list (stack : virtualStack) (prev_insts: RInstList.rlist) : virtualStack * RInstList.rlist =
     (* helper to deal with groups of args *)
@@ -314,7 +318,7 @@ let compile_function (f : func) : inst list =
     let local_stack = { last_offset = 0l; contents = StringMap.empty } in
 
         (* Generate a label for the function *)
-        let f_label = Label(signature.name) in
+        let f_label = Label((sanitize_f_name signature.name)) in
 
         (* Generate a prologue for the function *)
         let (new_stack, prologue_code) = generate_prologue signature local_stack in
