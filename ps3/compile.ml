@@ -215,9 +215,9 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
             | Assign(v, e) -> 
                   let (stack1, insts1) = compile_exp_r is e stack in
                       (stack1, insts1 <@ [(store_var stack1 v R2)])
-            | Call(f, exp_list) -> compile_call f exp_list stack 
+            | Call(f, exp_list) -> compile_call f exp_list stack is
 
-and compile_call f exp_list (stack : virtualStack) : virtualStack * RInstList.rlist =
+and compile_call f exp_list (stack : virtualStack) (prev_insts: RInstList.rlist) : virtualStack * RInstList.rlist =
     (* helper to deal with groups of args *)
     let rec compile_call_r argno exps t_stack t_insts =
         (* For each expression *)
@@ -233,7 +233,7 @@ and compile_call f exp_list (stack : virtualStack) : virtualStack * RInstList.rl
             in
             compile_call_r (argno + 1) rest new_stack ( new_insts <@ mv_insts )
     in
-    compile_call_r 0 exp_list stack RInstList.empty
+    compile_call_r 0 exp_list stack prev_insts
 
 (* Compiles a statement in reverse order *)
 let rec compile_stmt_r (is: RInstList.rlist) ((s,pos): Ast.stmt) (stack : virtualStack) : virtualStack * RInstList.rlist =
