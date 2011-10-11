@@ -190,7 +190,7 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
                       dual_op e1 e2 oper
             (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
             | Not(e) -> let (stack1, insts1) = compile_exp_r is e stack in
-                  (stack1, insts1 <@ [Mips.Seq(R2, R3, R0)])
+                  (stack1, insts1 <@ [Mips.Seq(R2, R2, R0)])
             | And(e1, e2) -> 
                   dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
             | Or(e1, e2) ->
@@ -234,7 +234,7 @@ let rec compile_stmt_r (is: RInstList.rlist) ((s,pos): Ast.stmt) (stack : virtua
             (* Compile the statment *)
             let (stack3, insts3) = compile_stmt_r (insts2 <@ sw_insts) t_stmt stack2 in
             (* Pop the variable *)
-            let (stack4, pop_insts)  = pop_local_var t_var stack3 in
+            let (stack4, pop_insts) = pop_local_var t_var stack3 in
             (stack4, insts3 <@ pop_insts)
         | Seq (s1, s2) ->
               let(stack1, insts1) = compile_stmt_r is s1 stack in

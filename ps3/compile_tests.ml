@@ -64,8 +64,14 @@ module SAst =
                       (Ast.Let(v, (transform_e e), (transform s)), 0)
 
         (* Example stmt/exp *)
-        let simple_op = 
+        let simple_stmt = 
             Exp(Binop(Binop((Int(3),Plus,Int(5))),Plus,Int(4)))
+
+        let exp_stmt2 =
+            Exp(Not(Int(7)))
+
+        let seq_stmt =
+            Seq(simple_stmt,exp_stmt2)
 
         (* Compiles a simple statement to MIPS. Does not function prologue/epilogue*)
         let simple_compile_stmt (s: sstmt) : Compile.result = 
@@ -110,6 +116,8 @@ let revapp_test1 = mk_revapp_test
 let revapp_test2 = 
     let t = RIntList.rev_list [1;2] in
         mk_revapp_test (t<@ [3;4]) [1;2;3;4] "Reversed list test 2"
+
+let _ = SAst.print_simple_statement SAst.seq_stmt;;
 
 let _ = run_test_set [ revapp_test1;
                        revapp_test2;] "Reverse List Tests";;
