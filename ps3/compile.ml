@@ -188,7 +188,7 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
                                   | Gt    -> Mips.Sgt(R2, R2, R3)
                                   | Gte   -> Mips.Sge(R2, R2, R3)) in
                       dual_op e1 e2 oper
-            (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
+            (* If R2 = 0, then set R2 = 1, else R2 = 0 *)
             | Not(e) -> let (stack1, insts1) = compile_exp_r is e stack in
                   (stack1, insts1 <@ [Mips.Seq(R2, R2, R0)])
             | And(e1, e2) -> 
