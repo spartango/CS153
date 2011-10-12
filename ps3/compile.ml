@@ -87,7 +87,7 @@ let generate_prologue (f_sig : funcsig) (stack : virtualStack) : virtualStack * 
                           let new_insts = new_insts @ 
                                           [ Sw((string2reg ("A"^(string_of_int touched_num))), 
                                                 fp, 
-                                                (find_local_var hd new_stack)); ]
+                                                (find_local_var hd new_stack)); ] 
                           in
                           save_low_args (touched_num + 1) rest new_stack (t_insts @ new_insts)
     in 
@@ -222,20 +222,32 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
             | Call(f, exp_list) -> compile_call (sanitize_f_name f) exp_list stack is
 
 and compile_call f exp_list (stack : virtualStack) (prev_insts: RInstList.rlist) : virtualStack * RInstList.rlist =
+    let arg_offset = Int32.of_int ((List.length exp_list) * -4) in
+
     (* helper to deal with groups of args *)
     let rec compile_call_r argno exps t_stack t_insts =
         (* For each expression *)
         match exps with 
         | []          -> (t_stack, t_insts <@ [ Jal(f); ]) (* Jump and Link *)
         | t_exp::rest -> 
+            (* Setup Sandbox *)
+            let sandbox_stack = { contents = t_stack.contents; 
+                                  last_offset = (Int32.add t_stack.last_offset arg_offset); }
+            in                     
             (* Compile expression *)
-            let (new_stack, new_insts) = compile_exp_r t_insts t_exp t_stack in
-            (* Move result into aX OR If n_arg > 3 then push arg into next frame (past sp) *)
-            let mv_insts = if argno < 4 
-                            then [ Add((string2reg ("A"^(string_of_int argno))), R2, Reg(R0)); ]
-                            else [ Sw(R2, sp, (Int32.mul (-4l) (Int32.of_int argno)));            ]
+            let (sandbox_stack, new_insts) = compile_exp_r 
+                                                    t_insts 
+                                                    t_exp 
+                                                    sandbox_stack 
             in
-            compile_call_r (argno + 1) rest new_stack ( new_insts <@ mv_insts )
+
+            (* Exit Sandbox *)
+            (* Move result into aX OR If n_arg > 3 then push arg into next frame (past sp) *)
+            let mv_insts = (if argno < 4 
+                            then [ Add((string2reg ("A"^(string_of_int argno))), R2, Reg(R0));  ]
+                            else [] ) @ [ Sw(R2, sp, (Int32.mul (-4l) (Int32.of_int argno)));   ]
+            in
+            compile_call_r (argno + 1) rest t_stack ( new_insts <@ mv_insts )
     in
     compile_call_r 0 exp_list stack prev_insts
 
