@@ -76,13 +76,6 @@ let generate_prologue (f_sig : funcsig) (stack : virtualStack) : virtualStack * 
             | hd::rest -> let (new_stack, new_insts) = add_local_var hd t_stack in
                           mark_high_args skipped_num rest new_stack (t_insts @ new_insts)
     in 
-
-    (* Mark the stack positions of arguments *)
-    (* First are n_arg > 3 *)
-    let (new_stack, arg_insts) = if (arg_offset > -16l) 
-                                 then (stack, []) 
-                                 else mark_high_args 0 f_sig.args stack []
-    in
     
     let rec save_low_args touched_num arg_names t_stack t_insts =
         if touched_num >= 4 
@@ -101,7 +94,14 @@ let generate_prologue (f_sig : funcsig) (stack : virtualStack) : virtualStack * 
 
     (* Then the first 4 args *)
     (* Save the rest of the arguments a0 - a3 *)
-    let (new_stack, narg_insts) = save_low_args 0 f_sig.args new_stack []
+    let (new_stack, narg_insts) = save_low_args 0 f_sig.args stack []
+    in
+
+    (* Mark the stack positions of arguments *)
+    (* First are n_arg > 3 *)
+    let (new_stack, arg_insts) = if (arg_offset > -16l) 
+                                 then (new_stack, []) 
+                                 else mark_high_args 0 f_sig.args new_stack []
     in
 
     (* Mark the Framepointer *)
