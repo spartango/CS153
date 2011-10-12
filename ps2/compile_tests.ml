@@ -5,24 +5,18 @@ open Optimize
 open Ast
 open Mips
 
+module IList = RevList(struct type element = int end)
+
 (* Utility function tests *)
 let revapp_test = 
-	let test = fun () ->
-		let init_list   = [3; 2; 1]               in
-		let target_list = [4; 5]                  in
-		let result = revapp init_list target_list in
-		result = [5;4;3;2;1]
-	in 
+    let (<@) a b = IList.app_list a b in
+    let test = fun () ->
+	let init_list   = IList.rev_list [1;2;3]    in
+	let target_list = [4;5]                  in
+	let result = IList.to_list (init_list <@ target_list) in
+	    result = [1;2;3;4;5]
+    in 
 	Test("Revapp Test", test)
-;;
-
-let rev_test = 
-	let test = fun () -> 
-		let init_list = [3; 2; 1]     in
-		let result    = rev init_list in
-		result = [1; 2; 3] 
-	in
-	Test("Rev Test", test)
 ;;
 
 (* Tests for collecting variables *)
@@ -190,8 +184,7 @@ let constant_folding_test =
 ;;
 			
 
-run_test_set [ revapp_test;
-			   rev_test    ] "Utility Tests";;
+run_test_set [ revapp_test;  ] "Utility Tests";;
 
 run_test_set [ collect_assign_test; 
 			   collect_rec_assign_test;
