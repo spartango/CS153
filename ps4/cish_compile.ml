@@ -221,8 +221,12 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Cish_ast.exp) (stack : virtu
                   let (stack1, insts1) = compile_exp_r is e stack in
                       (stack1, insts1 <@ [(store_var stack1 v R2)])
             | Call (f, exp_list) -> raise TODO
-            | Load (e) -> raise TODO
-            | Store (dest, e) -> raise TODO
+            | Load (e) -> 
+                  let (stack1, insts1) = compile_exp_r is e stack in
+                  (stack1, insts1 <@ [Lw(R2, R2, Int32.zero)])
+            | Store (dest, e) ->
+                  (* Compile value and address, then store value at address *)
+                  dual_op e dest [Sw(R2, R3, Int32.zero)]
             | Malloc (e) -> raise TODO
 
 and compile_call f exp_list (stack : virtualStack) (prev_insts: RInstList.rlist) : virtualStack * RInstList.rlist =
