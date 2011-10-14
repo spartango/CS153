@@ -220,7 +220,7 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Cish_ast.exp) (stack : virtu
             | Assign(v, e) -> 
                   let (stack1, insts1) = compile_exp_r is e stack in
                       (stack1, insts1 <@ [(store_var stack1 v R2)])
-            | Call (f, exp_list) -> raise TODO
+            | Call (f_exp, exp_list) -> raise TODO
             | Load (e) -> 
                   let (stack1, insts1) = compile_exp_r is e stack in
                   (stack1, insts1 <@ [Lw(R2, R2, Int32.zero)])
