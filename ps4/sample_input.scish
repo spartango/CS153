@@ -1,0 +1,6 @@
+/* this is some sample input for the Scish compiler -- the 
+ * corresponding output that my compiler generates is in
+ * the file sample_output.cish.
+ */
+
+(((lambda (x) (lambda (y) (+ x y))) 42) 3)
