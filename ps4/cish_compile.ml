@@ -1,7 +1,7 @@
 exception FAILBLOG
 (* Compile Cish AST to MIPS AST *)
 open Mips
-open Cist_ast
+open Cish_ast
 open Utility
 open Word32
 
@@ -162,10 +162,10 @@ let load_var (stack: virtualStack) (v: string) (dest: Mips.reg) : inst =
     Lw(dest, fp, (find_local_var v stack))
 
 (* Places result in R2 *)
-let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualStack) : virtualStack * RInstList.rlist =
+let rec compile_exp_r (is: RInstList.rlist) ((e,_): Cish_ast.exp) (stack : virtualStack) : virtualStack * RInstList.rlist =
 
     (* HELPER: Compiles e1 and e2. Result of e1 goes in R2, e2 in R3 *)
-    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instructions: inst list) : virtualStack * RInstList.rlist =
+    let dual_op (e1: Cish_ast.exp) (e2: Cish_ast.exp) (instructions: inst list) : virtualStack * RInstList.rlist =
         let (t, stack1, insts1) = new_temp stack in
         (* Compile e2 first so result goes in R3, getting resulting instructions and stack *)
         let (stack2, insts2) = compile_exp_r (is <@ insts1) e2 stack1 in
@@ -220,7 +220,10 @@ let rec compile_exp_r (is: RInstList.rlist) ((e,_): Ast.exp) (stack : virtualSta
             | Assign(v, e) -> 
                   let (stack1, insts1) = compile_exp_r is e stack in
                       (stack1, insts1 <@ [(store_var stack1 v R2)])
-            | Call(f, exp_list) -> compile_call (sanitize_f_name f) exp_list stack is
+            | Call (f, exp_list) -> raise TODO
+            | Load (e) -> raise TODO
+            | Store (dest, e) -> raise TODO
+            | Malloc (e) -> raise TODO
 
 and compile_call f exp_list (stack : virtualStack) (prev_insts: RInstList.rlist) : virtualStack * RInstList.rlist =
     let arg_offset = Int32.of_int ((List.length exp_list) * -4) in
@@ -253,7 +256,7 @@ and compile_call f exp_list (stack : virtualStack) (prev_insts: RInstList.rlist)
     compile_call_r 0 exp_list stack prev_insts
 
 (* Compiles a statement in reverse order *)
-let rec compile_stmt_r (is: RInstList.rlist) ((s,pos): Ast.stmt) (stack : virtualStack) : virtualStack * RInstList.rlist =
+let rec compile_stmt_r (is: RInstList.rlist) ((s,pos): Cish_ast.stmt) (stack : virtualStack) : virtualStack * RInstList.rlist =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
         | Exp e -> compile_exp_r is e stack
@@ -307,11 +310,11 @@ let rec compile_stmt_r (is: RInstList.rlist) ((s,pos): Ast.stmt) (stack : virtua
               (* Helper to get position out of statement *)
               let get_pos s = let (_,p) = s in p in 
               (* Nastiness due to necesity of having position informaiton *)
-              compile_stmt_r is ((Ast.Seq(
-                                      (Ast.Exp e1, (get_pos e1)),
+              compile_stmt_r is ((Cish_ast.Seq(
+                                      (Cish_ast.Exp e1, (get_pos e1)),
                                          (While(
                                               e2,
-                                              (Ast.Seq(s, (Ast.Exp e3, (get_pos e3))), get_pos s)),
+                                              (Cish_ast.Seq(s, (Cish_ast.Exp e3, (get_pos e3))), get_pos s)),
                                           pos))),
                                  pos) stack
         | Return (e) ->
@@ -321,7 +324,7 @@ let rec compile_stmt_r (is: RInstList.rlist) ((s,pos): Ast.stmt) (stack : virtua
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
  *)
-let compile_stmt (s : Ast.stmt) (stack : virtualStack) : virtualStack * inst list = 
+let compile_stmt (s : Cish_ast.stmt) (stack : virtualStack) : virtualStack * inst list = 
 let(stack1, insts1) = compile_stmt_r RInstList.empty s stack in
     (stack1, RInstList.to_list insts1)
 
@@ -345,8 +348,8 @@ let compile_function (f : func) : inst list =
         (* Concate code blocks together *)
         ([ f_label; ] @ prologue_code @ body_code @ epilogue_code)
 
-let rec compile (p:Ast.program) : result =
-    let rec compile_prog (prog : Ast.program) (compiled : result) =
+let rec compile (p:Cish_ast.program) : result =
+    let rec compile_prog (prog : Cish_ast.program) (compiled : result) =
         match prog with 
         | [] -> compiled
         | f::rest -> 
