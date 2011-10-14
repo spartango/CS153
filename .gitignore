@@ -90,3 +90,7 @@ ps3/compiled_tests
 ps3/parse.ml*
 
 ps3/lex.ml
+
+ps3/test/19cish_90adderx.cish
+
+ps3/compiled_js
