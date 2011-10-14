@@ -71,53 +71,80 @@ let rec collect_vars (p : Ast.program) : unit =
               collect_vars s
         | Return e -> collect_vars_e e
 
-(* Prepends reversed x onto accum. Order of parameters for 
- * readability of code *)
-let rec revapp (accum: 'a list) (x: 'a list) : 'a list=
-    match x with
-        | []         -> accum
-        | head::tail -> revapp (head::accum) tail
+module type LISTARGS =
+    sig
+        type element
+    end
 
-let rev x = revapp [] x
+module type RLIST =
+  sig
+      type element
+      type rlist
+      val empty    : rlist
+      val app_list : rlist -> element list -> rlist
+      val rev_list : element list -> rlist
+      val to_list  : rlist -> element list
+  end
+
+(* Reverse list module *) 
+module RevList (L: LISTARGS) : (RLIST with
+                                          type element = L.element)=  
+    struct
+        type element = L.element
+        type rlist = (element list) 
+        let empty = []
+        let rec app_list (accum: rlist) (x: element list) : rlist=
+            match x with
+                | []         -> accum
+                | head::tail -> app_list (head::accum) tail
+        let rev_list (l: element list) : rlist = app_list [] l                      
+        let to_list (x: rlist) : element list = app_list [] x      
+    end
+
+module RL = RevList(struct type element = inst end)
+
+let (<@) (a: RL.rlist) (b: RL.element list) : RL.rlist = RL.app_list a b
+
+
 
 (* Factors out common code for compiling two nested expressions and
  * carrying out some instruction. The result of e1 is stored in R3,
  * the result of e2 in R2. in is the instruction to carry out on these
  * results *)
-let rec compile_exp_r (is: inst list) ((e,_): Ast.exp): inst list =
-    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : inst list =
+let rec compile_exp_r (is: RL.rlist) ((e,_): Ast.exp): RL.rlist =
+    let dual_op (e1: Ast.exp) (e2: Ast.exp) (instruction: inst) : RL.rlist =
         let t = new_temp() in
-            (* Load result of first expression and carry out instruction *)
-            revapp (compile_exp_r 
-                        (revapp (compile_exp_r is e1) [La(R3, t); Sw(R2, R3, Int32.zero)])
-                        e2)
-                [La(R3, t); Lw(R3, R3, Int32.zero); instruction] in  
+            (* Compile e2 so its result ends up in R3 *)
+            (compile_exp_r ((compile_exp_r is e2) <@ [La(R3, t); Sw(R2, R3, Int32.zero)])
+                e1) <@ 
+                (* Load result of first expression and carry out instruction *)
+                [La(R3, t); Lw(R3, R3, Int32.zero); instruction] in
         match e with
-        | Var v -> revapp is [La(R2, "V"^v); Lw(R2,R2, Int32.zero)]
-        | Int i -> Li(R2, Word32.fromInt i)::is
+        | Var v -> is <@ [La(R2, "V"^v); Lw(R2,R2, Int32.zero)]
+        | Int i -> is <@ [Li(R2, Word32.fromInt i)]
         | Binop(e1,op,e2) ->
               let oper = (match op with 
-                  | Plus  -> Mips.Add(R2, R3, Reg(R2))
-                  | Minus -> Mips.Sub(R2, R3, R2)
-                  | Times -> Mips.Mul(R2, R3, R2)
-                  | Div   -> Mips.Div(R2, R3, R2)
-                  | Eq    -> Mips.Seq(R2, R3, R2)
-                  | Neq   -> Mips.Sne(R2, R3, R2)
-                  | Lt    -> Mips.Slt(R2, R3, R2)
-                  | Lte   -> Mips.Sle(R2, R3, R2)
-                  | Gt    -> Mips.Sgt(R2, R3, R2)
-                  | Gte   -> Mips.Sge(R2, R3, R2)) in
+                  | Plus  -> Mips.Add(R2, R2, Reg(R3))
+                  | Minus -> Mips.Sub(R2, R2, R3)
+                  | Times -> Mips.Mul(R2, R2, R3)
+                  | Div   -> Mips.Div(R2, R2, R3)
+                  | Eq    -> Mips.Seq(R2, R2, R3)
+                  | Neq   -> Mips.Sne(R2, R2, R3)
+                  | Lt    -> Mips.Slt(R2, R2, R3)
+                  | Lte   -> Mips.Sle(R2, R2, R3)
+                  | Gt    -> Mips.Sgt(R2, R2, R3)
+                  | Gte   -> Mips.Sge(R2, R2, R3)) in
                   dual_op e1 e2 oper
         (* If R3 = 0, then set R2 = 1, else R2 = 0 *)
-        | Not(e) -> revapp (compile_exp_r is e) [Mips.Seq(R2, R3, R0)]
+        | Not(e) -> (compile_exp_r is e) <@ [Mips.Seq(R2, R3, R0)]
         | And(e1, e2) -> 
               dual_op e1 e2 (Mips.And(R2, R2, Reg R3))
         | Or(e1, e2) ->
               dual_op e1 e2 (Mips.Or(R2, R2, Reg R3))
-        | Assign(v, e) -> revapp (compile_exp_r is e) [La(R3, "V"^v); Sw(R2,R3, Int32.zero)] 
+        | Assign(v, e) -> (compile_exp_r is e) <@ [La(R3, "V"^v); Sw(R2,R3, Int32.zero)] 
 
 (* Compiles a statement in reverse order *)
-let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
+let rec compile_stmt_r (is: RL.rlist) ((s,pos): Ast.stmt) : RL.rlist =
     match s with
          (* Using compile_exp_r directly eliminates redundant reversing the list *)
         | Exp e -> compile_exp_r is e
@@ -127,27 +154,14 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
               (* Test e, branch to else_s if not equal *)
               let else_l = new_label () in
               let end_l  = new_label () in
-              revapp (compile_exp_r is e) 
-                     (rev (revapp 
-                          (compile_stmt_r 
-                            (revapp 
-                                   (compile_stmt_r [Beq(R2,R0,else_l)] then_s)
-                                   [J(end_l); Label(else_l)]
-                            )
-                            else_s)
-                          [Label(end_l)]))
+              (compile_stmt_r ((compile_stmt_r ((compile_exp_r is e) <@ [Beq(R2,R0,else_l)]) then_s) <@ 
+                  [J(end_l); Label(else_l)]) else_s) <@ [Label(end_l)]
         | While(e, s) ->
               let test_l = new_label () in
               let top_l  = new_label () in
-              revapp 
-                  (compile_exp_r (
-                       revapp 
-                           (compile_stmt_r 
-                           (revapp is [J(test_l); Label(top_l)]) 
-                           s)
-                           [Label(test_l)])
-                       e)
-                  [Bne(R2,R0,top_l)]
+                  (compile_exp_r 
+                       ((compile_stmt_r (is <@ [J(test_l); Label(top_l)]) s) <@ [Label(test_l)]) e)
+                      <@ [Bne(R2,R0,top_l)]                  
         (* Transform for loops into while loops *)
         | For(e1, e2, e3, s) ->
               (* Helper to get position out of statement *)
@@ -161,23 +175,23 @@ let rec compile_stmt_r (is: inst list) ((s,pos): Ast.stmt)  : inst list =
                                           pos))),
                                  pos)
         | Return (e) ->
-              revapp (compile_exp_r is e) [Jr(R31)] 
+             (compile_exp_r is e) <@ [Jr(R31)] 
              
 (* compiles a Fish statement down to a list of MIPS instructions.
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
  *)
 let compile_stmt (s :Ast.stmt) : inst list = 
-    rev (compile_stmt_r [] s)
+    RL.to_list (compile_stmt_r RL.empty s)
 
 (* compiles Fish AST down to MIPS instructions and a list of global vars *)
 let compile (p : Ast.program) : result = 
-    let preoptimized = (constant_fold p) in
+    (*let preoptimized = (constant_fold p) in*)
     let _ = reset() in
-    let _ = collect_vars(preoptimized) in
-    let insts = (Label "main") :: (compile_stmt preoptimized) in
-    let optimized = (thread_jumps insts) in
-    { code = optimized; data = VarSet.elements (!variables) }
+    let _ = collect_vars(p) in
+    let insts = (Label "main") :: (compile_stmt p) in
+    (*let optimized = (thread_jumps insts) in *)
+    { code = insts; data = VarSet.elements (!variables) }
 
 let code_to_string code = 
   List.map (fun x -> (Mips.inst2string x) ^ "\n") code
