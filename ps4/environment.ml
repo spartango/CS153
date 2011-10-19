@@ -30,6 +30,15 @@ let init_env (code : stmt) : stmt =
 let lookup_env (index : int) : stmt =
   cish_stmt_from_str ("result = env;" 
                      ^"for(i=0; i<"
-                     ^(string_of_int index)
-                     ^"; i=i+1) result = *(result + 4); "
+                     ^(string_of_int index^"; "
+                     ^"i=i+1) result = *(result + 4); "
                      ^"result = *(result);")
+
+(* Modifies the environment to include the marked variable *)
+let store_env (value : int) : stmt = 
+  cish_stmt_from_str ("result = malloc(8);" 
+                     ^"*(result) = "
+                     ^(string_of_int value)^"; "
+                     ^"*(result+4) = env; "
+                     ^"env = result; "
+                     )
