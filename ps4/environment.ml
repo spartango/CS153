@@ -1,9 +1,9 @@
+open Cish_ast
+
 (* Environment *)
 
 (* Environment is a LIFO queue (aka Stack), 
  * implemented as a linked List. *)
-
-(* Initialize an environment *)
 
 (*
  * Each element of the list is a heap-allocated, two-word block

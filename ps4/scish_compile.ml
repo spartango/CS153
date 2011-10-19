@@ -4,18 +4,31 @@
    You will want to do your own test cases...
  *)
 
+open Environment 
+open Cish_ast
+open Scish_ast
+
+let null     = Int(0);;
+let env_name = "env";;
+ 
 exception Unimplemented
 
-let rec compile_exp (e:Scish_ast.exp) : Cish_ast.program = raise Unimplemented
+let rec compile_exp_r (t_expr : Scish_ast.exp) ( f_list : func list ) 
+                  : (func list, stmt) =
 
-(* Environment *)
+(* Initialize an environment    *)
+(* Env starts as a null pointer *)
+let init (t_expr : Scish_ast.exp) : (func list, stmt) =
+  let (fns, code) = compile_exp_r t_expr []                 in
+  let new_code    = (Let(env_name, null, compile_exp_r), 0) in
+  (fns, new_code)
 
-(* Environment is a LIFO queue (aka Stack), 
- * implemented as a linked List.
- * Each element of the list is a heap-allocated, two-word block
- * which represents a tuple of the form (value, pointer)
- * Values in the environment are immutable, instead they can 
- * only be Shadowed.
- * Variables are indexed in the environment using DeBruijn indicies
- * allowing for O(n) lookup by seeking
-*)
+(* Create a main function       *)
+let rec compile_exp (e:Scish_ast.exp) : Cish_ast.program =
+  let (functions, main_body) = (init e
+    (Fn( { name = "main"; 
+        args = []; 
+        body = main_body; 
+        pos  = 0;
+       } ) 
+     @ functions)
