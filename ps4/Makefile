@@ -37,4 +37,5 @@ scish: mips
 	$(COMPILER) -o ps4_scish cish_ast.cmo scish_ast.cmo scish_parse.cmo scish_lex.cmo scish_eval.cmo word32.cmo mips.cmo scish_compile.cmo scish.cmo
 
 clean:
-	-rm *.cmo *.cmi ps4_cish ps4_scish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml
+	rm -rf *.cmo *.cmi ps4_cish ps4_scish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml
+

@@ -1,4 +1,5 @@
 exception FAILBLOG
+
 (* Compile Cish AST to MIPS AST *)
 open Mips
 open Cish_ast
