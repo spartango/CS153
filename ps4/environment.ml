@@ -4,8 +4,6 @@ open Utility
 let null     = Int(0);;
 let env_name = "env";;
 
-let stub_pos = 0;;
-
 (* Environment *)
 
 (* Environment is a LIFO queue (aka Stack), 
@@ -13,7 +11,7 @@ let stub_pos = 0;;
 
 (* Initializes an environment for a block of code *)
 let init_env (code : stmt) : stmt =
-  (Let(env_name, null, code), stub_pos)
+  (Let(env_name, (null, stub_pos) , code), stub_pos)
 
 (*
  * Each element of the list is a heap-allocated, two-word block
@@ -30,9 +28,10 @@ let init_env (code : stmt) : stmt =
 let lookup_env (index : int) : stmt =
   cish_stmt_from_str ("result = env;" 
                      ^"for(i=0; i<"
-                     ^(string_of_int index^"; "
+                     ^(string_of_int index)^"; "
                      ^"i=i+1) result = *(result + 4); "
-                     ^"result = *(result);")
+                     ^"result = *(result);"
+                   )
 
 (* Modifies the environment to include the marked variable *)
 let store_env (value : int) : stmt = 

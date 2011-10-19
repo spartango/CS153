@@ -12,6 +12,7 @@ let parse_error s =
 %}
 
 %start program
+%start stmt
 
 /* nonterminals */
 %type <Cish_ast.program> program

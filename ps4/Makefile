@@ -23,7 +23,7 @@ cish: mips
 	$(COMPILER) -c cish.ml
 	$(COMPILER) -o ps4_cish cish_ast.cmo cish_parse.cmo cish_lex.cmo cish_eval.cmo word32.cmo mips.cmo utility.cmo cish_compile.cmo cish.cmo
 
-scish: mips
+scish: cish mips
 	$(COMPILER) -c cish_ast.ml
 	$(COMPILER) -c scish_ast.ml
 	ocamlyacc scish_parse.mly
@@ -35,7 +35,7 @@ scish: mips
 	$(COMPILER) -c environment.ml
 	$(COMPILER) -c scish_compile.ml
 	$(COMPILER) -c scish.ml
-	$(COMPILER) -o ps4_scish cish_ast.cmo scish_ast.cmo scish_parse.cmo scish_lex.cmo scish_eval.cmo word32.cmo mips.cmo environment.cmo scish_compile.cmo scish.cmo
+	$(COMPILER) -o ps4_scish cish_ast.cmo cish_parse.cmo cish_lex.cmo scish_ast.cmo scish_parse.cmo scish_lex.cmo scish_eval.cmo utility.cmo word32.cmo mips.cmo environment.cmo scish_compile.cmo scish.cmo
 
 clean:
 	rm -rf *.cmo *.cmi ps4_cish ps4_scish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml

@@ -5,6 +5,7 @@
  *)
 
 open Environment 
+open Utility
 open Cish_ast
 open Scish_ast
 
@@ -13,16 +14,16 @@ exception Unimplemented
 let result_name = "result";;
 
 let rec compile_exp_r (t_expr : Scish_ast.exp) ( f_list : func list ) 
-                      : (func list, stmt) =
+                      : (func list * stmt) =
   (* TODO: Implement compilation *)
   raise Unimplemented
 
 let init_result (code : stmt) : stmt =
-  (Let(result_name, null, code), 0)
+  (Let(result_name, (null, stub_pos), code), stub_pos)
 
 (* Initialize an environment    *)
 (* Env starts as a null pointer *)
-let init (t_expr : Scish_ast.exp) : (func list, stmt) =
+let init (t_expr : Scish_ast.exp) : (func list * stmt) =
   let (fns, code) = compile_exp_r t_expr [] in
   let new_code    = init_result   code      in
   let new_code    = init_env      new_code  in
@@ -30,10 +31,10 @@ let init (t_expr : Scish_ast.exp) : (func list, stmt) =
 
 (* Create a main function       *)
 let rec compile_exp (e:Scish_ast.exp) : Cish_ast.program =
-  let (functions, main_body) = (init e
-    (Fn( { name = "main"; 
+  let (functions, main_body) = (init e) in
+    ([Fn( { name = "main"; 
            args = []; 
            body = main_body; 
            pos  = 0;
-       } ) 
+       } )]
      @ functions)
