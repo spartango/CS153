@@ -1,20 +1,20 @@
 t7(dynenv) {
    let result = 0; {
      let t6 = 0; {
-       result = **(dynenv+4);
-       t6 = result;
-       result = *dynenv;
-       result = t6+result;
+       result = **(dynenv+4);            /* Set result to contents pointed to by the pointer in second word of stack frame */
+       t6 = result;                      /* t6 is result */
+       result = *dynenv;                 /* Set result to contents of word at address dynenv */
+       result = t6+result;               /* Result is the 
      }
      return result;
    }
 }
 t8(dynenv) {
    let result = 0; {
-     result = malloc(8);
-     *result = t7;
-     *(result+4) = dynenv;
-     return result;
+     result = malloc(8);         /* Allocate 8 bytes of space */
+     *result = t7;               /* First word of stack frame is return value of t7 */
+     *(result+4) = dynenv;       /* Second word of stack frame is dynamic environment */
+     return result;              /* Return pointer to stack frame */
    }
 }
 main() {
@@ -26,10 +26,10 @@ main() {
              let t3 = 0; {
                let t4 = 0; {
                  let t5 = 0; {
-                   result = malloc(8);
-                   *result = t8;
-                   *(result+4) = dynenv;
-                   t3 = *result;
+                   result = malloc(8);          /* allocate 8 bytes of space */
+                   *result = t8;           /* Pointer to function in first 4 bytes */
+                   *(result+4) = dynenv;   /* Second word of stack frame is dynamic environment */
+                   t3 = *result;           /* t3 is contents of result, result of t8 */
                    t4 = *(result+4);
                    result = 42;
                    t5 = result;
