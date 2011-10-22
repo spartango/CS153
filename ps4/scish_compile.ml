@@ -15,8 +15,13 @@ let result_name = "result";;
 
 let rec compile_exp_r (t_expr : Scish_ast.exp) ( f_list : func list ) 
                       : (func list * stmt) =
-  (* TODO: Implement compilation *)
-  raise Unimplemented
+  match t_expr with
+  | Int(i)
+  | Var(v)
+  | PrimApp(op, exps)
+  | Lambda(v, t_exp)
+  | App(e1, e2)
+  | If(e1, e2, e3)
 
 let init_result (code : stmt) : stmt =
   (Let(result_name, (null, stub_pos), code), stub_pos)
@@ -33,8 +38,8 @@ let init (t_expr : Scish_ast.exp) : (func list * stmt) =
 let rec compile_exp (e:Scish_ast.exp) : Cish_ast.program =
   let (functions, main_body) = (init e) in
     ([Fn( { name = "main"; 
-           args = []; 
-           body = main_body; 
-           pos  = 0;
+            args = []; 
+            body = main_body; 
+            pos  = 0;
        } )]
      @ functions)
