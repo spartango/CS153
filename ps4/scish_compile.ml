@@ -16,12 +16,12 @@ let result_name = "result";;
 let rec compile_exp_r (t_expr : Scish_ast.exp) ( f_list : func list ) 
                       : (func list * stmt) =
   match t_expr with
-  | Int(i)
-  | Var(v)
-  | PrimApp(op, exps)
-  | Lambda(v, t_exp)
-  | App(e1, e2)
-  | If(e1, e2, e3)
+  | Int(i)            -> raise Unimplemented (* TODO: use integer    *)
+  | Var(v)            -> raise Unimplemented (* TODO: do lookup      *)
+  | PrimApp(op, exps) -> raise Unimplemented (* TODO: Apply          *)
+  | Lambda(v, t_exp)  -> raise Unimplemented (* TODO: create closure *)  
+  | App(e1, e2)       -> raise Unimplemented (* TODO: call           *)
+  | If(e1, e2, e3)    -> raise Unimplemented (* TODO: logical flow   *)
 
 let init_result (code : stmt) : stmt =
   (Let(result_name, (null, stub_pos), code), stub_pos)
