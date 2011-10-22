@@ -29,17 +29,20 @@ let create_closure (arg : string)
   (* Generate Function *)
   let function_name = (new_function ()) in
   let new_func  = Fn( { name = function_name; 
-                        args = ["f_env"]; 
+                        args = ["env"]; 
                         body = f_body;
                         pos  = stub_pos;
                       } 
                   ) in
   (* Allocate Space    *)
-  let code = cish_stmt_from_str ("result = malloc(8); "
-                                 ^"**result = "^function_name^"; "
-                                 ^"*(result+4) = env;" )
   (* Put pointers      *)
-  raise Unimplemented
+  let code = cish_stmt_from_str ("result = malloc(8); "
+                                 ^"*result = "^function_name^"; "
+                                 ^"*(result+4) = env;" )
+  in
+  (  ([new_func] @ f_list),
+     scope, 
+     code )
 
 let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
                       ( f_list : func list     ) 
