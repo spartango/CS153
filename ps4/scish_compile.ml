@@ -12,11 +12,12 @@ open Scish_ast
 exception Unimplemented
 
 let result_name = "result";;
+let dummy_pos = 0;;
 
 let rec compile_exp_r (t_expr : Scish_ast.exp) ( f_list : func list ) 
                       : (func list * stmt) =
   match t_expr with
-  | Int(i)            -> raise Unimplemented (* TODO: use integer    *)
+  | Int(i)            -> (f_list, (Cish_ast.Exp(Cish_ast.Int i, dummy_pos), dummy_pos))
   | Var(v)            -> raise Unimplemented (* TODO: do lookup      *)
   | PrimApp(op, exps) -> raise Unimplemented (* TODO: Apply          *)
   | Lambda(v, t_exp)  -> raise Unimplemented (* TODO: create closure *)  
