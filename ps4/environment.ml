@@ -41,3 +41,23 @@ let store_env (value : int) : stmt =
                      ^"*(result+4) = env; "
                      ^"env = result; "
                      )
+
+let push_scope (varname : string) (scope : string list) = 
+  [varname;] @ scope
+
+let pop_scope (scope : string list) =
+  match scope with 
+  | []         -> []
+  | head::rest -> rest
+
+let scope_index (varname : string) (t_scope : var list) : int =
+  let scope_index_r current_index c_scope =
+    match c_scope with 
+    | []         -> -1
+    | head::rest -> if head = varname 
+                      then current_index
+                      else scope_index_r (current_index+1) rest
+  in
+  scope_index_r 0 t_scope
+  
+                                       
