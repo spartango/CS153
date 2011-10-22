@@ -27,13 +27,17 @@ let create_closure (arg : string)
   let new_scope = push_scope arg in
   let (new_f_list, _, f_body) = (compile_exp_r body f_list new_scope) in
   (* Generate Function *)
-  let new_func  = Fn( { name = (new_function ()); 
+  let function_name = (new_function ()) in
+  let new_func  = Fn( { name = function_name; 
                         args = ["f_env"]; 
                         body = f_body;
                         pos  = stub_pos;
                       } 
                   ) in
   (* Allocate Space    *)
+  let code = cish_stmt_from_str ("result = malloc(8); "
+                                 ^"**result = "^function_name^"; "
+                                 ^"*(result+4) = env;" )
   (* Put pointers      *)
   raise Unimplemented
 
