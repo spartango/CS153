@@ -13,15 +13,27 @@ exception Unimplemented
 
 let result_name = "result";;
 
+(* generate fresh labels *)
+let label_counter = ref 0
+let new_int() = (label_counter := (!label_counter) + 1; !label_counter)
+let new_function() = "f" ^ (string_of_int (new_int()))
+
 let create_closure (arg : string) 
                    (body : exp) 
                    (f_list : func list) 
                    (scope : var list) 
                    : (func list * var list * stmt) =
-  (* Allocate Space    *)
   (* Push scope        *)
+  let new_scope = push_scope arg in
+  let (new_f_list, _, f_body) = (compile_exp_r body f_list new_scope) in
   (* Generate Function *)
-  (* Compile body      *)
+  let new_func  = Fn( { name = (new_function ()); 
+                        args = ["f_env"]; 
+                        body = f_body;
+                        pos  = stub_pos;
+                      } 
+                  ) in
+  (* Allocate Space    *)
   (* Put pointers      *)
   raise Unimplemented
 
@@ -39,7 +51,11 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
 
   | PrimApp(op, exps) -> raise Unimplemented (* TODO: Primitives     *)
   | Lambda(v, t_exp)  -> create_closure v t_expr f_list scope 
-  | App(e1, e2)       -> raise Unimplemented (* TODO: call           *)
+  | App(e1, e2)       -> (* Compile e2 *)
+                         (* Push result on to stack *)
+                         (* Call *)
+                         (* Pop *)
+                         raise Unimplemented (* TODO: call           *)
   | If(e1, e2, e3)    -> raise Unimplemented (* TODO: logical flow   *)
 
 let init_result (code : stmt) : stmt =

@@ -44,7 +44,7 @@ let store_env (value : int) : stmt =
                      ^"env = result; "
                      )
 
-let push_scope (varname : string) (scope : string list) = 
+let push_scope (varname : string) (scope : string list) : string list = 
   [varname;] @ scope
 
 let pop_scope (scope : string list) =
