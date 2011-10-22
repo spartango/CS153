@@ -13,6 +13,18 @@ exception Unimplemented
 
 let result_name = "result";;
 
+let create_closure (arg : string) 
+                   (body : exp) 
+                   (f_list : func list) 
+                   (scope : var list) 
+                   : (func list * var list * stmt) =
+  (* Allocate Space    *)
+  (* Push scope        *)
+  (* Generate Function *)
+  (* Compile body      *)
+  (* Put pointers      *)
+  raise Unimplemented
+
 let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
                       ( f_list : func list     ) 
                       ( scope  : var list      )
@@ -21,7 +33,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
   | Int(i)            -> raise Unimplemented (* TODO: use integer    *)
   | Var(v)            -> raise Unimplemented (* TODO: do lookup      *)
   | PrimApp(op, exps) -> raise Unimplemented (* TODO: Apply          *)
-  | Lambda(v, t_exp)  ->  (* TODO: create closure *)  
+  | Lambda(v, t_exp)  -> create_closure v t_expr f_list scope 
   | App(e1, e2)       -> raise Unimplemented (* TODO: call           *)
   | If(e1, e2, e3)    -> raise Unimplemented (* TODO: logical flow   *)
 
