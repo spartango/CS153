@@ -44,16 +44,19 @@ let store_env (value : int) : stmt =
                      ^"env = result; "
                      )
 
+(* Pushes a variable onto our virtual stack used during code gen *) 
 let push_scope (varname : string) (scope : string list) : string list = 
   [varname;] @ scope
 
+(* Pops a variable off our virtual stack used during code gen *) 
 let pop_scope (scope : string list) =
   match scope with 
   | []         -> []
   | head::rest -> rest
 
+(* Looks up a variable in our virtual stack used during code gen *) 
 let scope_index (varname : string) (t_scope : var list) : int =
-  let scope_index_r current_index c_scope =
+  let rec scope_index_r current_index c_scope =
     match c_scope with 
     | []         -> raise Not_Found_In_Scope
     | head::rest -> if head = varname 

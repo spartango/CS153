@@ -40,9 +40,9 @@ let create_closure (arg : string)
                                  ^"*result = "^function_name^"; "
                                  ^"*(result+4) = env;" )
   in
-  (  ([new_func] @ f_list),
-     scope, 
-     code )
+  ( ([new_func] @ f_list),
+    scope, 
+    code )
 
 let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
                       ( f_list : func list     ) 
@@ -63,7 +63,19 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                          (* Call *)
                          (* Pop *)
                          raise Unimplemented (* TODO: call           *)
-  | If(e1, e2, e3)    -> raise Unimplemented (* TODO: logical flow   *)
+  | If(e1, e2, e3)    -> let (new_f_list, _, e1_code) = 
+                            compile_exp_r e1 f_list scope in
+                         let (new_f_list, _, e2_code) = 
+                            compile_exp_r e2 new_f_list scope in
+                         let (new_f_list, _, e3_code ) = 
+                            compile_exp_r e3 new_f_list scope in
+                         let if_s = ( Cish_ast.If(
+                                        (Var(result_name), stub_pos),
+                                        e2_code, 
+                                        e3_code), stub_pos )
+                          in
+                          let code = ( Seq(e1_code, if_s), stub_pos) in
+                          (new_f_list, scope, code) 
 
 let init_result (code : stmt) : stmt =
   (Let(result_name, (null, stub_pos), code), stub_pos)
