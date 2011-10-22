@@ -33,16 +33,16 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                          (* Env lookup   *)
                           (f_list, scope, code)
   | PrimApp(op, exps) -> 
-        let rec seqs (stmts: Cish_ast.Stmt list) : Cish_ast.stmt =
+        let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
             match stmts with
-                | [] -> Cish_ast.skip
+                | [] -> (Cish_ast.skip, stub_pos)
                 | hd::[] -> hd
-                | hd::tl -> Cish_ast.Seq(hd, seqs tl) in
+                | hd::tl -> (Cish_ast.Seq(hd, seqs tl), stub_pos) in
         (* Compiles an expression and stores its result in a temporary variable *)
         let compile_store (ex: Scish_ast.exp) (fs: func list) (s: var list) 
                 : var * (func list * var list * stmt) =
             let (f_list1, scope1, stmt1) = compile_exp_r ex fs s in
-            let temp = new_temp () in
+            let temp1 = new_temp () in
             let store_result = cish_stmt_from_str (temp1 ^ " = " ^ result_name) in    
                 (temp1, (f_list1, scope1, (seqs [stmt1; store_result]))) in
         let binop (oper: string) : func list * var list * Cish_ast.stmt =
@@ -54,7 +54,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
             let end_stmt = cish_stmt_from_str (result_name ^ " = " ^ temp1 ^ oper ^ result_name) in
                 (* Concatinate statements using Seq *)
                 (f_list2, scope2, seqs [stmt1; stmt2; end_stmt]) in      
-            match op with
+            (match op with
                 | Plus   -> binop "+"
                 | Minus -> binop "-"
                 | Times -> binop "*"
@@ -62,23 +62,21 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                 | Cons ->
                       let tuple_address = new_temp () in
                       (* Create space to store tuple *)
-                      let init_stmt = tuple_address ^" = malloc(8);" in
+                      let init_stmt = cish_stmt_from_str (tuple_address ^" = malloc(8);") in
                       (* Compile first expression, placing result in result *) 
                       let (f_list1, scope1, stmt1) = compile_exp_r (List.hd exps) f_list scope in
-                      let store_stmt1 = "*(" ^ tuple_address ^ ") = " ^ result_name ^ ";" in
+                      (* Store result in first word at the tuple's address *)
+                      let store_stmt1 = cish_stmt_from_str ("*(" ^ tuple_address ^ ") = " ^ result_name ^ ";") in
                       (* Compile second expression, placing result in result *)
                       let (f_list2, scope2, stmt2) = compile_exp_r (List.nth exps 1) f_list1 scope1 in
-                      let (temp1, ) = compile_store (List.hd exps) f_list scope in
-                      let (temp2, (f_list2, scope2, stmt2)) = compile_store (List.nth exps 1) f_list1 scope1 in
-                      let store1 = "
-
-
-
+                      (* Store result in second word at tupele's address *)
+                      let store_stmt2 = cish_stmt_from_str ("*(" ^ tuple_address ^ "+4) = " ^ result_name ^ ";") in
+                          (f_list2, scope2, seqs [init_stmt; stmt1; store_stmt1; stmt2; store_stmt2])
  (* create a pair *)
-| Fst    (* fetch the 1st component of a pair *)
-| Snd    (* fetch the 2nd component of a pair *)
-| Eq     (* compare two ints for equality *)
-| Lt     (* compare two ints for inequality *)
+                | Fst -> raise Unimplemented    (* fetch the 1st component of a pair *)
+                | Snd -> raise Unimplemented    (* fetch the 2nd component of a pair *)
+                | Eq -> raise Unimplemented    (* compare two ints for equality *)
+                | Lt -> raise Unimplemented    (* compare two ints for inequality *))
   | Lambda(v, t_exp)  -> create_closure v t_expr f_list scope 
   | App(e1, e2)       -> (* Compile e2 *)
                          (* Push result on to stack *)
