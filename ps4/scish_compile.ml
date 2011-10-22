@@ -20,40 +20,13 @@ let new_function() = "f" ^ (string_of_int (new_int()))
 let result_name = "result";;
 let result_var : Cish_ast.exp = (Cish_ast.Var(result_name), stub_pos)
 
-
-let create_closure (arg : string) 
-                   (body : exp) 
-                   (f_list : func list) 
-                   (scope : var list) 
-                   : (func list * var list * stmt) =
-  (* Push scope        *)
-  let new_scope = push_scope arg in
-  let (new_f_list, _, f_body) = (compile_exp_r body f_list new_scope) in
-  (* Generate Function *)
-  let function_name = (new_function ()) in
-  let new_func  = Fn( { name = function_name; 
-                        args = ["env"]; 
-                        body = f_body;
-                        pos  = stub_pos;
-                      } 
-                  ) in
-  (* Allocate Space    *)
-  (* Put pointers      *)
-  let code = cish_stmt_from_str ("result = malloc(8); "
-                                 ^"*result = "^function_name^"; "
-                                 ^"*(result+4) = env;" )
-  in
-  ( ([new_func] @ f_list),
-    scope, 
-    code )
-
 let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
                       ( f_list : func list     ) 
                       ( scope  : var list      )
                       : (func list * var list * stmt) =
   match t_expr with
   (* Store int in result *)
-  | Int(i) -> (f_list, scope, (cish_stmt_from_str ("result = " ^ (string_of_int i))), 0))
+  | Int(i) -> (f_list, scope, (cish_stmt_from_str ("result = " ^ (string_of_int i))))
   | Var(v)            -> (* Scope lookup *)
                           let scope_loc = (scope_index v scope) in
                           let code = lookup_env scope_loc in 
@@ -73,15 +46,38 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                          let (new_f_list, _, e3_code ) = 
                             compile_exp_r e3 new_f_list scope in
                          let if_s = ( Cish_ast.If(
-                                        (Var(result_name), stub_pos),
+                                        (Cish_ast.Var(result_name), stub_pos),
                                         e2_code, 
                                         e3_code), stub_pos )
                           in
                           let code = ( Seq(e1_code, if_s), stub_pos) in
                           (new_f_list, scope, code) 
 
-
-
+and create_closure (arg : string) 
+                   (body : exp) 
+                   (f_list : func list) 
+                   (scope : var list) 
+                   : (func list * var list * stmt) =
+  (* Push scope        *)
+  let new_scope = push_scope arg scope in
+  let (new_f_list, _, f_body) = (compile_exp_r body f_list new_scope) in
+  (* Generate Function *)
+  let function_name = (new_function ()) in
+  let new_func  = Fn( { name = function_name; 
+                        args = ["env"]; 
+                        body = f_body;
+                        pos  = stub_pos;
+                      } 
+                  ) in
+  (* Allocate Space    *)
+  (* Put pointers      *)
+  let code = cish_stmt_from_str ("result = malloc(8); "
+                                 ^"*result = "^function_name^"; "
+                                 ^"*(result+4) = env;" )
+  in
+  ( ([new_func] @ f_list),
+    scope, 
+    code )
 
 let init_result (code : stmt) : stmt =
   (Let(result_name, (null, stub_pos), code), stub_pos)
@@ -89,9 +85,9 @@ let init_result (code : stmt) : stmt =
 (* Initialize an environment    *)
 (* Env starts as a null pointer *)
 let init (t_expr : Scish_ast.exp) : (func list * stmt) =
-  let (fns, code) = compile_exp_r t_expr [] [] in
-  let new_code    = init_result   code         in
-  let new_code    = init_env      new_code     in
+  let (fns, _, code) = compile_exp_r t_expr [] []     in
+  let new_code       = init_result   code             in
+  let new_code       = init_env      new_code         in
   (fns, new_code)
 
 (* Create a main function       *)
