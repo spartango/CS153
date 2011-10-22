@@ -31,8 +31,12 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                       : (func list * var list * stmt) =
   match t_expr with
   | Int(i)            -> raise Unimplemented (* TODO: use integer    *)
-  | Var(v)            -> raise Unimplemented (* TODO: do lookup      *)
-  | PrimApp(op, exps) -> raise Unimplemented (* TODO: Apply          *)
+  | Var(v)            -> (* Scope lookup *)
+                          let scope_loc = (scope_index v scope) in
+                          let code = lookup_env scope_loc in 
+                         (* Env lookup   *)
+                          (f_list, scope, code)
+  | PrimApp(op, exps) -> raise Unimplemented (* TODO: Primitives     *)
   | Lambda(v, t_exp)  -> create_closure v t_expr f_list scope 
   | App(e1, e2)       -> raise Unimplemented (* TODO: call           *)
   | If(e1, e2, e3)    -> raise Unimplemented (* TODO: logical flow   *)

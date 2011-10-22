@@ -1,6 +1,8 @@
 open Cish_ast
 open Utility
 
+exception Not_Found_In_Scope
+
 let null     = Int(0);;
 let env_name = "env";;
 
@@ -53,7 +55,7 @@ let pop_scope (scope : string list) =
 let scope_index (varname : string) (t_scope : var list) : int =
   let scope_index_r current_index c_scope =
     match c_scope with 
-    | []         -> -1
+    | []         -> raise Not_Found_In_Scope
     | head::rest -> if head = varname 
                       then current_index
                       else scope_index_r (current_index+1) rest
