@@ -14,7 +14,9 @@ exception Unimplemented
 let result_name = "result";;
 let dummy_pos = 0;;
 
-let rec compile_exp_r (t_expr : Scish_ast.exp) ( f_list : func list ) 
+let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
+                      ( f_list : func list     ) 
+                      ( scope  : var list      )
                       : (func list * stmt) =
   match t_expr with
   | Int(i)            -> (f_list, (Cish_ast.Exp(Cish_ast.Int i, dummy_pos), dummy_pos))
@@ -30,9 +32,9 @@ let init_result (code : stmt) : stmt =
 (* Initialize an environment    *)
 (* Env starts as a null pointer *)
 let init (t_expr : Scish_ast.exp) : (func list * stmt) =
-  let (fns, code) = compile_exp_r t_expr [] in
-  let new_code    = init_result   code      in
-  let new_code    = init_env      new_code  in
+  let (fns, code) = compile_exp_r t_expr [] [] in
+  let new_code    = init_result   code         in
+  let new_code    = init_env      new_code     in
   (fns, new_code)
 
 (* Create a main function       *)
