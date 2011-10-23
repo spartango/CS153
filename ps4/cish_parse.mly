@@ -8,7 +8,7 @@ let rhs n =
 let parse_error s =
   let pos = Parsing.symbol_end_pos () in
   let l = pos.pos_lnum in
-  print_string ("line "^(string_of_int l)^": "^s^"\n") 
+  print_string ("Cish error: line "^(string_of_int l)^": "^s^"\n") 
 %}
 
 %start program stmt

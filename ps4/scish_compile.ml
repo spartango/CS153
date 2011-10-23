@@ -27,6 +27,7 @@ let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
         | hd::[] -> hd
         | hd::tl -> (Cish_ast.Seq(hd, seqs tl), stub_pos)
 
+(* Wraps a let declaration for v around st *)
 let init_var (v: string) (st: Cish_ast.stmt) : Cish_ast.stmt =
     (Cish_ast.Let(v, (Cish_ast.Int(0), stub_pos), st), stub_pos)
 
@@ -62,7 +63,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                       (* Accesses the address in memory in ex with an offset in bytes of offset *)
                   let access_mem (ex: Scish_ast.exp) (fs: func list) (s: var list) (offset: int) =
                       let(f_list1, scope1, stmt1) = compile_exp_r (List.hd exps) f_list scope in    
-                      let access_stmt = cish_stmt_from_str (result_name ^ " = " ^ "*("^ result_name ^ "+" ^ (string_of_int offset) ^ ");") in
+                      let access_stmt = cish_stmt_from_str (result_name ^ " = " ^ "*(" ^ result_name ^ "+" ^ (string_of_int offset) ^ ");") in
                           (f_list1, scope1, seqs [stmt1; access_stmt]) in
                       (match op with
                            | Plus   -> binop "+"
@@ -72,7 +73,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                            | Cons ->
                                  let tuple_address = new_temp () in
                                      (* Create space to store tuple *)
-                                 let init_stmt = cish_stmt_from_str (tuple_address ^" = malloc(8);") in
+                                 let init_stmt = cish_stmt_from_str (tuple_address ^ " = malloc(8);") in
                                      (* Compile first expression, placing result in result *) 
                                  let (f_list1, scope1, stmt1) = compile_exp_r (List.hd exps) f_list scope in
                                      (* Store result in first word at the tuple's address *)
@@ -81,7 +82,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                                  let (f_list2, scope2, stmt2) = compile_exp_r (List.nth exps 1) f_list1 scope1 in
                                      (* Store result in second word at tupele's address *)
                                  let store_stmt2 = cish_stmt_from_str ("*(" ^ tuple_address ^ "+4) = " ^ result_name ^ ";") in
-                                     (f_list2, scope2, seqs [init_stmt; stmt1; store_stmt1; stmt2; store_stmt2])
+                                     (f_list2, scope2, (init_var tuple_address (seqs [init_stmt; stmt1; store_stmt1; stmt2; store_stmt2])))
                                          (* create a pair *)
                            | Fst -> access_mem (List.hd exps) f_list scope 0 
                            | Snd -> access_mem (List.hd exps) f_list scope 4
@@ -89,12 +90,13 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                            | Lt -> binop "<")
             | Lambda(v, t_exp)  -> create_closure v t_expr f_list scope 
             | App(e1, e2)       -> 
-                  (* Compile e2 *)
+                  (* Compile e2 and store in temp1 *)
                   let(temp1, (f_list1, scope1, stmt1)) = compile_store e2 f_list scope in
                       (* Compile e1 *)
+                  (* Compile pointer to expression and stores in result *)
                   let (f_list2, scope2, stmt2) = compile_exp_r e1 f_list scope in
-                  let app_stmt = cish_stmt_from_str (result_name ^ " = " ^ result_name ^ "(" ^ temp1 ^ ");") in
-                      (f_list2, scope2, seqs [stmt1; stmt2; app_stmt])
+                  let app_stmt = cish_stmt_from_str (result_name ^ " = *" ^ result_name ^ "(" ^ temp1 ^ ");") in
+                      (f_list2, scope2, (init_var temp1 (seqs [stmt1; stmt2; app_stmt])))
             | If(e1, e2, e3)    -> let (new_f_list, _, e1_code) = 
                   compile_exp_r e1 f_list scope in
               let (new_f_list, _, e2_code) = 
@@ -151,7 +153,7 @@ let init (t_expr : Scish_ast.exp) : (func list * stmt) =
   (fns, new_code)
 
 (* Create a main function       *)
-let rec compile_exp (e:Scish_ast.exp) : Cish_ast.program =
+let compile_exp (e:Scish_ast.exp) : Cish_ast.program =
   let (functions, main_body) = (init e) in
     ([Fn( { name = "main"; 
             args = []; 
