@@ -88,7 +88,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                            | Snd -> access_mem (List.hd exps) f_list scope 4
                            | Eq -> binop "=="
                            | Lt -> binop "<")
-            | Lambda(v, t_exp)  -> create_closure v t_expr f_list scope 
+            | Lambda(v, e1)  -> create_closure v e1 f_list scope 
             | App(e1, e2)       -> 
                   (* Compile e2 and store in temp1 *)
                   let(temp1, (f_list1, scope1, stmt1)) = compile_store e2 f_list scope in
@@ -118,6 +118,7 @@ and create_closure (arg : string)
                    : (func list * var list * stmt) =
   (* Push scope        *)
   let new_scope = push_scope arg scope in
+  let _ = print_string (Scish_ast.exp2string body) in
   let (new_f_list, _, f_body) = (compile_exp_r body f_list new_scope) in
   (* Generate Function *)
   let function_name = (new_function ()) in
