@@ -11,12 +11,11 @@ open Scish_ast
 
 exception Unimplemented
 
-let func_counter = ref 0
-let temp_counter = ref 0
-let new_int (r: int ref) = (r := (!r) + 1; !r)
+let int_counter = ref 0
+let new_int () = (int_counter := (!int_counter) + 1; !int_counter)
 let new_temp() = 
-    "temp_var" ^ (string_of_int (new_int temp_counter))
-let new_function() = "f" ^ (string_of_int (new_int func_counter))
+    "temp_var" ^ (string_of_int (new_int ()))
+let new_function() = "f" ^ (string_of_int (new_int ()))
 
 let result_var : Cish_ast.exp = (Cish_ast.Var(result_name), stub_pos)
 
@@ -31,6 +30,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
         let temp1 = new_temp () in
         let store_result = cish_stmt_from_str (temp1 ^ " = " ^ result_name ^ ";") in    
             (temp1, (f_list1, scope1, (seqs [stmt1; store_result]))) in
+
         match t_expr with
                 (* Store int in result *)
             | Int(i) -> (f_list, scope, (cish_stmt_from_str (result_name ^ " = " ^ (string_of_int i) ^ ";")))
@@ -39,6 +39,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                   let code = lookup_env scope_loc in 
                       (* Env lookup   *)
                       (f_list, scope, code)
+
             | PrimApp(op, exps) -> 
                   let binop (oper: string) : func list * var list * Cish_ast.stmt =
                       (* Compile expression and store result in temp1 *)
@@ -49,11 +50,13 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                       let end_stmt = cish_stmt_from_str (result_name ^ " = " ^ temp1 ^ oper ^ result_name ^ ";") in
                           (* Concatinate statements using Seq *)
                           (f_list2, scope2, (init_var temp1 (seqs [stmt1; stmt2; end_stmt]))) in 
-                      (* Accesses the address in memory in ex with an offset in bytes of offset *)
+
+                  (* Accesses the address in memory in ex with an offset in bytes of offset *)
                   let access_mem (ex: Scish_ast.exp) (fs: func list) (s: var list) (offset: int) =
                       let(f_list1, scope1, stmt1) = compile_exp_r (List.hd exps) f_list scope in    
                       let access_stmt = cish_stmt_from_str (result_name ^ " = " ^ "*(" ^ result_name ^ "+" ^ (string_of_int offset) ^ ");") in
                           (f_list1, scope1, seqs [stmt1; access_stmt]) in
+
                       (match op with
                            | Plus   -> binop "+"
                            | Minus -> binop "-"
@@ -77,18 +80,23 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                            | Snd -> access_mem (List.hd exps) f_list scope 4
                            | Eq -> binop "=="
                            | Lt -> binop "<")
-            | Lambda(v, e1)  -> create_closure v e1 f_list scope 
+
+            | Lambda(v, e1)  -> create_closure v e1 f_list scope
+ 
             | App(e1, e2)    -> 
                   (* Compile e1 to pointer to function and environment; store in result *)
                   let (f_list1, scope1, stmt1) = compile_exp_r e1 f_list scope in
+
                   (* Store function address in temp1 and environment in temp2 *)
                   let temp1 = new_temp () in
                   let temp2 = new_temp () in
                   let store_stmt = zip_cish_strs 
                       [(temp1 ^ " = *" ^ result_name ^ ";");
                        (temp2 ^ " = *(" ^ result_name ^ "+4);") ] in
+
                   (* Compile e2 and store in temp3 *)
                   let (temp3, (f_list2, scope2, stmt2)) = compile_store e2 f_list1 scope1 in
+
                   (* Place updated environment in result and call function *)
                   let malloc_new_env = zip_cish_strs
                       (* Malloc space *)
@@ -99,9 +107,11 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                         "*(" ^ result_name ^ "+4) = " ^ temp2 ^ ";"; 
                         (* Call function with environment, returning result to result *)
                         result_name ^ " = " ^ temp1 ^ "(" ^ result_name ^ ");" ] in
+                      (* Return all, initializing variables *)
                       (f_list2, scope2, (
                            (init_var temp1 (init_var temp2 (init_var temp3 
                                                                 (seqs [stmt1; store_stmt; stmt2; malloc_new_env]))))))
+
             | If(e1, e2, e3)    -> let (new_f_list, _, e1_code) = 
                   compile_exp_r e1 f_list scope in
               let (new_f_list, _, e2_code) = 
@@ -124,7 +134,7 @@ and create_closure (arg : string)
   (* Push scope        *)
   let new_scope = push_scope arg scope in
   let (new_f_list, _, f_body) = (compile_exp_r body f_list new_scope) in
-  (* Wrap variable declarations *)
+  (* Wrap variable declarations and put return in body *)
   let f_body1 = init_result (return_result f_body) in
   (* Generate Function *)
   let function_name = (new_function ()) in
@@ -153,7 +163,7 @@ let init (t_expr : Scish_ast.exp) : (func list * stmt) =
   let (fns, _, code) = compile_exp_r t_expr [] []     in
   (* Add return to main *)
   let new_code       = return_result code             in
-  let new_code       = init_result   new_code             in
+  let new_code       = init_result   new_code         in
   let new_code       = init_env      new_code         in
   (fns, new_code)
 
