@@ -156,9 +156,9 @@ let init (t_expr : Scish_ast.exp) : (func list * stmt) =
 (* Create a main function       *)
 let compile_exp (e:Scish_ast.exp) : Cish_ast.program =
   let (functions, main_body) = (init e) in
-    ([Fn( { name = "main"; 
+    (functions @ [Fn( { name = "main"; 
             args = []; 
             body = main_body; 
             pos  = 0;
        } )]
-     @ functions)
+     )
