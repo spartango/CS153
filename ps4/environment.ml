@@ -3,13 +3,14 @@ open Utility
 
 exception Not_Found_In_Scope
 
-let null     = Int(0);;
+
 let env_name = "env";;
 
 (* Environment *)
 
 (* Environment is a LIFO queue (aka Stack), 
  * implemented as a linked List. *)
+
 
 (* Initializes an environment for a block of code *)
 let init_env (code : stmt) : stmt =

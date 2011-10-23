@@ -18,7 +18,7 @@ let new_temp() =
     "temp_var" ^ (string_of_int (new_int temp_counter))
 let new_function() = "f" ^ (string_of_int (new_int func_counter))
 
-let result_name = "result";;
+
 let result_var : Cish_ast.exp = (Cish_ast.Var(result_name), stub_pos)
 
 let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
@@ -26,14 +26,6 @@ let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
         | [] -> (Cish_ast.skip, stub_pos)
         | hd::[] -> hd
         | hd::tl -> (Cish_ast.Seq(hd, seqs tl), stub_pos)
-
-(* Wraps a let declaration for v around st *)
-let init_var (v: string) (st: Cish_ast.stmt) : Cish_ast.stmt =
-    (Cish_ast.Let(v, (null, stub_pos), st), stub_pos)
-let return_result (code : stmt) : stmt =
-    (Cish_ast.Seq(code, cish_stmt_from_str ("return " ^ result_name ^ ";")), stub_pos)
-let init_result (code : stmt) : stmt =
-    init_var "result" code
 
 let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
                       ( f_list : func list     ) 
