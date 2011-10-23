@@ -52,9 +52,9 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                           (* Compile second expression, storing result in result *)
                       let (f_list2, scope2, stmt2) = compile_exp_r (List.nth exps 1) f_list1 scope1 in
                           (* Perform operation and place result in result *)
-                      let end_stmt = cish_stmt_from_str (result_name ^ " = " ^ temp1 ^ oper ^ result_name) in
+                      let end_stmt = cish_stmt_from_str (result_name ^ " = " ^ temp1 ^ oper ^ result_name ^ ";") in
                           (* Concatinate statements using Seq *)
-                          (f_list2, scope2, seqs [stmt1; stmt2; end_stmt]) in  
+                          (f_list2, scope2, seqs [stmt1; stmt2; end_stmt]) in 
                       (* Accesses the address in memory in ex with an offset in bytes of offset *)
                   let access_mem (ex: Scish_ast.exp) (fs: func list) (s: var list) (offset: int) =
                       let(f_list1, scope1, stmt1) = compile_exp_r (List.hd exps) f_list scope in    

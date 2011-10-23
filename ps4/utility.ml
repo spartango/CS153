@@ -44,5 +44,6 @@ module StringMap = Map.Make(struct type t = String.t let compare = String.compar
 
 
 let cish_stmt_from_str (s : string) : Cish_ast.stmt = 
+    let _ = print_string ("Compile stmt: "^ s ^ "\n") in
   Cish_parse.stmt Cish_lex.lexer (Lexing.from_string s)
 
