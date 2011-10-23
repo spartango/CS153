@@ -21,7 +21,7 @@ let compile_prog prog =
 
 (* Reads in cish code and evaluates it *)
 let _ =
-  let prog = parse_stdin() in
+  let prog = parse_file() in
   let ans = eval prog in
   print_string ("answer = "^(val2string ans)^"\n")
   (* print_string (compile_prog prog) *)

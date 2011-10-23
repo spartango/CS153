@@ -27,6 +27,9 @@ let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
         | hd::[] -> hd
         | hd::tl -> (Cish_ast.Seq(hd, seqs tl), stub_pos)
 
+let init_var (v: string) (st: Cish_ast.stmt) : Cish_ast.stmt =
+    (Cish_ast.Let(v, (Cish_ast.Int(0), stub_pos), st), stub_pos)
+
 let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
                       ( f_list : func list     ) 
                       ( scope  : var list      )
@@ -55,7 +58,7 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                           (* Perform operation and place result in result *)
                       let end_stmt = cish_stmt_from_str (result_name ^ " = " ^ temp1 ^ oper ^ result_name ^ ";") in
                           (* Concatinate statements using Seq *)
-                          (f_list2, scope2, seqs [stmt1; stmt2; end_stmt]) in 
+                          (f_list2, scope2, (init_var temp1 (seqs [stmt1; stmt2; end_stmt]))) in 
                       (* Accesses the address in memory in ex with an offset in bytes of offset *)
                   let access_mem (ex: Scish_ast.exp) (fs: func list) (s: var list) (offset: int) =
                       let(f_list1, scope1, stmt1) = compile_exp_r (List.hd exps) f_list scope in    
