@@ -17,13 +17,13 @@ cish: mips
 	$(COMPILER) -c cish_parse.ml
 	ocamllex cish_lex.mll
 	$(COMPILER) -c cish_lex.ml
-	$(COMPILER) -c cish_eval.ml
 	$(COMPILER) -c utility.ml
+	$(COMPILER) -c cish_eval.ml
 	$(COMPILER) -c cish_compile.ml
 	$(COMPILER) -c cish.ml
 	$(COMPILER) -o ps4_cish cish_ast.cmo cish_parse.cmo cish_lex.cmo cish_eval.cmo word32.cmo mips.cmo utility.cmo cish_compile.cmo cish.cmo
 
-scish: cish mips
+scish: cish mips	
 	$(COMPILER) -c cish_ast.ml
 	$(COMPILER) -c scish_ast.ml
 	ocamlyacc scish_parse.mly

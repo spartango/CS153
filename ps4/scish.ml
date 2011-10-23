@@ -24,4 +24,5 @@ let _ =
 (*
 let _ =  print_string ("answer = "^(string_of_int ans)^"\n") in
 *)
+
   dump (compile_prog prog)
