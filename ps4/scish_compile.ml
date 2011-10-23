@@ -29,7 +29,11 @@ let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
 
 (* Wraps a let declaration for v around st *)
 let init_var (v: string) (st: Cish_ast.stmt) : Cish_ast.stmt =
-    (Cish_ast.Let(v, (Cish_ast.Int(0), stub_pos), st), stub_pos)
+    (Cish_ast.Let(v, (null, stub_pos), st), stub_pos)
+let return_result (code : stmt) : stmt =
+    (Cish_ast.Seq(code, cish_stmt_from_str ("return " ^ result_name ^ ";")), stub_pos)
+let init_result (code : stmt) : stmt =
+    init_var "result" code
 
 let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
                       ( f_list : func list     ) 
@@ -138,10 +142,7 @@ and create_closure (arg : string)
     scope, 
     code )
 
-let return_result (code : stmt) : stmt =
-    (Cish_ast.Seq(code, cish_stmt_from_str ("return " ^ result_name ^ ";")), stub_pos)
-let init_result (code : stmt) : stmt =
-  (Let(result_name, (null, stub_pos), code), stub_pos)
+
 
 (* Initialize an environment    *)
 (* Env starts as a null pointer *)

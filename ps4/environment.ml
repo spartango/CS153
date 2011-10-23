@@ -13,7 +13,7 @@ let env_name = "env";;
 
 (* Initializes an environment for a block of code *)
 let init_env (code : stmt) : stmt =
-  (Let(env_name, (null, stub_pos) , code), stub_pos)
+    init_var "env" code
 
 (*
  * Each element of the list is a heap-allocated, two-word block
