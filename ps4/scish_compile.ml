@@ -18,14 +18,7 @@ let new_temp() =
     "temp_var" ^ (string_of_int (new_int temp_counter))
 let new_function() = "f" ^ (string_of_int (new_int func_counter))
 
-
 let result_var : Cish_ast.exp = (Cish_ast.Var(result_name), stub_pos)
-
-let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
-    match stmts with
-        | [] -> (Cish_ast.skip, stub_pos)
-        | hd::[] -> hd
-        | hd::tl -> (Cish_ast.Seq(hd, seqs tl), stub_pos)
 
 let rec compile_exp_r ( t_expr : Scish_ast.exp ) 
                       ( f_list : func list     ) 
@@ -74,9 +67,9 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                                  let (f_list1, scope1, stmt1) = compile_exp_r (List.hd exps) f_list scope in
                                      (* Store result in first word at the tuple's address *)
                                  let store_stmt1 = cish_stmt_from_str ("*(" ^ tuple_address ^ ") = " ^ result_name ^ ";") in
-                                     (* Compile second expression, placing result in result *)
+                                 (* Compile second expression, placing result in result *)
                                  let (f_list2, scope2, stmt2) = compile_exp_r (List.nth exps 1) f_list1 scope1 in
-                                     (* Store result in second word at tupele's address *)
+                                 (* Store result in second word at tupele's address *)
                                  let store_stmt2 = cish_stmt_from_str ("*(" ^ tuple_address ^ "+4) = " ^ result_name ^ ";") in
                                      (f_list2, scope2, (init_var tuple_address (seqs [init_stmt; stmt1; store_stmt1; stmt2; store_stmt2])))
                                          (* create a pair *)
@@ -85,14 +78,30 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                            | Eq -> binop "=="
                            | Lt -> binop "<")
             | Lambda(v, e1)  -> create_closure v e1 f_list scope 
-            | App(e1, e2)       -> 
-                  (* Compile e2 and store in temp1 *)
-                  let(temp1, (f_list1, scope1, stmt1)) = compile_store e2 f_list scope in
-                      (* Compile e1 *)
-                  (* Compile pointer to expression and stores in result *)
-                  let (f_list2, scope2, stmt2) = compile_exp_r e1 f_list scope in
-                  let app_stmt = cish_stmt_from_str (result_name ^ " = *" ^ result_name ^ "(" ^ temp1 ^ ");") in
-                      (f_list2, scope2, (init_var temp1 (seqs [stmt1; stmt2; app_stmt])))
+            | App(e1, e2)    -> 
+                  (* Compile e1 to pointer to function and environment; store in result *)
+                  let (f_list1, scope1, stmt1) = compile_exp_r e1 f_list scope in
+                  (* Store function address in temp1 and environment in temp2 *)
+                  let temp1 = new_temp () in
+                  let temp2 = new_temp () in
+                  let store_stmt = seqs (List.map cish_stmt_from_str 
+                      [(temp1 ^ " = *" ^ result_name ^ ";");
+                       (temp2 ^ " = *(" ^ result_name ^ "+4);") ]) in
+                  (* Compile e2 and store in temp3 *)
+                  let (temp3, (f_list2, scope2, stmt2)) = compile_store e2 f_list1 scope1 in
+                  (* Place updated environment in result and call function *)
+                  let malloc_new_env = seqs(List.map cish_stmt_from_str 
+                        (* Mall0c space *)
+                      [ result_name ^ " = malloc(8);";
+                        (* Store value of e2 in first word *)
+                        "*" ^ result_name ^ " = " ^ temp3 ^ ";";
+                        (* Store previous environment in second word *)
+                        "*(" ^ result_name ^ "+4) = " ^ temp2 ^ ";"; 
+                        (* Call function with environment, returning result to result *)
+                        result_name ^ " = " ^ temp1 ^ "(" ^ result_name ^ ");" ]) in
+                      (f_list2, scope2, (
+                           (init_var temp1 (init_var temp2 (init_var temp3 
+                                                                (seqs [stmt1; store_stmt; stmt2; malloc_new_env]))))))
             | If(e1, e2, e3)    -> let (new_f_list, _, e1_code) = 
                   compile_exp_r e1 f_list scope in
               let (new_f_list, _, e2_code) = 
@@ -114,23 +123,25 @@ and create_closure (arg : string)
                    : (func list * var list * stmt) =
   (* Push scope        *)
   let new_scope = push_scope arg scope in
-  let _ = print_string (Scish_ast.exp2string body) in
   let (new_f_list, _, f_body) = (compile_exp_r body f_list new_scope) in
+  (* Wrap variable declarations *)
+  let f_body1 = init_result (return_result f_body) in
   (* Generate Function *)
   let function_name = (new_function ()) in
   let new_func  = Fn( { name = function_name; 
                         args = ["env"]; 
-                        body = f_body;
+                        body = f_body1;
                         pos  = stub_pos;
                       } 
                   ) in
   (* Allocate Space    *)
   (* Put pointers      *)
-  let code = cish_stmt_from_str ("result = malloc(8); "
-                                 ^"*result = "^function_name^"; "
-                                 ^"*(result+4) = env;" )
+  let code = seqs (List.map cish_stmt_from_str 
+                       [ "result = malloc(8);";
+                         "*result = " ^ function_name ^ ";";
+                         "*(result+4) = env;"])
   in
-  ( ([new_func] @ f_list),
+  ( (new_f_list @ [new_func]),
     scope, 
     code )
 

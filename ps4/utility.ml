@@ -6,8 +6,16 @@ let null     = Int(0);;
 
 let result_name = "result";;
 
+(* Glues a list of statements together with Seq *)
+let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
+    match stmts with
+        | [] -> (Cish_ast.skip, stub_pos)
+        | hd::[] -> hd
+        | hd::tl -> (Cish_ast.Seq(hd, seqs tl), stub_pos)
+
+
+(* Will only convert a single stmt concluded by a semicolon *)
 let cish_stmt_from_str (s : string) : Cish_ast.stmt = 
-    let _ = print_string ("Compile stmt: "^ s ^ "\n") in
   Cish_parse.stmt Cish_lex.lexer (Lexing.from_string s)
 
 (* Wraps a let declaration for v around st *)
@@ -18,6 +26,8 @@ let return_result (code : stmt) : stmt =
 let init_result (code : stmt) : stmt =
     init_var "result" code
 
+let zip_cish_strs (strs: string list) : Cish_ast.stmt =
+    seqs (List.map cish_stmt_from_str strs)
 
 (* Arguments to reversed list functor *)
 module type LISTARGS =
