@@ -11,11 +11,12 @@ open Scish_ast
 
 exception Unimplemented
 
-let label_counter = ref 0
-let new_int()   = (label_counter := (!label_counter) + 1; !label_counter)
+let func_counter = ref 0
+let temp_counter = ref 0
+let new_int (r: int ref) = (r := (!r) + 1; !r)
 let new_temp() = 
-    "temp_var" ^ (string_of_int (new_int()))
-let new_function() = "f" ^ (string_of_int (new_int()))
+    "temp_var" ^ (string_of_int (new_int temp_counter))
+let new_function() = "f" ^ (string_of_int (new_int func_counter))
 
 let result_name = "result";;
 let result_var : Cish_ast.exp = (Cish_ast.Var(result_name), stub_pos)
