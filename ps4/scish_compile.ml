@@ -84,21 +84,21 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                   (* Store function address in temp1 and environment in temp2 *)
                   let temp1 = new_temp () in
                   let temp2 = new_temp () in
-                  let store_stmt = seqs (List.map cish_stmt_from_str 
+                  let store_stmt = zip_cish_strs 
                       [(temp1 ^ " = *" ^ result_name ^ ";");
-                       (temp2 ^ " = *(" ^ result_name ^ "+4);") ]) in
+                       (temp2 ^ " = *(" ^ result_name ^ "+4);") ] in
                   (* Compile e2 and store in temp3 *)
                   let (temp3, (f_list2, scope2, stmt2)) = compile_store e2 f_list1 scope1 in
                   (* Place updated environment in result and call function *)
-                  let malloc_new_env = seqs(List.map cish_stmt_from_str 
-                        (* Mall0c space *)
+                  let malloc_new_env = zip_cish_strs
+                      (* Malloc space *)
                       [ result_name ^ " = malloc(8);";
                         (* Store value of e2 in first word *)
                         "*" ^ result_name ^ " = " ^ temp3 ^ ";";
                         (* Store previous environment in second word *)
                         "*(" ^ result_name ^ "+4) = " ^ temp2 ^ ";"; 
                         (* Call function with environment, returning result to result *)
-                        result_name ^ " = " ^ temp1 ^ "(" ^ result_name ^ ");" ]) in
+                        result_name ^ " = " ^ temp1 ^ "(" ^ result_name ^ ");" ] in
                       (f_list2, scope2, (
                            (init_var temp1 (init_var temp2 (init_var temp3 
                                                                 (seqs [stmt1; store_stmt; stmt2; malloc_new_env]))))))
