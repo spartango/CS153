@@ -1,0 +1,1 @@
+(fst (snd (cons 5 (cons 4 3))))

@@ -13,6 +13,9 @@ let parse_file () =
   let ch = open_in argv.(1) in
   Scish_parse.program Scish_lex.lexer (Lexing.from_channel ch)
 
+let parse_stdin () = 
+  Scish_parse.program Scish_lex.lexer (Lexing.from_channel stdin)
+
 let compile_prog prog = Scish_compile.compile_exp prog
 
 let run_prog prog = Scish_eval.run prog
@@ -20,7 +23,7 @@ let run_prog prog = Scish_eval.run prog
 let dump p = print_string (Cish_ast.prog2string p)
 
 let _ =
-  let prog = parse_file() in
+  let prog = parse_stdin() in
 (*
 let _ =  print_string ("answer = "^(string_of_int ans)^"\n") in
 *)

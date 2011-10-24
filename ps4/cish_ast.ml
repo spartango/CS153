@@ -128,7 +128,7 @@ let rec s2s i (s,_) =
       (tab i)^"while ("^(exp2string e)^") {\n"^
       (s2s (i+2) s)^(tab i)^"}\n"
     | For(e1,e2,e3,s) -> 
-      (tab i)^"for ("^(exp2string e1)^","^(exp2string e2)^","^
+      (tab i)^"for ("^(exp2string e1)^";"^(exp2string e2)^";"^
                        (exp2string e3)^") {\n"^(s2s (i+2) s)^(tab i)^"}\n"
     | Let(x,e,s) -> 
       (tab i)^"let "^x^" = "^(exp2string e)^"; {\n"^(s2s (i+2) s)^(tab i)^"}\n"
