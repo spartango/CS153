@@ -42,6 +42,8 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
 
             | PrimApp(op, exps) -> 
                   let binop (oper: string) : func list * var list * Cish_ast.stmt =
+                      (* Verify that expression list is only length 2 *)
+                      let _ = verify_length exps 2 in
                       (* Compile expression and store result in temp1 *)
                       let (temp1, (f_list1, scope1, stmt1)) = compile_store (List.hd exps) f_list scope in
                           (* Compile second expression, storing result in result *)
@@ -51,8 +53,10 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                           (* Concatinate statements using Seq *)
                           (f_list2, scope2, (init_var temp1 (seqs [stmt1; stmt2; end_stmt]))) in 
 
-                  (* Accesses the address ex in memory with an offset in bytes of offset *)
-                  let access_mem (ex: Scish_ast.exp) (fs: func list) (s: var list) (offset: int) =
+                  (* Accesses tuple at address ex in memory with an offset in bytes of offset *)
+                  let access_tuple (ex: Scish_ast.exp) (fs: func list) (s: var list) (offset: int) =
+                      (* Verify exps is one argument long for fst/snd *)
+                      let _ = verify_length exps 1 in
                       (* Compiles ex, placing result in result *)
                       let(f_list1, scope1, stmt1) = compile_exp_r ex f_list scope in    
                       (* Places value at (ex+offset) in result *)
@@ -65,6 +69,8 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                            | Times -> binop "*"
                            | Div -> binop "/"
                            | Cons ->
+                                 (* Verify that exps is length 2 *)
+                                 let _ = verify_length exps 2 in
                                  let tuple_address = new_temp () in
                                      (* Create space to store tuple *)
                                  let init_stmt = cish_stmt_from_str (tuple_address ^ " = malloc(8);") in
@@ -79,8 +85,8 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                                  let mv_result   = cish_stmt_from_str (result_name^" = "^tuple_address^";") in
                                      (f_list2, scope2, (init_var tuple_address (seqs [init_stmt; stmt1; store_stmt1; stmt2; store_stmt2; mv_result])))
                                          (* create a pair *)
-                           | Fst -> access_mem (List.hd exps) f_list scope 0 
-                           | Snd -> access_mem (List.hd exps) f_list scope 4
+                           | Fst -> access_tuple (List.hd exps) f_list scope 0 
+                           | Snd -> access_tuple (List.hd exps) f_list scope 4
                            | Eq -> binop "=="
                            | Lt -> binop "<")
 

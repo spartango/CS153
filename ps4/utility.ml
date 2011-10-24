@@ -6,6 +6,12 @@ let null     = Int(0);;
 
 let result_name = "result";;
 
+exception InvalidExpressionListLength
+let verify_length (ls: 'a list) (expected: int): unit =
+    if (List.length ls) = expected
+    then ()
+    else raise InvalidExpressionListLength
+
 (* Glues a list of statements together with Seq *)
 let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
     match stmts with
