@@ -12,7 +12,7 @@ let val2string = function
   | (Fun_v (Fn f)) -> f.name
 
 (* set this flag to true to turn on diagnostics when evaluating *)
-let debug_flag = ref false
+let debug_flag = ref true
 
 let debug f x = if (!debug_flag) then f x else ()
 
