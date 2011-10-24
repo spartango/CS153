@@ -156,3 +156,22 @@ let inst2string(i:inst):string =
   | Sw (r1,r2,w) -> i2as "sw" (r1,r2,w)
   | Label x -> x ^ ":" 
       
+(* Gupta-Watanabe additions *)
+let sp = R29;;
+let fp = R30;;
+let ra = R31;;
+
+exception UnknownRegister
+
+let string2reg ( target : string ) : reg =
+  match target with
+    "R0" -> R0   | "R1" -> R1   | "R2" -> R2   | "R3" -> R3 | "R4" | "A0" -> R4
+  | "R5" | "A1" -> R5           | "R6" | "A2" -> R6         | "R7" | "A3" -> R7  
+  | "R8" -> R8 | "R9" -> R9     | "R10" -> R10 | "R11" -> R11 
+  | "R12" -> R12 | "R13" -> R13
+  | "R14" -> R14 | "R15" -> R15 | "R16" | "S0" -> R16  
+  | "R17" | "S1" -> R17 | "R18" | "S2" -> R18 | "R19" | "S3" -> R19 | "R20" | "S4" -> R20
+  | "R21" | "S5" -> R21 | "R22" | "S6" -> R22 | "R23" | "S7" -> R23 | "R24" -> R24
+  | "R25" -> R25 | "R26" -> R26 | "R27" -> R27 | "R28" -> R28
+  | "R29" | "SP" -> R29 | "R30" | "FP" -> R30 | "R31" | "RA" -> R31
+  | _ -> raise UnknownRegister
