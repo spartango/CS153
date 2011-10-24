@@ -51,9 +51,11 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                           (* Concatinate statements using Seq *)
                           (f_list2, scope2, (init_var temp1 (seqs [stmt1; stmt2; end_stmt]))) in 
 
-                  (* Accesses the address in memory in ex with an offset in bytes of offset *)
+                  (* Accesses the address ex in memory with an offset in bytes of offset *)
                   let access_mem (ex: Scish_ast.exp) (fs: func list) (s: var list) (offset: int) =
-                      let(f_list1, scope1, stmt1) = compile_exp_r (List.hd exps) f_list scope in    
+                      (* Compiles ex, placing result in result *)
+                      let(f_list1, scope1, stmt1) = compile_exp_r ex f_list scope in    
+                      (* Places value at (ex+offset) in result *)
                       let access_stmt = cish_stmt_from_str (result_name ^ " = " ^ "*(" ^ result_name ^ "+" ^ (string_of_int offset) ^ ");") in
                           (f_list1, scope1, seqs [stmt1; access_stmt]) in
 
