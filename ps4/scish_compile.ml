@@ -72,9 +72,10 @@ let rec compile_exp_r ( t_expr : Scish_ast.exp )
                                  let store_stmt1 = cish_stmt_from_str ("*(" ^ tuple_address ^ ") = " ^ result_name ^ ";") in
                                  (* Compile second expression, placing result in result *)
                                  let (f_list2, scope2, stmt2) = compile_exp_r (List.nth exps 1) f_list1 scope1 in
-                                 (* Store result in second word at tupele's address *)
+                                 (* Store result in second word at tuple's address *)
                                  let store_stmt2 = cish_stmt_from_str ("*(" ^ tuple_address ^ "+4) = " ^ result_name ^ ";") in
-                                     (f_list2, scope2, (init_var tuple_address (seqs [init_stmt; stmt1; store_stmt1; stmt2; store_stmt2])))
+                                 let mv_result   = cish_stmt_from_str (result_name^" = "^tuple_address^";") in
+                                     (f_list2, scope2, (init_var tuple_address (seqs [init_stmt; stmt1; store_stmt1; stmt2; store_stmt2; mv_result])))
                                          (* create a pair *)
                            | Fst -> access_mem (List.hd exps) f_list scope 0 
                            | Snd -> access_mem (List.hd exps) f_list scope 4
