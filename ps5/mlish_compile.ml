@@ -33,10 +33,19 @@ match e with
                   | ML.Unit ->
                         let _ = verify_zero_arg () in
                         S.Int(0)
-              (* Binops - compile sub epxressions and perform operation *)   
+                  (* Binops - compile sub epxressions and perform operation *) 
+                  | ML.Plus -> binop S.Plus
+                  | ML.Minus -> binop S.Minus
+                  | ML.Times -> binop S.Times
+                  | ML.Div -> binop S.Div
+                  | ML.Eq -> binop S.Eq
+                  | ML.Lt -> binop S.Lt
+                  (* Create pair using Scish.Cons *)
+                  | ML.Pair ->
+                        let (e1, e2) = verify_double_arg () in
+                            S.PrimApp(S.Cons, [(compile_exp e1); (compile_exp e2)])
                   | _ -> raise ImplementMe)
 (* 
-| Unit   (* unit value -- () *)
 | Plus   (* Add two ints *)
 | Minus  (* subtract two ints *)
 | Times  (* multiply two ints *)

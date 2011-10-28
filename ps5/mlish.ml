@@ -18,12 +18,17 @@ let compile_prog prog =
 
 let run_prog prog = Scish_eval.run prog
 
+(*
 let _ = 
   let prog = parse_file() in
   let prog' = compile_prog prog in
   let ans = run_prog prog' in
   print_string ("answer = "^(Scish_eval.val2string ans)^"\n")
+*)
 
+let _ = 
+    let prog = parse_file() in
+    print_string (Scish_ast.exp2string (Mlish_compile.compile_exp prog))
 (*
 let dump p = print_string (Cish_ast.prog2string p)
 
