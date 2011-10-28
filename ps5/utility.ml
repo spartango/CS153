@@ -6,6 +6,9 @@ let null     = Int(0);;
 
 let result_name = "result";;
 
+(* Schish bindings *)
+
+
 exception InvalidExpressionListLength
 let verify_length (ls: 'a list) (expected: int): unit =
     if (List.length ls) = expected
