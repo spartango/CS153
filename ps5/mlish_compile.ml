@@ -3,6 +3,9 @@ module S = Scish_ast
 
 exception ImplementMe
 exception InvalidNumberParameters
+
+let nil = S.PrimApp(S.Cons,[S.Int(42);S.Int(42)])
+
 let rec compile_exp ((e,_):ML.exp) : S.exp = 
 match e with
     (* Return Scish variable *)
@@ -41,10 +44,27 @@ match e with
                   | ML.Eq -> binop S.Eq
                   | ML.Lt -> binop S.Lt
                   (* Create pair using Scish.Cons *)
-                  | ML.Pair ->
-                        let (e1, e2) = verify_double_arg () in
-                            S.PrimApp(S.Cons, [(compile_exp e1); (compile_exp e2)])
-                  | _ -> raise ImplementMe)
+                  | ML.Pair -> binop S.Cons
+                  | ML.Fst ->
+                        let e = verify_single_arg () in
+                            S.PrimApp(S.Fst, [compile_exp e])
+                  | ML.Snd ->
+                        let e = verify_single_arg () in
+                            S.PrimApp(S.Fst, [compile_exp e])
+                  (* Create list using Cons *)
+                  | ML.Cons -> binop S.Cons
+                  | ML.Hd -> 
+                        let e = verify_single_arg () in
+                            S.PrimApp(S.Fst, [compile_exp e])
+                  | ML.Tl ->
+                        let e = verify_single_arg () in
+                            S.PrimApp(S.Fst, [compile_exp e])
+                  | ML.Nil ->
+                        nil
+                  | ML.IsNil -> 
+                        let e = verify_single_arg () in
+                            (* Check for physical equality *)
+                            if nil == (compile_exp e) then S.Int(1) else S.Int(0) )
 (* 
 | Plus   (* Add two ints *)
 | Minus  (* subtract two ints *)

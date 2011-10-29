@@ -13,7 +13,7 @@ let parse_file () =
   Ml_parse.program Ml_lex.lexer (Lexing.from_channel ch)
 
 let compile_prog prog = 
-  let _ = Mlish_type_check.type_check_exp prog in
+   let _ = Mlish_type_check.type_check_exp prog in
   Mlish_compile.compile_exp prog
 
 let run_prog prog = Scish_eval.run prog
@@ -24,11 +24,11 @@ let _ =
   let prog' = compile_prog prog in
   let ans = run_prog prog' in
   print_string ("answer = "^(Scish_eval.val2string ans)^"\n")
-*)
-
+      *)
 let _ = 
     let prog = parse_file() in
     print_string (Scish_ast.exp2string (Mlish_compile.compile_exp prog))
+
 (*
 let dump p = print_string (Cish_ast.prog2string p)
 
