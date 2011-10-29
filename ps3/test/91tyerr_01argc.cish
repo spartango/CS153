@@ -1,0 +1,6 @@
+f(x) {
+  return x;
+}
+main() {
+  return f();
+}

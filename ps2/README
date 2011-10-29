@@ -1,0 +1,31 @@
+The goal of this problem set is to compile Fish abstract syntax down
+to MIPS assembly code.  
+
+You are to complete the file compile.sml at the places marked with 
+IMPLEMENT_ME.  There are two big functions to right:  one collects
+up the set of all variables that occur in a program, and the other
+compiles Fish programs down to Mips assembly.  You do not need to
+do any optimization, or have a particularly fast compiler to realize 
+full credit for this assignment.  On the other hand, if you want
+to try to do a few transformations, optimizations, or simplifications,
+please feel free.  Just make sure to get the basic code working
+correctly first.  
+
+I've provided boiler plate code for printing out Mips code so that you
+can dump the results into a file, assemble it, and load it using SPIM.
+
+I've included a sample lexer and parser that demonstrates how PS2
+could have been solved.  You might want to use this, but you are free
+to use your own lexer and parser from PS2 if you prefer.  I've also
+introduced the mips.ml module which contains the definition of the
+mips instructions and a way to pretty-print them into assembly.
+
+The directory tests/ is intended to hold test files that you should
+construct to exercise your compiler.  I encourage you to share your
+tests with other groups. 
+
+Running make in the current directory generates an executable ps2,
+which expects a file to compile, and prints out the compiled code
+to standard out.
+
+ps2 [file-to-compile]
