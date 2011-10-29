@@ -47,12 +47,14 @@ mlish:
 	$(COMPILER) -c mlish_type_check.ml
 	$(COMPILER) -c mlish_compile.ml
 	$(COMPILER) -c mlish.ml
+	$(COMPILER) -c pretty_print.ml
+	$(COMPILER) -c test_framework.ml
+	$(COMPILER) -c mlish_compile_tests.ml
 	$(COMPILER) -o ps5_mlish mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_type_check.cmo mlish_compile.cmo mlish.cmo
+	$(COMPILER) -o compile_tests mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_compile.cmo pretty_print.cmo test_framework.cmo mlish_compile_tests.cmo
 
 compile_tests: mlish
-	$(COMPILER) -c mlish_compile_tests.ml
-	$(COMPILER) -o ps5_compile_tests mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_type_check.cmo mlish_compile_tests.cmo
-	./ps5_compile_tests
+	./compile_tests
 
 clean:
 	-rm *.cmo *.cmi ps5_cish ps5_scish ps5_mlish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml ml_parse.ml ml_parse.mli ml_lex.ml

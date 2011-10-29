@@ -6,6 +6,7 @@ exception InvalidNumberParameters
 
 (* Arbitrary implementation of nil *)
 let nil = S.Int(42)
+let unit = S.Int(0)
 
 let rec compile_exp_r ((e,_):ML.exp) : S.exp = 
 match e with
@@ -36,7 +37,7 @@ match e with
                   (* Unit: Return an undefined integer value - type check should eliminate any impropper use of unit *)
                   | ML.Unit ->
                         let _ = verify_zero_arg () in
-                        S.Int(0)
+                        S.Var("Unit")
                   (* Binops - compile sub epxressions and perform operation *) 
                   | ML.Plus -> binop S.Plus
                   | ML.Minus -> binop S.Minus
@@ -60,7 +61,9 @@ match e with
                   | ML.Tl ->
                         let e = verify_single_arg () in
                             S.PrimApp(S.Fst, [compile_exp_r e])
-                  | ML.Nil -> S.Var("Nil")
+                  | ML.Nil -> 
+                        let _ = verify_zero_arg () in 
+                        S.Var("Nil")
                   | ML.IsNil -> 
                         let e = verify_single_arg () in
                             (* Check if expression is variable Nil *)
@@ -93,6 +96,6 @@ match e with
 
 let compile_exp (e: Mlish_ast.exp) : S.exp =
     (* Wrapper that defines Nil *)
-    S.sLet "Nil" nil (compile_exp_r e)
+    S.sLet "Nil" nil (S.sLet "Unit" unit (compile_exp_r e))
 
 
