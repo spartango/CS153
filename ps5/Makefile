@@ -4,7 +4,7 @@
 # change to a different ocamlc if you prefer (e.g., ocamlopt)
 COMPILER=ocamlc
  
-all: clean cish scish mlish
+all: clean cish scish mlish compile_tests
 
 mips:
 	$(COMPILER) -c word32.ml
@@ -48,6 +48,11 @@ mlish:
 	$(COMPILER) -c mlish_compile.ml
 	$(COMPILER) -c mlish.ml
 	$(COMPILER) -o ps5_mlish mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_type_check.cmo mlish_compile.cmo mlish.cmo
+
+compile_tests: mlish
+	$(COMPILER) -c mlish_compile_tests.ml
+	$(COMPILER) -o ps5_compile_tests mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_type_check.cmo mlish_compile_tests.cmo
+	./ps5_compile_tests
 
 clean:
 	-rm *.cmo *.cmi ps5_cish ps5_scish ps5_mlish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml ml_parse.ml ml_parse.mli ml_lex.ml

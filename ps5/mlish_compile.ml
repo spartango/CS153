@@ -4,9 +4,10 @@ module S = Scish_ast
 exception ImplementMe
 exception InvalidNumberParameters
 
-let nil = S.PrimApp(S.Cons,[S.Int(42);S.Int(42)])
+(* Arbitrary implementation of nil *)
+let nil = S.Int(42)
 
-let rec compile_exp ((e,_):ML.exp) : S.exp = 
+let rec compile_exp_r ((e,_):ML.exp) : S.exp = 
 match e with
     (* Return Scish variable *)
     | ML.Var(v) -> S.Var(v)
@@ -22,7 +23,7 @@ match e with
               (* Check argument list of length two *)
               let(e1, e2) = verify_double_arg () in
               (* Return Scish PrimApp *)
-              S.PrimApp(op, [(compile_exp e1); (compile_exp e2)]) in
+              S.PrimApp(op, [(compile_exp_r e1); (compile_exp_r e2)]) in
               (match prim with
                   (* Int: Return Scish int *)
                   | ML.Int(i) ->     
@@ -47,24 +48,24 @@ match e with
                   | ML.Pair -> binop S.Cons
                   | ML.Fst ->
                         let e = verify_single_arg () in
-                            S.PrimApp(S.Fst, [compile_exp e])
+                            S.PrimApp(S.Fst, [compile_exp_r e])
                   | ML.Snd ->
                         let e = verify_single_arg () in
-                            S.PrimApp(S.Fst, [compile_exp e])
+                            S.PrimApp(S.Fst, [compile_exp_r e])
                   (* Create list using Cons *)
                   | ML.Cons -> binop S.Cons
                   | ML.Hd -> 
                         let e = verify_single_arg () in
-                            S.PrimApp(S.Fst, [compile_exp e])
+                            S.PrimApp(S.Fst, [compile_exp_r e])
                   | ML.Tl ->
                         let e = verify_single_arg () in
-                            S.PrimApp(S.Fst, [compile_exp e])
-                  | ML.Nil ->
-                        nil
+                            S.PrimApp(S.Fst, [compile_exp_r e])
+                  | ML.Nil -> S.Var("Nil")
                   | ML.IsNil -> 
                         let e = verify_single_arg () in
-                            (* Check for physical equality *)
-                            if nil == (compile_exp e) then S.Int(1) else S.Int(0) )
+                            (* Check if expression is variable Nil *)
+                            S.If(S.PrimApp(S.Eq, [S.Var("Nil"); (compile_exp_r e)]),
+                                 S.Int(1), S.Int(0)))
 (* 
 | Plus   (* Add two ints *)
 | Minus  (* subtract two ints *)
@@ -82,12 +83,16 @@ match e with
 | Tl     (* fetch the tail of a list *)
 *)
     (* Build to Scish lambda *)
-    | ML.Fn(param, body) -> S.Lambda(param, (compile_exp body))
+    | ML.Fn(param, body) -> S.Lambda(param, (compile_exp_r body))
     (* Apply function to an argument *)
-    | ML.App (func, arg) -> S.App((compile_exp func), compile_exp arg)
+    | ML.App (func, arg) -> S.App((compile_exp_r func), compile_exp_r arg)
     (* If control statement - compile to Scish If *)
-    | ML.If(e1, e2, e3) -> S.If(compile_exp e1, compile_exp e2, compile_exp e3)
+    | ML.If(e1, e2, e3) -> S.If(compile_exp_r e1, compile_exp_r e2, compile_exp_r e3)
     (* Use Scish sLet, or apply lambda of e2 to e1 *)
-    | ML.Let(v, e1, e2) -> S.App(S.Lambda(v, compile_exp e2), compile_exp e1) 
+    | ML.Let(v, e1, e2) -> S.App(S.Lambda(v, compile_exp_r e2), compile_exp_r e1) 
+
+let compile_exp (e: Mlish_ast.exp) : S.exp =
+    (* Wrapper that defines Nil *)
+    S.sLet "Nil" nil (compile_exp_r e)
 
 
