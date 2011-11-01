@@ -4,8 +4,9 @@ module S = Scish_ast
 exception ImplementMe
 exception InvalidNumberParameters
 
-
-
+(* Lists: Each Cons cell, implemented as a pair, is wrapped within inside a pair;
+the first element is the cons cell. The second element states whether that cell is
+nil or not. Wastes memory, but clean implementation. *)
 
 let is_nil = S.Int(1)
 let not_nil = S.Int(0)
