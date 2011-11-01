@@ -58,6 +58,11 @@ let if_true2 = mk_compile_test "if true then 5 else 2" 5 "True if-true test";;
 let if_false1 = mk_compile_test "if 0 then 5 else 2" 2 "Simple if-false test";;
 let if_false2 = mk_compile_test "if false then 5 else 2" 2 "False if-false test";;
 
+let comp_test1 = mk_compile_test "let x = 5 in let y = 7 in let z = (if y < x then 5 + 2 else 6 / 3) in hd (tl [x;y;z])" 7 "Comprehensive test 1";;
+let comp_test2 = mk_compile_test "let test_fun = (fun x -> if x then 4 else 5) in test_fun true" 4 "Comprehensive test 2";;
+let comp_test3 = mk_compile_test "let test_fun = (fun x -> (fst x) + (snd x)) in test_fun (10, 3)" 13 "Comprehensive test 2";;
+let comp_test4 = mk_compile_test "let test_fun = (fun x -> 5 / 5 + 1) in (test_fun ()) - (test_fun ())" 0 "Comprehensive test 3";;
+
 run_test_set [let_test;
               fun_test;
               app_test; ] "Compile Exp Tests";;
@@ -96,3 +101,9 @@ run_test_set [if_true1;
               if_false1;
               if_true2;
               if_false2;] "Compile If Exp Tests";;
+
+run_test_set [comp_test1;
+              comp_test2;
+              comp_test3;
+              comp_test4]
+    "larger program tests";;
