@@ -4,9 +4,20 @@ module S = Scish_ast
 exception ImplementMe
 exception InvalidNumberParameters
 
-(* Arbitrary implementation of nil *)
-let nil = S.Int(42)
-let unit = S.Int(0)
+
+
+
+let is_nil = S.Int(1)
+let not_nil = S.Int(0)
+
+(* Value inside a nil wrapper - can be anything *)
+let nil_content = S.Int(0)
+
+let nil_cell = S.PrimApp(S.Cons, [nil_content; is_nil])
+
+(* Unit *)
+let val_unit = 0
+let unit = S.Int(val_unit)
 
 let rec compile_exp_r ((e,_):ML.exp) : S.exp = 
 match e with
@@ -52,23 +63,32 @@ match e with
                             S.PrimApp(S.Fst, [compile_exp_r e])
                   | ML.Snd ->
                         let e = verify_single_arg () in
-                            S.PrimApp(S.Fst, [compile_exp_r e])
+                            S.PrimApp(S.Snd, [compile_exp_r e])
                   (* Create list using Cons *)
-                  | ML.Cons -> binop S.Cons
+                  | ML.Cons -> 
+                        let (e1, e2) = verify_double_arg () in
+                        (* Create the cons cell of the hd (e1) and tail (e2) *)
+                        let cell = S.PrimApp(S.Cons, [compile_exp_r e1;compile_exp_r e2]) in
+                        (* Create wrapper cell containing information as to whether it is nill *)
+                            S.PrimApp(S.Cons, [cell; not_nil])
                   | ML.Hd -> 
                         let e = verify_single_arg () in
-                            S.PrimApp(S.Fst, [compile_exp_r e])
+                            (* Gets cons cell out of wrapper and returns first element *)
+                            S.PrimApp(S.Fst, [S.PrimApp(S.Fst, [compile_exp_r e])])
                   | ML.Tl ->
                         let e = verify_single_arg () in
-                            S.PrimApp(S.Fst, [compile_exp_r e])
+                            (* Gets cons cell out of wrapper and returns second element *)
+                            S.PrimApp(S.Snd, [S.PrimApp(S.Fst, [compile_exp_r e])])
                   | ML.Nil -> 
                         let _ = verify_zero_arg () in 
-                        S.Var("Nil")
+                        (* Creates a wrapper cell with no cons cell and but information saying is_nil *)
+                        nil_cell
                   | ML.IsNil -> 
-                        let e = verify_single_arg () in
-                            (* Check if expression is variable Nil *)
-                            S.If(S.PrimApp(S.Eq, [S.Var("Nil"); (compile_exp_r e)]),
-                                 S.Int(1), S.Int(0)))
+                        let e1 = verify_single_arg () in
+                            (* Return the value of the is_nil part of the cons pair cell *)
+                            S.PrimApp(S.Snd, [compile_exp_r e1])
+                            
+              )
 (* 
 | Plus   (* Add two ints *)
 | Minus  (* subtract two ints *)
@@ -95,7 +115,7 @@ match e with
     | ML.Let(v, e1, e2) -> S.App(S.Lambda(v, compile_exp_r e2), compile_exp_r e1) 
 
 let compile_exp (e: Mlish_ast.exp) : S.exp =
-    (* Wrapper that defines Nil *)
-    S.sLet "Nil" nil (S.sLet "Unit" unit (compile_exp_r e))
+    (* Wrapper that defines Unit *)
+    S.sLet "Unit" unit (compile_exp_r e)
 
 

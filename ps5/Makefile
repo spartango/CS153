@@ -51,9 +51,9 @@ mlish:
 	$(COMPILER) -c test_framework.ml
 	$(COMPILER) -c mlish_compile_tests.ml
 	$(COMPILER) -o ps5_mlish mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_type_check.cmo mlish_compile.cmo mlish.cmo
-	$(COMPILER) -o compile_tests mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_compile.cmo pretty_print.cmo test_framework.cmo mlish_compile_tests.cmo
 
 compile_tests: mlish
+	$(COMPILER) -o compile_tests mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_compile.cmo pretty_print.cmo test_framework.cmo mlish_compile_tests.cmo
 	./compile_tests
 
 clean:
