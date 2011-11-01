@@ -90,22 +90,7 @@ match e with
                             S.PrimApp(S.Snd, [compile_exp_r e1])
                             
               )
-(* 
-| Plus   (* Add two ints *)
-| Minus  (* subtract two ints *)
-| Times  (* multiply two ints *)
-| Div    (* divide two ints *)
-| Eq     (* compare two ints for equality *)
-| Lt     (* compare two ints for inequality *)
-| Pair   (* create a pair from two values *)
-| Fst    (* fetch the 1st component of a pair *)
-| Snd    (* fetch the 2nd component of a pair *)
-| Nil    (* the empty list *)
-| Cons   (* create a list from two values *)
-| IsNil  (* determine whether a list is Nil *)
-| Hd     (* fetch the head of a list *)
-| Tl     (* fetch the tail of a list *)
-*)
+
     (* Build to Scish lambda *)
     | ML.Fn(param, body) -> S.Lambda(param, (compile_exp_r body))
     (* Apply function to an argument *)
