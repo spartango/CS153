@@ -66,8 +66,12 @@ and check_fn v t_exp env =
 
 and check_app t_exp o_exp env = 
   (* Return type is a guess *)
+  let return_type = guess () in
   (* Type check both expressions *)
+  let (t_type, o_type) = ((check_exp t_exp env), (check_exp o_exp env)) in
   (* Unify first expression as a function that can take the second *)
+  if unify t_type (Fn_t(o_type, return_type)) then return_type 
+  else raise TypeError
 
 and check_if cond t_exp e_exp env = 
   (* Check condition for bool *)
