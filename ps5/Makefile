@@ -4,7 +4,7 @@
 # change to a different ocamlc if you prefer (e.g., ocamlopt)
 COMPILER=ocamlc
  
-all: clean cish scish mlish compile_tests
+all: clean cish scish mlish compile_tests type_check_tests
 
 mips:
 	$(COMPILER) -c word32.ml
@@ -57,5 +57,10 @@ compile_tests: mlish
 	$(COMPILER) -o compile_tests mlish_ast.cmo environment.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_compile.cmo pretty_print.cmo test_framework.cmo mlish_compile_tests.cmo
 	./compile_tests
 
+type_check_tests: mlish
+	$(COMPILER) -c mlish_type_check_tests.ml
+	$(COMPILER) -o type_check_tests mlish_ast.cmo environment.cmo mlish_type_check.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_compile.cmo pretty_print.cmo test_framework.cmo mlish_type_check_tests.cmo
+	./type_check_tests
+
 clean:
-	rm -rf *.cmo *.cmi ps5_cish ps5_scish ps5_mlish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml ml_parse.ml ml_parse.mli ml_lex.ml
+	rm -rf *.cmo *.cmi ps5_cish ps5_scish ps5_mlish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml ml_parse.ml ml_parse.mli ml_lex.ml compile_tests type_check_tests
