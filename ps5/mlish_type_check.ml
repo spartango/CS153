@@ -3,7 +3,7 @@ open Environment
 
 exception TypeError
 
-let type_error(s:string) = (print_string s; raise TypeError)
+let type_error(s:string) = print_string s; raise TypeError
 
 (* Guess Manipulators *)
 
@@ -11,17 +11,18 @@ let type_error(s:string) = (print_string s; raise TypeError)
 let rec unify a_type b_type = 
   (* Compare for easy equality *)
   if a_type = b_type then true
-  else match (a_type, b_type) with 
-  | (Guess(t_guess as (ref None)), b_type)  -> 
+  else 
+  match (a_type, b_type) with 
+  | (Guess_t((ref None) as t_guess), b_type)  -> 
       (* If a_ is not yet assigned, assign it  *)
       let _ = t_guess := Some b_type in true
  
-  | (Guess(ref Some(t_guess)), b_type)      -> 
+  | (Guess_t(ref Some(t_guess)), b_type)      -> 
       (* If a_ is a guess, try to resolve it   *)
       unify t_guess b_type
 
   (* If b_ is a guess, use a_ to assign it *)
-  | (a_type, Guess(_))        -> unify b_type a_type
+  | (a_type, Guess_t(_))        -> unify b_type a_type
 
   (* Recurse if functions involved *)
   | (Fn_t(l_atype, r_atype), Fn_t(l_btype, r_btype)) ->  
@@ -41,11 +42,11 @@ let rec resolve t_type =
 (* Attempts to resolve a type, setting it if it isnt assigned *)
 let rec resolve_or_set t_type set_type = 
   match t_type with
-  | (Guess(t_guess as (ref None)), b_type)  -> 
+  | (Guess_t((ref None) as t_guess ), b_type)  -> 
       (* If a_ is not yet assigned, assign it  *)
       let _ = t_guess := set_type in set_type
 
-  | (Guess(ref Some(t_guess)), b_type)      -> 
+  | (Guess_t(ref Some(t_guess)), b_type)      -> 
       (* If a_ is a guess, try to resolve it   *)
       resolve_or_set t_guess set_type
 
