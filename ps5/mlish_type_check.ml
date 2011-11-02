@@ -7,6 +7,20 @@ let type_error(s:string) = print_string s; raise TypeError
 
 (* Guess Manipulators *)
 
+let rec occurs ptr graph =
+  match graph with 
+  | Int_t -> false
+  | Bool_t -> false
+  | Unit_t -> false
+  | Fn_t(a_type, r_type) -> (occurs ptr a_type) || (occurs ptr r_type)
+  | Pair_t(a_type, r_type)-> (occurs ptr a_type) || (occurs ptr r_type)
+  | List_t(a_type) -> (occurs ptr a_type)
+  | Guess_t(rot) -> 
+    rot == ptr || 
+    (match !rot with 
+    | None -> false
+    | Some t_guess -> occurs ptr t_guess)
+
 (* Unifies types *)
 let rec unify a_type b_type = 
   (*let _ = print_string ("Unifying "^(type_to_string a_type)^" & "^(type_to_string b_type)^"\n") in *)
@@ -19,7 +33,9 @@ let rec unify a_type b_type =
       (* If a_ is not yet assigned, assign it  *)
       | None -> 
       (*let _ = print_string ("Setting "^(type_to_string a_type)^" to "^(type_to_string b_type)^"\n") in*)
-      let _ = r_guess := Some b_type in true
+      if (occurs r_guess b_type) then type_error ("Recursive relationship found")
+        else 
+        let _ = r_guess := Some b_type in true
       (* If a_ is a guess, try to resolve it   *)
       | Some(t_guess) -> unify t_guess b_type)
   (* If b_ is a guess, use a_ to assign it *)
