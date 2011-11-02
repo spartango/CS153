@@ -9,6 +9,7 @@ let type_error(s:string) = print_string s; raise TypeError
 
 (* Unifies types *)
 let rec unify a_type b_type = 
+  (*let _ = print_string ("Unifying "^(type_to_string a_type)^" & "^(type_to_string b_type)^"\n") in *)
   (* Compare for easy equality *)
   if (a_type = b_type) then true
   else 
@@ -16,7 +17,9 @@ let rec unify a_type b_type =
   | (Guess_t(r_guess), b_type)  -> 
       (match !r_guess with 
       (* If a_ is not yet assigned, assign it  *)
-      | None -> let _ = r_guess := Some b_type in true
+      | None -> 
+      (*let _ = print_string ("Setting "^(type_to_string a_type)^" to "^(type_to_string b_type)^"\n") in *)
+      let _ = r_guess := Some b_type in true
       (* If a_ is a guess, try to resolve it   *)
       | Some(t_guess) -> unify t_guess b_type)
   (* If b_ is a guess, use a_ to assign it *)
@@ -24,6 +27,9 @@ let rec unify a_type b_type =
 
   (* Recurse if functions involved *)
   | (Fn_t(l_atype, r_atype), Fn_t(l_btype, r_btype)) ->  
+    (unify l_atype l_btype) && (unify r_atype r_btype)
+  | (List_t(l_atype), List_t(l_btype)) -> unify l_atype l_btype
+  | (Pair_t(l_atype, r_atype), Pair_t(l_btype, r_btype)) ->
     (unify l_atype r_atype) && (unify l_btype r_btype)
   | _ -> (type_error ("Unable to unify "^(type_to_string a_type)^" vs "^(type_to_string b_type)))
 
@@ -56,6 +62,7 @@ let rec prune_guesses t_type =
   | Guess_t(rt_guess) -> (match !rt_guess with
                          | None -> t_type
                          | Some(n_type) -> prune_guesses n_type)
+  | List_t(rt_guess)  -> List_t(prune_guesses rt_guess)
   | _                 -> t_type
 
 (* Type Checks *)
@@ -92,7 +99,7 @@ and check_prim p (exps : exp list) env =
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
-                          else (type_error "Int expected for Plus")
+                          else (type_error ("Int expected for Plus vs "^(type_to_string e1_check)^" & "^(type_to_string e2_check)))
   | (Minus, [e1; e2]) ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
@@ -205,4 +212,4 @@ and check_let v t_exp in_exp env =
 (* Entry Point *)
 
 let type_check_exp (e:Mlish_ast.exp) : tipe =
-  resolve_or_set (check_exp e empty_env) Unit_t
+  check_exp e empty_env
