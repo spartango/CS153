@@ -81,10 +81,10 @@ and check_prim p exps env =
 
 and check_fn v t_exp env = 
   (* Add v to the env as a guess *)
-  let arg_type = (guess ()) in
+  let arg_type = guess () in
   let new_env = push v arg_type env in
   (* Check body *)
-  let body_type = check_exp t_exp in
+  let body_type = check_exp t_exp new_env in
   (* Return function type *)
   Fn_t(arg_type, body_type) 
 
@@ -103,17 +103,18 @@ and check_if cond t_exp e_exp env =
   let resolved_type = resolve_or_set cond_check Bool_t in
   if not (resolved_type = Bool_t) then raise TypeError
   else 
-    let t_check = check_exp t_exp in
-    let e_check = check_exp e_exp in
+    let t_check = check_exp t_exp env in
+    let e_check = check_exp e_exp env in
     (* Check t_exp and e_exp for equality, type *)
     if unify t_check e_check then t_check
     else raise TypeError 
 
 and check_let v t_exp in_exp env =
-  (* Create a guess for v in env *)
   (* Check t_exp *)
-    (* Assign type to the guess *)
+  let t_type = check_exp t_exp env in
+  let new_env = push v t_type env in 
   (* Check in_exp with new environemnt *)
+  check_exp in_exp new_env
 
 (* Entry Point *)
 
