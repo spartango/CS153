@@ -1,0 +1,55 @@
+Your job for this assignment is to implement a compiler that maps 
+MLish, a subset of ML, down to Scish.  To do so, you must complete
+two tasks:  (1) a type-checker for MLish, and (2) a translation from
+MLish AST to Scish AST (which, you can compile to Cish, which you
+can compile to Mips.)  
+
+The file mlish_ast.ml defines the abstract syntax for the ML subset
+that we will be using, and the files ml_lex.mll and ml_parse.mly
+provide the lexer and parser for the language.  The language is 
+really very cut down --- there's no support for modules, references,
+pattern matching, type declarations, type annotations, or even
+recursive functions.  Thus your job should be relatively easy.
+
+To test out your ML code, instead of providing an interpreter, you
+can simply evaluate the code in Ocaml toplevel to see what value you get
+back.  You should get back an equivalent value when you compile
+the code to Scish and run it in the Scish interpreter.  To run
+MLish code in OCaml, you will need to add a few definitions to
+the initial basis such as:
+
+   let isnil x = match x with [] -> true | _ -> false
+
+Make sure to test your code on all of the language forms.  
+
+To build the type-checker for MLish, modify the definition in
+mlish_type_check.ml.  You should follow (roughly) the notes presented
+in class for doing ML-style type inference.  You do not need to worry
+about side-effects (since the language doesn't have any!)  The key
+thing is that any code rejected by OCaml should be rejected by your
+type-checker, and any code accepted by OCaml should be accepted by
+your type-checker.  (Of course, this assumes that you start with
+primitives, such as isnil, in the initial basis before you load the
+code.)
+
+I will leave it up to you how to compile code to Scish, but suffice
+it to say that it's pretty easy to do.  You will need to modify the
+code in mlish_compile.ml to achieve this goal.  
+
+Running make in the current directory will generate an exectuable ps6_mlish,
+which expects a file to compile. You can use this to test your compiler.
+This will first use your type checker. If this succeeds, it will compile
+to scish and use the scish evaluator to return an answer.
+
+===========================================
+Extra Credit:
+
+In your copious spare time, you might consider adding back some
+some ML features such as:
+
+1) additional primitives [easy]
+2) recursive functions [tricky]
+3) patterns and pattern matching [tricky]
+
+Do not work on this unless you've got the other parts working
+perfectly.  
