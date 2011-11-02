@@ -25,7 +25,7 @@ let rec unify a_type b_type =
   (* Recurse if functions involved *)
   | (Fn_t(l_atype, r_atype), Fn_t(l_btype, r_btype)) ->  
     (unify l_atype r_atype) && (unify l_btype r_btype)
-  | _ -> (type_error ("Unable to unify "^(type_to_string a_type)^(type_to_string b_type)))
+  | _ -> (type_error ("Unable to unify "^(type_to_string a_type)^" vs "^(type_to_string b_type)))
 
 (* Creates a new Guess *)
 let guess () = 
@@ -89,7 +89,7 @@ and check_prim p (exps : exp list) env =
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
-                          else (type_error "Int expected for Minus")
+                          else (type_error ("Int expected for Minus vs "^(type_to_string e1_check)^" & "^(type_to_string e2_check)))
   | (Times, [e1; e2]) ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
@@ -128,12 +128,11 @@ and check_prim p (exps : exp list) env =
   | (Nil, [])         -> List_t(guess ())
   | (Cons, [e1; e2])  -> let e1_check = (check_exp e1 env) in
                          let e2_check = (check_exp e2 env) in
-                         if unify e1_check e2_check then List_t(e1_check)
-                         else (type_error "Pair expected for Cons")
+                         List_t(e1_check)
   | (IsNil, [t_list]) -> let l_check = (check_exp t_list env) in
                          (match l_check with 
                          | List_t(_) -> Bool_t
-                         | _         -> (type_error "List expected for IsNil"))
+                         | _         -> (type_error ("List expected for IsNil vs "^(type_to_string l_check))))
   | (Hd, [t_list])    -> let l_check = (check_exp t_list env) in
                          (match l_check with 
                          | List_t(l_type) -> l_type
