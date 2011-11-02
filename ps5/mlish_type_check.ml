@@ -5,8 +5,29 @@ exception TypeError
 
 let type_error(s:string) = (print_string s; raise TypeError)
 
+(* Guess Manipulators *)
+
+let rec unify a_type b_type = 
+  (* Compare for easy equality *)
+  if a_type = b_type then true
+  else match (a_type, b_type) with 
+  (* If a_ is not yet assigned, assign it  *)
+  | (Guess(ref None), b_type) -> let a_type := b_type in true
+
+  (* If a_ is a guess, try to resolve it   *)
+  | (Guess(t_guess), b_type)  -> unify t_guess b_type
+
+  (* If b_ is a guess, use a_ to assign it *)
+  | (a_type, Guess(_))        -> unify b_type a_type
+
+  (* Recurse if functions involved *)
+  | (Fn_t(l_atype, r_atype), Fn_t(l_btype, r_btype)) ->  
+    (unify l_atype r_atype) && (unify l_btype r_btype)
+
 let guess () = 
   Guess_t(ref None)
+
+(* Type Checks *)
 
 let rec check_exp e env = 
   (* Extract rexp *)
@@ -48,13 +69,6 @@ and check_app t_exp o_exp env =
   (* Type check both expressions *)
   (* Unify first expression as a function that can take the second *)
 
-and unify a_type b_type = 
-  (* Compare for easy equality *)
-  (* If a_ is not yet assigned, assign it  *)
-  (* If a_ is a guess, try to resolve it   *)
-  (* If b_ is a guess, use a_ to assign it *)
-  (* Recurse if functions involved *)
-
 and check_if cond t_exp e_exp env = 
   (* Check condition for bool *)
     (* If it a guess, try to resolve it *)
@@ -66,6 +80,8 @@ and check_let v t_exp in_exp env =
   (* Check t_exp *)
     (* Assign type to the guess *)
   (* Check in_exp with new environemnt *)
+
+(* Entry Point *)
 
 let type_check_exp (e:Mlish_ast.exp) : tipe =
 
