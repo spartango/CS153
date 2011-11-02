@@ -58,4 +58,4 @@ compile_tests: mlish
 	./compile_tests
 
 clean:
-	-rm *.cmo *.cmi ps5_cish ps5_scish ps5_mlish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml ml_parse.ml ml_parse.mli ml_lex.ml
+	rm -rf *.cmo *.cmi ps5_cish ps5_scish ps5_mlish cish_parse.ml cish_parse.mli cish_lex.ml scish_parse.ml scish_parse.mli scish_lex.ml ml_parse.ml ml_parse.mli ml_lex.ml

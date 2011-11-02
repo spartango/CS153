@@ -10,23 +10,22 @@ let type_error(s:string) = print_string s; raise TypeError
 (* Unifies types *)
 let rec unify a_type b_type = 
   (* Compare for easy equality *)
-  if a_type = b_type then true
+  if (a_type = b_type) then true
   else 
   match (a_type, b_type) with 
-  | (Guess_t((ref None) as t_guess), b_type)  -> 
+  | (Guess_t(r_guess), b_type)  -> 
+      (match !r_guess with 
       (* If a_ is not yet assigned, assign it  *)
-      let _ = t_guess := Some b_type in true
- 
-  | (Guess_t(ref Some(t_guess)), b_type)      -> 
+      | None -> let _ = r_guess := Some b_type in true
       (* If a_ is a guess, try to resolve it   *)
-      unify t_guess b_type
-
+      | Some(t_guess) -> unify t_guess b_type)
   (* If b_ is a guess, use a_ to assign it *)
   | (a_type, Guess_t(_))        -> unify b_type a_type
 
   (* Recurse if functions involved *)
   | (Fn_t(l_atype, r_atype), Fn_t(l_btype, r_btype)) ->  
     (unify l_atype r_atype) && (unify l_btype r_btype)
+  | _ -> raise TypeError
 
 (* Creates a new Guess *)
 let guess () = 
@@ -35,28 +34,30 @@ let guess () =
 (* Follows guess links until an end is found *)
 let rec resolve t_type = 
   match t_type with
-  | Guess_t(ref None)         -> None
-  | Guess_t(ref Some(n_type)) -> resolve n_type
-  | _                         -> t_type
+  | Guess_t(rt_guess) -> (match !rt_guess with
+                         | None -> None
+                         | Some(n_type) -> resolve n_type)
+  | _                 -> Some(t_type)
 
 (* Attempts to resolve a type, setting it if it isnt assigned *)
-let rec resolve_or_set t_type set_type = 
+let rec resolve_or_set (t_type : tipe) (set_type : tipe)  : tipe = 
   match t_type with
-  | (Guess_t((ref None) as t_guess ), b_type)  -> 
+  | Guess_t(rt_guess)  -> 
+      (match !rt_guess with
       (* If a_ is not yet assigned, assign it  *)
-      let _ = t_guess := set_type in set_type
-
-  | (Guess_t(ref Some(t_guess)), b_type)      -> 
+      | None -> let _ = rt_guess := Some set_type in set_type
       (* If a_ is a guess, try to resolve it   *)
-      resolve_or_set t_guess set_type
-
-  | _                                       -> t_type
+      | Some t_guess -> resolve_or_set t_guess set_type)
+  | _  -> t_type
 
 (* Type Checks *)
 
 let rec check_exp e env = 
   (* Extract rexp *)
   let (t_rexp, _) = e in
+  check_rexp t_rexp env
+
+and check_rexp (t_rexp : rexp) env = 
   (* Segregate expressions *)
   match t_rexp with
   | Var(v)                 -> check_var v env
@@ -70,77 +71,77 @@ and check_var v env =
   (* Look up var *)
   lookup v env
 
-and check_prim p exps env = 
+and check_prim p (exps : exp list) env = 
   (* Match primitive possibilities *)
   match (p, exps) with 
   (* Raw *)
   | (Int(i),  [])  -> Int_t
   | (Bool(b), [])  -> Bool_t
-  | Unit           -> Unit_t
+  | (Unit,    [])  -> Unit_t
 
   (* Int ops *)
-  | (Plus, [e1, e2])  ->  let e1_check = (check_exp e1 env) in
+  | (Plus, [e1; e2])  ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
                           else raise TypeError
-  | (Minus, [e1, e2]) ->  let e1_check = (check_exp e1 env) in
+  | (Minus, [e1; e2]) ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
                           else raise TypeError
-  | (Times, [e1, e2]) ->  let e1_check = (check_exp e1 env) in
+  | (Times, [e1; e2]) ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
                           else raise TypeError
-  | (Div, [e1, e2])   ->  let e1_check = (check_exp e1 env) in
+  | (Div, [e1; e2])   ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
                           else raise TypeError
-  | (Eq, [e1, e2])    ->  let e1_check = (check_exp e1 env) in
+  | (Eq, [e1; e2])    ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Bool_t 
                           else raise TypeError
-  | (Lt, [e1, e2])    ->  let e1_check = (check_exp e1 env) in
+  | (Lt, [e1; e2])    ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Bool_t 
                           else raise TypeError
   (* Pairs *)
-  | (Pair, [e1, e2])  ->  let e1_check = (check_exp e1 env) in
+  | (Pair, [e1; e2])  ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           Pair_t(e1_check, e2_check)
 
   | (Fst, [e1])       ->  let check = (check_exp e1 env) in 
-                          match check with 
+                          (match check with 
                           | Pair_t(fst_type, _) -> fst_type
-                          | _                   -> raise TypeError
+                          | _                   -> raise TypeError)
      
   | (Snd, [e1])       ->  let check = (check_exp e1 env) in 
-                          match check with 
+                          (match check with 
                           | Pair_t(_, snd_type) -> snd_type
-                          | _                   -> raise TypeError
+                          | _                   -> raise TypeError)
   (* Lists *)
-  | (Nil, [])         -> List_t
-  | (Cons, [e1, e2])  -> let e1_check = (check_exp e1 env) in
+  | (Nil, [])         -> List_t(guess ())
+  | (Cons, [e1; e2])  -> let e1_check = (check_exp e1 env) in
                          let e2_check = (check_exp e2 env) in
                          if unify e1_check e2_check then List_t(e1_check)
                          else raise TypeError
   | (IsNil, [t_list]) -> let l_check = (check_exp t_list env) in
-                         match l_check with 
+                         (match l_check with 
                          | List_t(_) -> Bool_t
-                         | _         -> raise TypeError
+                         | _         -> raise TypeError)
   | (Hd, [t_list])    -> let l_check = (check_exp t_list env) in
-                         match l_check with 
+                         (match l_check with 
                          | List_t(l_type) -> l_type
-                         | _              -> raise TypeError
+                         | _              -> raise TypeError)
   | (Tl, [t_list])    -> let l_check = (check_exp t_list env) in
-                         match l_check with 
+                         (match l_check with 
                          | List_t(l_type) -> List_t(l_type)
-                         | _              -> raise TypeError
+                         | _              -> raise TypeError)
   | _ -> raise TypeError
 
 and check_fn v t_exp env = 
@@ -183,6 +184,4 @@ and check_let v t_exp in_exp env =
 (* Entry Point *)
 
 let type_check_exp (e:Mlish_ast.exp) : tipe =
-
-
-    
+  (check_exp e empty_env)

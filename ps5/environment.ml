@@ -16,3 +16,4 @@ let rec lookup v env =
 let push v t_type env = 
   (v, t_type)::env
 
+let empty_env = []
