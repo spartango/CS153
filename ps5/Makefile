@@ -37,6 +37,7 @@ scish: mips
 
 mlish: 
 	$(COMPILER) -c mlish_ast.ml
+	$(COMPILER) -c environment.ml
 	$(COMPILER) -c scish_ast.ml
 	$(COMPILER) -c scish_eval.ml
 	ocamlyacc ml_parse.mly
@@ -50,10 +51,10 @@ mlish:
 	$(COMPILER) -c pretty_print.ml
 	$(COMPILER) -c test_framework.ml
 	$(COMPILER) -c mlish_compile_tests.ml
-	$(COMPILER) -o ps5_mlish mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_type_check.cmo mlish_compile.cmo mlish.cmo
+	$(COMPILER) -o ps5_mlish mlish_ast.cmo environment.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_type_check.cmo mlish_compile.cmo mlish.cmo
 
 compile_tests: mlish
-	$(COMPILER) -o compile_tests mlish_ast.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_compile.cmo pretty_print.cmo test_framework.cmo mlish_compile_tests.cmo
+	$(COMPILER) -o compile_tests mlish_ast.cmo environment.cmo scish_ast.cmo scish_eval.cmo ml_parse.cmo ml_lex.cmo mlish_compile.cmo pretty_print.cmo test_framework.cmo mlish_compile_tests.cmo
 	./compile_tests
 
 clean:

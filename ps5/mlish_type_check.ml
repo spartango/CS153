@@ -1,8 +1,12 @@
 open Mlish_ast
+open Environment 
 
 exception TypeError
 
 let type_error(s:string) = (print_string s; raise TypeError)
+
+let guess () = 
+  Guess_t(ref None)
 
 let rec check_exp e env = 
   (* Extract rexp *)
@@ -18,6 +22,7 @@ let rec check_exp e env =
 
 and check_var v env =
   (* Look up var *)
+  lookup v env
 
 and check_prim p exps env = 
   (* Match primitive possibilities *)
@@ -31,8 +36,12 @@ and check_prim p exps env =
 
 and check_fn v t_exp env = 
   (* Add v to the env as a guess *)
+  let arg_type = (guess ()) in
+  let new_env = push v arg_type env in
   (* Check body *)
+  let body_type = check_exp t_exp in
   (* Return function type *)
+  Fn_t(arg_type, body_type) 
 
 and check_app t_exp o_exp env = 
   (* Return type is a guess *)
