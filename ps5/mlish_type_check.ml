@@ -12,11 +12,13 @@ let rec unify a_type b_type =
   (* Compare for easy equality *)
   if a_type = b_type then true
   else match (a_type, b_type) with 
-  (* If a_ is not yet assigned, assign it  *)
-  | (Guess(ref None), b_type) -> let a_type := Some b_type in true
-
-  (* If a_ is a guess, try to resolve it   *)
-  | (Guess(t_guess), b_type)  -> unify t_guess b_type
+  | (Guess(t_guess as (ref None)), b_type)  -> 
+      (* If a_ is not yet assigned, assign it  *)
+      let _ = t_guess := Some b_type in true
+ 
+  | (Guess(ref Some(t_guess)), b_type)      -> 
+      (* If a_ is a guess, try to resolve it   *)
+      unify t_guess b_type
 
   (* If b_ is a guess, use a_ to assign it *)
   | (a_type, Guess(_))        -> unify b_type a_type
@@ -35,6 +37,19 @@ let rec resolve t_type =
   | Guess_t(ref None)         -> None
   | Guess_t(ref Some(n_type)) -> resolve n_type
   | _                         -> t_type
+
+(* Attempts to resolve a type, setting it if it isnt assigned *)
+let rec resolve_or_set t_type set_type = 
+  match t_type with
+  | (Guess(t_guess as (ref None)), b_type)  -> 
+      (* If a_ is not yet assigned, assign it  *)
+      let _ = t_guess := set_type in set_type
+
+  | (Guess(ref Some(t_guess)), b_type)      -> 
+      (* If a_ is a guess, try to resolve it   *)
+      resolve_or_set t_guess set_type
+
+  | _                                       -> t_type
 
 (* Type Checks *)
 
@@ -84,10 +99,15 @@ and check_app t_exp o_exp env =
 
 and check_if cond t_exp e_exp env = 
   (* Check condition for bool *)
-  let cond_type = check_exp cond env in
-    (* If it a guess, try to resolve it *)
-    (* If its not assigned, assign it to bool *) 
-  (* Check t_exp and e_exp for equality, type *)
+  let cond_check = check_exp cond env in
+  let resolved_type = resolve_or_set cond_check Bool_t in
+  if not (resolved_type = Bool_t) then raise TypeError
+  else 
+    let t_check = check_exp t_exp in
+    let e_check = check_exp e_exp in
+    (* Check t_exp and e_exp for equality, type *)
+    if unify t_check e_check then t_check
+    else raise TypeError 
 
 and check_let v t_exp in_exp env =
   (* Create a guess for v in env *)
