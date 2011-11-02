@@ -41,3 +41,16 @@ type rexp =
 | If of exp * exp * exp
 | Let of var * exp * exp
 and exp = rexp * pos
+
+let rec type_to_string t_type = 
+  match t_type with
+  | Tvar_t(tvar)   -> "TVar("^tvar^")" 
+  | Int_t          -> "Int"
+  | Bool_t         -> "Bool"
+  | Unit_t         -> "Unit"
+  | Fn_t(t1, t2)   -> (type_to_string t1)^" -> "^(type_to_string t2)
+  | Pair_t(t1, t2) -> (type_to_string t1)^" * "^(type_to_string t2)
+  | List_t(t)      -> "List("^(type_to_string t)^")"
+  | Guess_t(rot)   -> (match !rot with 
+                      | None -> "G(None)"
+                      | Some(t) -> "G("^(type_to_string t)^")")

@@ -25,7 +25,7 @@ let rec unify a_type b_type =
   (* Recurse if functions involved *)
   | (Fn_t(l_atype, r_atype), Fn_t(l_btype, r_btype)) ->  
     (unify l_atype r_atype) && (unify l_btype r_btype)
-  | _ -> raise TypeError
+  | _ -> (type_error "Unable to unify")
 
 (* Creates a new Guess *)
 let guess () = 
@@ -84,32 +84,32 @@ and check_prim p (exps : exp list) env =
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
-                          else raise TypeError
+                          else (type_error "Int expected for Plus")
   | (Minus, [e1; e2]) ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
-                          else raise TypeError
+                          else (type_error "Int expected for Minus")
   | (Times, [e1; e2]) ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
-                          else raise TypeError
+                          else (type_error "Int expected for Times")
   | (Div, [e1; e2])   ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Int_t 
-                          else raise TypeError
+                          else (type_error "Int expected for Div")
   | (Eq, [e1; e2])    ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Bool_t 
-                          else raise TypeError
+                          else (type_error "Int expected for Eq")
   | (Lt, [e1; e2])    ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
                           if (unify e1_check e2_check) && (e1_check = Int_t)
                           then Bool_t 
-                          else raise TypeError
+                          else (type_error "Int expected for Lt")
   (* Pairs *)
   | (Pair, [e1; e2])  ->  let e1_check = (check_exp e1 env) in
                           let e2_check = (check_exp e2 env) in
@@ -118,31 +118,31 @@ and check_prim p (exps : exp list) env =
   | (Fst, [e1])       ->  let check = (check_exp e1 env) in 
                           (match check with 
                           | Pair_t(fst_type, _) -> fst_type
-                          | _                   -> raise TypeError)
+                          | t                   -> (type_error ("Pair expected for Fst vs "^(type_to_string t))))
      
   | (Snd, [e1])       ->  let check = (check_exp e1 env) in 
                           (match check with 
                           | Pair_t(_, snd_type) -> snd_type
-                          | _                   -> raise TypeError)
+                          | t                   -> (type_error ("Pair expected for Snd vs "^(type_to_string t))))
   (* Lists *)
   | (Nil, [])         -> List_t(guess ())
   | (Cons, [e1; e2])  -> let e1_check = (check_exp e1 env) in
                          let e2_check = (check_exp e2 env) in
                          if unify e1_check e2_check then List_t(e1_check)
-                         else raise TypeError
+                         else (type_error "Pair expected for Cons")
   | (IsNil, [t_list]) -> let l_check = (check_exp t_list env) in
                          (match l_check with 
                          | List_t(_) -> Bool_t
-                         | _         -> raise TypeError)
+                         | _         -> (type_error "List expected for IsNil"))
   | (Hd, [t_list])    -> let l_check = (check_exp t_list env) in
                          (match l_check with 
                          | List_t(l_type) -> l_type
-                         | _              -> raise TypeError)
+                         | _              -> (type_error "List expected for Hd"))
   | (Tl, [t_list])    -> let l_check = (check_exp t_list env) in
                          (match l_check with 
                          | List_t(l_type) -> List_t(l_type)
-                         | _              -> raise TypeError)
-  | _ -> raise TypeError
+                         | _              -> (type_error "List expected for Tl"))
+  | _ -> (type_error "Unknown Primitive")
 
 and check_fn v t_exp env = 
   (* Add v to the env as a guess *)
@@ -160,19 +160,19 @@ and check_app t_exp o_exp env =
   let (t_type, o_type) = ((check_exp t_exp env), (check_exp o_exp env)) in
   (* Unify first expression as a function that can take the second *)
   if unify t_type (Fn_t(o_type, return_type)) then return_type 
-  else raise TypeError
+  else (type_error "Unable to unify in apply")
 
 and check_if cond t_exp e_exp env = 
   (* Check condition for bool *)
   let cond_check = check_exp cond env in
   let resolved_type = resolve_or_set cond_check Bool_t in
-  if not (resolved_type = Bool_t) then raise TypeError
+  if not (resolved_type = Bool_t || resolved_type = Int_t) then (type_error ("Bool condition needed for If vs "^(type_to_string resolved_type)))
   else 
     let t_check = check_exp t_exp env in
     let e_check = check_exp e_exp env in
     (* Check t_exp and e_exp for equality, type *)
     if unify t_check e_check then t_check
-    else raise TypeError 
+    else (type_error ("Unable to unify If: "^(type_to_string t_check)^" vs "^(type_to_string e_check)))
 
 and check_let v t_exp in_exp env =
   (* Check t_exp *)
