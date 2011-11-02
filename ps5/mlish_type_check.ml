@@ -7,12 +7,13 @@ let type_error(s:string) = (print_string s; raise TypeError)
 
 (* Guess Manipulators *)
 
+(* Unifies types *)
 let rec unify a_type b_type = 
   (* Compare for easy equality *)
   if a_type = b_type then true
   else match (a_type, b_type) with 
   (* If a_ is not yet assigned, assign it  *)
-  | (Guess(ref None), b_type) -> let a_type := b_type in true
+  | (Guess(ref None), b_type) -> let a_type := Some b_type in true
 
   (* If a_ is a guess, try to resolve it   *)
   | (Guess(t_guess), b_type)  -> unify t_guess b_type
@@ -24,8 +25,16 @@ let rec unify a_type b_type =
   | (Fn_t(l_atype, r_atype), Fn_t(l_btype, r_btype)) ->  
     (unify l_atype r_atype) && (unify l_btype r_btype)
 
+(* Creates a new Guess *)
 let guess () = 
   Guess_t(ref None)
+
+(* Follows guess links until an end is found *)
+let rec resolve t_type = 
+  match t_type with
+  | Guess_t(ref None)         -> None
+  | Guess_t(ref Some(n_type)) -> resolve n_type
+  | _                         -> t_type
 
 (* Type Checks *)
 
@@ -75,6 +84,7 @@ and check_app t_exp o_exp env =
 
 and check_if cond t_exp e_exp env = 
   (* Check condition for bool *)
+  let cond_type = check_exp cond env in
     (* If it a guess, try to resolve it *)
     (* If its not assigned, assign it to bool *) 
   (* Check t_exp and e_exp for equality, type *)
