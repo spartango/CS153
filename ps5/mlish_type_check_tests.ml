@@ -1,4 +1,5 @@
 open Test_framework
+open Mlish_ast
 
 let nil_string = "(" ^ (Scish_ast.exp2string Mlish_compile.nil_content) ^ " " ^
     (Scish_ast.exp2string Mlish_compile.is_nil) ^")"
@@ -8,7 +9,7 @@ let val_unit = string_of_int Mlish_compile.val_unit
 let compile_answer (ml: string) () : (bool * string) =
     let ml_ast = Ml_parse.program Ml_lex.lexer (Lexing.from_string ml) in
     try 
-      let _ = Mlish_type_check.type_check_exp ml_ast in (true, "Type Checked")
+      let t_type = Mlish_type_check.type_check_exp ml_ast in (true, ("Type Checked: "^(type_to_string t_type)))
     with Mlish_type_check.TypeError -> (false, "Type Error Found")
 
 (* Type Checks ML, expecting a string as the return value for cons and #closure *)
@@ -61,8 +62,8 @@ let if_false2 = mk_compile_test "if false then 5 else 2" 2 "False if-false test"
 
 let comp_test1 = mk_compile_test "let x = 5 in let y = 7 in let z = (if y < x then 5 + 2 else 6 / 3) in hd (tl [x;y;z])" 7 "Comprehensive test 1";;
 let comp_test2 = mk_compile_test "let test_fun = (fun x -> if x then 4 else 5) in test_fun true" 4 "Comprehensive test 2";;
-let comp_test3 = mk_compile_test "let test_fun = (fun x -> (fst x) + (snd x)) in test_fun (10, 3)" 13 "Comprehensive test 2";;
-let comp_test4 = mk_compile_test "let test_fun = (fun x -> 5 / 5 + 1) in (test_fun ()) - (test_fun ())" 0 "Comprehensive test 3";;
+let comp_test3 = mk_compile_test "let test_fun = (fun x -> (fst x) + (snd x)) in test_fun (10, 3)" 13 "Comprehensive test 3";;
+let comp_test4 = mk_compile_test "let test_fun = (fun x -> 5 / 5 + 1) in (test_fun ()) - (test_fun ())" 0 "Comprehensive test 4";;
 
 run_test_set [let_test;
               fun_test;

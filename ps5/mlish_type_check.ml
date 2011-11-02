@@ -50,12 +50,20 @@ let rec resolve_or_set (t_type : tipe) (set_type : tipe)  : tipe =
       | Some t_guess -> resolve_or_set t_guess set_type)
   | _  -> t_type
 
+(* Removes guess wrappers for known types *)
+let rec prune_guesses t_type = 
+  match t_type with
+  | Guess_t(rt_guess) -> (match !rt_guess with
+                         | None -> t_type
+                         | Some(n_type) -> prune_guesses n_type)
+  | _                 -> t_type
+
 (* Type Checks *)
 
 let rec check_exp e env = 
   (* Extract rexp *)
   let (t_rexp, _) = e in
-  check_rexp t_rexp env
+  prune_guesses (check_rexp t_rexp env)
 
 and check_rexp (t_rexp : rexp) env = 
   (* Segregate expressions *)
@@ -117,30 +125,44 @@ and check_prim p (exps : exp list) env =
 
   | (Fst, [e1])       ->  let check = (check_exp e1 env) in 
                           (match check with 
+                          | Guess_t(rot) -> 
+                          let fst_type = guess () in
+                          let _ = rot := Some (Pair_t(fst_type, guess ())) in fst_type
                           | Pair_t(fst_type, _) -> fst_type
                           | t                   -> (type_error ("Pair expected for Fst vs "^(type_to_string t))))
      
   | (Snd, [e1])       ->  let check = (check_exp e1 env) in 
                           (match check with 
+                          | Guess_t(rot) -> 
+                          let snd_type = guess () in
+                          let _ = rot := Some (Pair_t(guess (), snd_type)) in snd_type
                           | Pair_t(_, snd_type) -> snd_type
                           | t                   -> (type_error ("Pair expected for Snd vs "^(type_to_string t))))
   (* Lists *)
   | (Nil, [])         -> List_t(guess ())
   | (Cons, [e1; e2])  -> let e1_check = (check_exp e1 env) in
-                         let e2_check = (check_exp e2 env) in
+                         let _ = (check_exp e2 env) in
                          List_t(e1_check)
   | (IsNil, [t_list]) -> let l_check = (check_exp t_list env) in
                          (match l_check with 
+                         | Guess_t(rot) ->
+                         let _ = rot := Some( List_t(guess ())) in Bool_t
                          | List_t(_) -> Bool_t
                          | _         -> (type_error ("List expected for IsNil vs "^(type_to_string l_check))))
   | (Hd, [t_list])    -> let l_check = (check_exp t_list env) in
                          (match l_check with 
+                         | Guess_t(rot) ->
+                         let l_guess = guess () in
+                         let _ = rot := Some(List_t(l_guess)) in l_guess
                          | List_t(l_type) -> l_type
-                         | _              -> (type_error "List expected for Hd"))
+                         | _              -> (type_error ("List expected for Hd vs "^(type_to_string l_check))))
   | (Tl, [t_list])    -> let l_check = (check_exp t_list env) in
                          (match l_check with 
+                         | Guess_t(rot) ->
+                         let l_guess = guess () in
+                         let _ = rot := Some(List_t(l_guess)) in List_t(l_guess)
                          | List_t(l_type) -> List_t(l_type)
-                         | _              -> (type_error "List expected for Tl"))
+                         | _              -> (type_error ("List expected for Tl vs "^(type_to_string l_check))))
   | _ -> (type_error "Unknown Primitive")
 
 and check_fn v t_exp env = 
@@ -183,4 +205,4 @@ and check_let v t_exp in_exp env =
 (* Entry Point *)
 
 let type_check_exp (e:Mlish_ast.exp) : tipe =
-  (check_exp e empty_env)
+  resolve_or_set (check_exp e empty_env) Unit_t
