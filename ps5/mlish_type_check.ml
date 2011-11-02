@@ -71,13 +71,76 @@ and check_var v env =
 
 and check_prim p exps env = 
   (* Match primitive possibilities *)
+  match (p, exps) with 
   (* Raw *)
+  | (Int(i),  [])  -> Int_t
+  | (Bool(b), [])  -> Bool_t
+  | Unit           -> Unit_t
 
   (* Int ops *)
-
+  | (Plus, [e1, e2])  ->  let e1_check = (check_exp e1 env) in
+                          let e2_check = (check_exp e2 env) in
+                          if (unify e1_check e2_check) && (e1_check = Int_t)
+                          then Int_t 
+                          else raise TypeError
+  | (Minus, [e1, e2]) ->  let e1_check = (check_exp e1 env) in
+                          let e2_check = (check_exp e2 env) in
+                          if (unify e1_check e2_check) && (e1_check = Int_t)
+                          then Int_t 
+                          else raise TypeError
+  | (Times, [e1, e2]) ->  let e1_check = (check_exp e1 env) in
+                          let e2_check = (check_exp e2 env) in
+                          if (unify e1_check e2_check) && (e1_check = Int_t)
+                          then Int_t 
+                          else raise TypeError
+  | (Div, [e1, e2])   ->  let e1_check = (check_exp e1 env) in
+                          let e2_check = (check_exp e2 env) in
+                          if (unify e1_check e2_check) && (e1_check = Int_t)
+                          then Int_t 
+                          else raise TypeError
+  | (Eq, [e1, e2])    ->  let e1_check = (check_exp e1 env) in
+                          let e2_check = (check_exp e2 env) in
+                          if (unify e1_check e2_check) && (e1_check = Int_t)
+                          then Bool_t 
+                          else raise TypeError
+  | (Lt, [e1, e2])    ->  let e1_check = (check_exp e1 env) in
+                          let e2_check = (check_exp e2 env) in
+                          if (unify e1_check e2_check) && (e1_check = Int_t)
+                          then Bool_t 
+                          else raise TypeError
   (* Pairs *)
+  | (Pair, [e1, e2])  ->  let e1_check = (check_exp e1 env) in
+                          let e2_check = (check_exp e2 env) in
+                          Pair_t(e1_check, e2_check)
 
+  | (Fst, [e1])       ->  let check = (check_exp e1 env) in 
+                          match check with 
+                          | Pair_t(fst_type, _) -> fst_type
+                          | _                   -> raise TypeError
+     
+  | (Snd, [e1])       ->  let check = (check_exp e1 env) in 
+                          match check with 
+                          | Pair_t(_, snd_type) -> snd_type
+                          | _                   -> raise TypeError
   (* Lists *)
+  | (Nil, [])         -> List_t
+  | (Cons, [e1, e2])  -> let e1_check = (check_exp e1 env) in
+                         let e2_check = (check_exp e2 env) in
+                         if unify e1_check e2_check then List_t(e1_check)
+                         else raise TypeError
+  | (IsNil, [t_list]) -> let l_check = (check_exp t_list env) in
+                         match l_check with 
+                         | List_t(_) -> Bool_t
+                         | _         -> raise TypeError
+  | (Hd, [t_list])    -> let l_check = (check_exp t_list env) in
+                         match l_check with 
+                         | List_t(l_type) -> l_type
+                         | _              -> raise TypeError
+  | (Tl, [t_list])    -> let l_check = (check_exp t_list env) in
+                         match l_check with 
+                         | List_t(l_type) -> List_t(l_type)
+                         | _              -> raise TypeError
+  | _ -> raise TypeError
 
 and check_fn v t_exp env = 
   (* Add v to the env as a guess *)
