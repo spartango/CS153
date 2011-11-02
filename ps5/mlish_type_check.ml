@@ -25,7 +25,7 @@ let rec unify a_type b_type =
   (* Recurse if functions involved *)
   | (Fn_t(l_atype, r_atype), Fn_t(l_btype, r_btype)) ->  
     (unify l_atype r_atype) && (unify l_btype r_btype)
-  | _ -> (type_error "Unable to unify")
+  | _ -> (type_error ("Unable to unify "^(type_to_string a_type)^(type_to_string b_type)))
 
 (* Creates a new Guess *)
 let guess () = 
