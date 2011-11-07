@@ -138,6 +138,8 @@ let cse (e : exp) : exp = raise TODO
  * Apply primitive operations which can be evaluated. e.g. fst (1,2) = 1
  *)
 
+
+
 let cfold (e : exp) : exp = raise TODO
 (*
     match e with 
