@@ -1,5 +1,6 @@
 open Mlish_ast
 
+
 (* This magic is used to glue the generated lexer and parser together.
  * Expect one command-line argument, a file to parse.
  * You do not need to understand this interaction with the system. *)
@@ -20,10 +21,10 @@ let compile_prog thresh prog =
   let _ = print_string (Scish_ast.exp2string sc) in
   let m = Monadic.tomonadic sc in
   let _ = print_string "\nInitial Monadic Code\n" in
-  let _ = print_string (Monadic.exp2string m) in
+  let _ = print_string (Monad.exp2string m) in
   let m2 = Monadic.optimize thresh m in
   let _ = print_string "\nOptimized Monadic Code\n" in
-  print_string ((Monadic.exp2string m2)^"\n")
+  print_string ((Monad.exp2string m2)^"\n")
 
 let run_prog prog = Scish_eval.run prog
 
