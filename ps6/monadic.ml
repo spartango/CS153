@@ -216,7 +216,32 @@ let snd_ops (args: operand list) : value =
         | [v1; v2] -> Op v2
         | _ -> PrimApp(S.Fst, args)
 
-let rec cfold (e : exp) : exp = raise TODO
+let rec cfold (e : exp) : exp = 
+    match e with
+        | Return o -> Return o
+        | LetVal (x, v, e) -> LetVal(x, cfold_val v, cfold e)
+        | LetCall (x, f, ws, e) -> 
+              (* Check that this is correct *)
+              LetCall (x, f, ws, cfold e)
+        (* Remove the if when it is either true or false *)
+        | LetIf (x, (Int 1), e1, e2, e_next) ->
+              cfold (flatten x e1 e_next)
+        | LetIf (x, (Int 0), e1, e2, e_next) ->
+              cfold (flatten x e2 e_next)
+        | LetIf (x, w, e1, e2, e_next) ->
+              LetIf(x, w, cfold e1, cfold e2, cfold e_next)
+
+(* Zips lets together *)
+and flatten (x: var) (e1: exp) (e2: exp) : exp =
+    match e1 with
+        (* Set value of x to the return value of the expression *)
+        | Return o -> LetVal(x, Op o, e2)
+        | LetVal(y, v, e) -> LetVal(y, v, flatten x e e2) 
+        | LetCall(y, f, ws, e) ->
+              LetCall(y, f, ws, flatten y e e2)
+        | LetIf(y, w, e1, e2, e_next) ->
+              LetIf(y, w, e1, e2, flatten x e_next e2)
+
 and cfold_val (v: value) : value = 
     (match v with
         (* Return an operand as is *)
@@ -233,8 +258,7 @@ and cfold_val (v: value) : value =
                   (* Nothing to do for cons - will be eliminated by dce *)
                   | S.Cons -> PrimApp(S.Cons, args)
                   | S.Fst -> fst_ops args
-                  | S.Snd -> snd_ops args
-                  | _ -> raise TODO)
+                  | S.Snd -> snd_ops args)
         (* Fold constants in functions, returning function *)
         | Lambda (v, e) -> Lambda(v, cfold e))
 
