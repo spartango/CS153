@@ -137,15 +137,107 @@ let cse (e : exp) : exp = raise TODO
 (* constant folding
  * Apply primitive operations which can be evaluated. e.g. fst (1,2) = 1
  *)
-
-
-
-let cfold (e : exp) : exp = raise TODO
 (*
-    match e with 
-        | Return v -> Return v
-        | LetValue (x, v, e) ->
-              cfold_val v*)
+type value = 
+  Op of operand
+| PrimApp of S.primop * (operand list)
+| Lambda of var * exp
+      *)
+
+(* Constant folding optimizations on plus *)
+let plus_ops (args: operand list) : value = 
+    match args with
+        (* For + 0, just return operand *)
+        | [Int(0); v] -> Op v
+        | [v; Int(0)] -> Op v
+        | [Int(i); Int(u)] -> Op(Int(i + u))
+        | _ -> PrimApp(S.Plus, args)
+
+let minus_ops (args: operand list) : value =
+    match args with
+        | [v; Int 0] -> Op v
+        | [Int(i); Int(u)] -> Op(Int(i - u))
+        | _ -> PrimApp(S.Minus, args)
+
+let times_ops (args: operand list) : value =
+    match args with
+        | [v; Int 0] -> Op(Int 0)
+        | [v; Int 1] -> Op v
+        | [Int 0; v] -> Op(Int 0)
+        | [Int 1; v] -> Op v
+        | [Int(i); Int(u)] -> Op(Int (i * u))
+        | _ -> PrimApp(S.Times, args)
+
+let div_ops (args: operand list) : value =
+    match args with
+        | [v; Int 1] -> Op v
+        | [Int 0; v] -> Op (Int 0)
+        | [Int 1; v] -> Op v
+        | [Int i; Int u] -> Op(Int (i / u))
+        | _ -> PrimApp(S.Div, args)
+
+let eq_ops (args: operand list) : value =
+    match args with
+        (* Return 1 or 0 if args are both ints *)
+        | [Int i; Int u] ->
+              if i = u
+              then Op (Int 1)
+              else Op (Int 0)
+        (* If two values are the same, condense *)
+        | [v1; v2] ->
+              (* CHECK that this works *)
+              if v1 = v2
+              then Op (Int 1)
+              else Op (Int 0)
+        | _ -> PrimApp(S.Eq, args)
+
+let lt_ops (args: operand list) : value =
+    match args with
+        | [Int i; Int u] ->
+              if i < u
+              then Op (Int 1)
+              else Op (Int 0)
+        (* If two values are the same, one is not less than the other *)
+        | [v1; v2] ->
+              if v1 = v2
+              then Op (Int 0)
+              else PrimApp(S.Lt, args)
+        | _ -> PrimApp(S.Lt, args)
+
+let fst_ops (args: operand list) : value =
+    match args with
+        (* Simplify to first part of pair *)
+        | [v1; v2] -> Op v1
+        | _ -> PrimApp(S.Fst, args)
+
+let snd_ops (args: operand list) : value =
+    match args with
+        (* Simplify to first part of pair *)
+        | [v1; v2] -> Op v2
+        | _ -> PrimApp(S.Fst, args)
+
+let rec cfold (e : exp) : exp = raise TODO
+and cfold_val (v: value) : value = 
+    (match v with
+        (* Return an operand as is *)
+        | Op o -> Op o
+        (* Optimize primative operations *)
+        | PrimApp (p_op, args) ->
+              (match p_op with
+                  | S.Plus -> plus_ops args 
+                  | S.Minus -> minus_ops args
+                  | S.Times -> times_ops args
+                  | S.Div -> div_ops args
+                  | S.Eq -> eq_ops args
+                  | S.Lt -> lt_ops args
+                  (* Nothing to do for cons - will be eliminated by dce *)
+                  | S.Cons -> PrimApp(S.Cons, args)
+                  | S.Fst -> fst_ops args
+                  | S.Snd -> snd_ops args
+                  | _ -> raise TODO)
+        (* Fold constants in functions, returning function *)
+        | Lambda (v, e) -> Lambda(v, cfold e))
+
 (* To support a somewhat more efficient form of dead-code elimination and
  * inlining, we first construct a table saying how many times each variable 
  * is used, and how many times each function is called.
@@ -187,9 +279,9 @@ let count_table (e:exp) =
                                occ_e e)
     and occ_v v = 
       match v with
-        Op w -> occ_o w
-      | PrimApp(_,ws) ->  List.iter occ_o ws
-      | Lambda(x,e) -> (def x; occ_e e)
+          |  Op w -> occ_o w
+          | PrimApp(_,ws) ->  List.iter occ_o ws
+          | Lambda(x,e) -> (def x; occ_e e)
         
     and occ_o oper = 
       match oper with
