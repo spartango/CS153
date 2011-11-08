@@ -52,7 +52,7 @@ mon: mlish
 	$(COMPILER) -o monadic scish_ast.cmo scish_eval.cmo mlish_ast.cmo mlish_type_check.cmo mlish_compile.cmo ml_lex.cmo ml_parse.cmo monad.cmo monadic.cmo mlish.cmo
 
 test: mon
-	$(COMPILER) -c prety_print.ml
+	$(COMPILER) -c pretty_print.ml
 	$(COMPILER) -c test_framework.ml
 	$(COMPILER) -c optimize_tests.ml
 	$(COMPILER) -o optimize_tests scish_ast.cmo scish_eval.cmo mlish_ast.cmo mlish_type_check.cmo mlish_compile.cmo ml_lex.cmo ml_parse.cmo monad.cmo monadic.cmo mlish.cmo pretty_print.cmo test_framework.cmo optimize_tests.cmo
