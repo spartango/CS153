@@ -2,9 +2,24 @@
  * Monadic Form, and various optimizations on Monadic Form. *)
 module S = Scish_ast
 open Monad
+open Utility
 
 exception TODO
+exception IntAsFunction
 exception EXTRA_CREDIT
+
+(* Zips lets together *)
+let rec flatten (x: var) (e1: exp) (e2: exp) : exp =
+    match e1 with
+        (* Set value of x to the return value of the expression *)
+        | Return o -> LetVal(x, Op o, e2)
+        | LetVal(y, v, e) -> LetVal(y, v, flatten x e e2) 
+        | LetCall(y, f, ws, e) ->
+              LetCall(y, f, ws, flatten y e e2)
+        | LetIf(y, w, e1, e2, e_next) ->
+              LetIf(y, w, e1, e2, flatten x e_next e2)
+
+
 
 (* used to generate fresh variables *)
 let counter = ref 0
@@ -157,6 +172,7 @@ let minus_ops (args: operand list) : value =
     match args with
         | [v; Int 0] -> Op v
         | [Int(i); Int(u)] -> Op(Int(i - u))
+        | [v1; v2] when (v1 = v2) ->  Op(Int(0))
         | _ -> PrimApp(S.Minus, args)
 
 let times_ops (args: operand list) : value =
@@ -174,6 +190,7 @@ let div_ops (args: operand list) : value =
         | [Int 0; v] -> Op (Int 0)
         | [Int 1; v] -> Op v
         | [Int i; Int u] -> Op(Int (i / u))
+        | [v1; v2] when (v1 = v2) ->Op(Int(1))
         | _ -> PrimApp(S.Div, args)
 
 let eq_ops (args: operand list) : value =
@@ -230,17 +247,6 @@ let rec cfold (e : exp) : exp =
               cfold (flatten x e2 e_next)
         | LetIf (x, w, e1, e2, e_next) ->
               LetIf(x, w, cfold e1, cfold e2, cfold e_next)
-
-(* Zips lets together *)
-and flatten (x: var) (e1: exp) (e2: exp) : exp =
-    match e1 with
-        (* Set value of x to the return value of the expression *)
-        | Return o -> LetVal(x, Op o, e2)
-        | LetVal(y, v, e) -> LetVal(y, v, flatten x e e2) 
-        | LetCall(y, f, ws, e) ->
-              LetCall(y, f, ws, flatten y e e2)
-        | LetIf(y, w, e1, e2, e_next) ->
-              LetIf(y, w, e1, e2, flatten x e_next e2)
 
 and cfold_val (v: value) : value = 
     (match v with
@@ -313,8 +319,48 @@ let count_table (e:exp) =
       | Int _ -> () in
     occ_e e; table
 
+
 (* dead code elimination *)
-let dce (e:exp) : exp = raise TODO 
+let dce (e:exp) : exp = 
+    let ct_table = count_table e in
+    let rec dce_r lam_map (e: exp) : exp =
+        let dce_passed_map = dce_r lam_map in
+        match e with
+            | Return o -> Return o
+            | LetVal(x, v, next_e) ->
+                  (* If the value is unused, eliminate it and dce the next expression *)
+                  if (get_uses ct_table x) = 0
+                  then dce_r lam_map next_e
+                  else 
+                      (* Check if value is function, if it called once *)
+                      (match v with
+                          | Lambda(y, body) ->
+                                (* Eliminate dead code in body of lambda - does not need to get back
+                                   lam_map because code in body is not in scope of rest of program *)
+                                let body1 = dce_r lam_map body in
+                                if (get_calls ct_table x) = 0
+                                (* Remove function map of vars to functions - body optimized before inserted into map*)
+                                then dce_r (StringMap.add x (y, body1) lam_map) next_e
+                                else LetVal(x, Lambda(y, body1), dce_passed_map next_e)
+                          (* Remove nothing if value is operand or primapp *)
+                          | _ -> LetVal(x, v, dce_passed_map next_e))
+            | LetCall(x, f, ws, next_e) ->
+                  (* Look to see if function has been previously remove and insert body before call if so *)
+                  let f_name = match f with
+                      | Var name -> name
+                      | Int _ -> raise IntAsFunction in
+                  if (StringMap.mem f_name lam_map)
+                  then
+                      (* Get lambda out of map *)
+                      let (param, body) = StringMap.find f_name lam_map in
+                          LetVal(param, Op(ws), flatten x body (dce_passed_map next_e))
+                  else LetCall(x, f, ws, dce_passed_map next_e)
+            | LetIf(x, o1, e1, e2, next_e) ->
+                  LetIf(x, o1, dce_passed_map e1, dce_r lam_map e2, dce_passed_map next_e) in
+        dce_r StringMap.empty e
+                              
+                          
+                           
 
 (* (1) inline functions 
  * (2) reduce LetIf expressions when the value being tested is a constant.
