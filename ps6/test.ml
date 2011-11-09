@@ -1,2 +1,3 @@
-let x = (fun y -> y + 1) in
+let t = 0 in
+let x = (fun y -> let z = 1 + 2 in y + z) in
 x 1

@@ -1,43 +1,6 @@
 open Cish_ast
 open Mips
 
-let (stub_pos : Cish_ast.pos)= 12;;
-let null     = Int(0);;
-
-let result_name = "result";;
-
-(* Schish bindings *)
-
-
-exception InvalidExpressionListLength
-let verify_length (ls: 'a list) (expected: int): unit =
-    if (List.length ls) = expected
-    then ()
-    else raise InvalidExpressionListLength
-
-(* Glues a list of statements together with Seq *)
-let rec seqs (stmts : Cish_ast.stmt list) : Cish_ast.stmt =
-    match stmts with
-        | [] -> (Cish_ast.skip, stub_pos)
-        | hd::[] -> hd
-        | hd::tl -> (Cish_ast.Seq(hd, seqs tl), stub_pos)
-
-
-(* Will only convert a single stmt concluded by a semicolon *)
-let cish_stmt_from_str (s : string) : Cish_ast.stmt = 
-  Cish_parse.stmt Cish_lex.lexer (Lexing.from_string s)
-
-(* Wraps a let declaration for v around st *)
-let init_var (v: string) (st: Cish_ast.stmt) : Cish_ast.stmt =
-    (Cish_ast.Let(v, (null, stub_pos), st), stub_pos)
-let return_result (code : stmt) : stmt =
-    (Cish_ast.Seq(code, cish_stmt_from_str ("return " ^ result_name ^ ";")), stub_pos)
-let init_result (code : stmt) : stmt =
-    init_var "result" code
-
-let zip_cish_strs (strs: string list) : Cish_ast.stmt =
-    seqs (List.map cish_stmt_from_str strs)
-
 (* Arguments to reversed list functor *)
 module type LISTARGS =
     sig
