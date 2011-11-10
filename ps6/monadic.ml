@@ -147,7 +147,7 @@ and cprop_oper (env : var -> operand option) (w:operand) =
 let cprop e = cprop_exp empty_env e
 
 (* common sub-value elimination -- as in the slides *)
-let cse (e : exp) : exp = raise TODO 
+let cse (e : exp) : exp = e
 
 (* constant folding
  * Apply primitive operations which can be evaluated. e.g. fst (1,2) = 1
@@ -188,7 +188,6 @@ let div_ops (args: operand list) : value =
     match args with
         | [v; Int 1] -> Op v
         | [Int 0; v] -> Op (Int 0)
-        | [Int 1; v] -> Op v
         | [Int i; Int u] -> Op(Int (i / u))
         | [v1; v2] when (v1 = v2) ->Op(Int(1))
         | _ -> PrimApp(S.Div, args)
@@ -345,7 +344,7 @@ let dce (e:exp) : exp =
                           (* Remove nothing if value is operand or primapp *)
                           | _ -> LetVal(x, v, dce_passed_map next_e))
             | LetCall(x, f, ws, next_e) ->
-                  (* Look to see if function has been previously remove and insert body before call if so *)
+                  (* Look to see if function has been previously removed and insert body before call if so *)
                   let f_name = match f with
                       | Var name -> name
                       | Int _ -> raise IntAsFunction in
@@ -375,6 +374,9 @@ let dce (e:exp) : exp =
  * each bound variable in the copy (else other optimizations will break
  * due to variable capture.)  
  *)
+(* It's necessary to use splice because the same function could potentially be
+   inlined multiple times - which would lead to variable capture. As long as a
+   function is only inlined once - i.e. dce - it is ok to use flatten *)
 let splice x e1 e2 = 
     let rec splice_exp final (env : var -> operand option) (e:exp) = 
       match e with
@@ -409,12 +411,88 @@ let never_inline_thresh  (e : exp) : bool = false (** Never inline  **)
 (* return true if the expression e is smaller than i, i.e. it has fewer
  * constructors
  *)
-let size_inline_thresh (i : int) (e : exp) : bool = raise TODO 
-
+let size_inline_thresh (i : int) (e : exp) : bool = 
+    (* Sizes operand - allows for us to easily change how this is counted *)
+    let size_var = 0 in
+    let rec size_operand (o: operand) : int =
+            1
+    and size_value (v: value) : int =
+        match v with
+            (* 1 for Op constructor, size of operand *)
+            | Op o -> 1 + size_operand o
+            (* 1 for PrimApp constructor, 1 for actual primative op, size of operands *)
+            | PrimApp (p, os) -> 1 + 1 + (List.fold_left (fun a o -> a + (size_operand o)) 0 os)
+            (* 1 for Lambda, size of var, size of expression *)
+            | Lambda (y, e) -> size (1 + size_var) e
+    and size (count: int) (e: exp)  : int =
+        match e with
+            | Return o -> count + 1 + (size_operand o)
+             (* 1 for LetVal, size of value, size of expression *)
+            | LetVal(x, v, e) -> size (count + 1 + (size_var) + (size_value v)) e
+            | LetCall(x, f, ws, e) -> size (count + 1 + (size_var) + (size_operand f) + (size_operand ws)) e
+            | LetIf(x, t, e1, e2, e_next) ->
+                  size (size (size (count + 1 + (size_var) + (size_operand t)) e1) e2) e_next in
+    ((size 0 e) < i)
 (* inlining 
  * only inline the expression e if (inline_threshold e) return true.
  *)
-let inline (inline_threshold: exp -> bool) (e:exp) : exp = raise TODO 
+let inline (inline_threshold: exp -> bool) (e:exp) : exp = 
+    (* INVARIANT: body of function only added to lambda map if it is below the inline threshold *)
+    let rec inline_r lam_map (ex: exp) : exp = 
+        let inline_passed_map = inline_r lam_map in
+        match ex with
+            (* Return unchanged *)
+            | Return o -> ex
+            | LetVal(x, v, e_next) ->
+                  (* Check if is function declaration *)
+                  (match v with
+                      (* Potentially prep for inline if Lambda *)
+                      | Lambda(y, body) ->
+                            (* Inline in body of lambda *)
+                            let body1 = inline_r lam_map body in
+                            let lam_map1 = 
+                                (* Add body to map if below inline threshold - does not remove original let binding *)
+                                if (inline_threshold body)
+                                (* CHECK - I believe this is necessary to make splice work correctly. It allows the parameter to be renamed each time it is inlined *)
+                                (* Key is LetVal variable; value is "holey expression" where the hole is the value of the parameter *)
+                                then StringMap.add x (fun ws -> (LetVal(y, ws, body1))) lam_map
+                                else lam_map in
+                                LetVal(x, Lambda(y, body1), inline_r lam_map1 e_next)
+                      (* Otherwise, continue through code *)
+                      | _ -> LetVal(x, v, inline_passed_map e_next))
+            | LetCall(x, f, ws, e_next) ->
+                  (* Helper to convert operand to string *)
+                  let f_name = match f with
+                      | Var name -> name
+                      | Int i -> string_of_int i in
+                      (* Inline if function in lambda map *)
+                      if (StringMap.mem f_name lam_map)
+                      then
+                          (* Get body out of map - in form of holey-exp where hole is value of param *)
+                          let body = StringMap.find f_name lam_map in
+                          (* Splice in inlined code *)
+                              splice x (body (Op ws)) (inline_passed_map e_next)
+                      else 
+                          (* Otherwise, do not inline this function and continue inlining *)
+                          LetCall(x, f, ws, inline_passed_map e_next)
+            (* CHECK: Assumes that true is always 1 and false is always 0 *)
+            | LetIf(x, t, e1, e2, e_next) ->
+                  (* Potentially eliminate branches if t is always true or false while inlining branchs.
+                   * Since functions in one branch not in scope in other, no need to get lam_maps back from branches *)
+                  match t with
+                      (* Always true *)
+                      | Int(1) ->
+                            (* Remove false branch - x gets result of e1 *)
+                            splice x (inline_passed_map e1) (inline_passed_map e_next)
+                      (* Always false *)
+                      | Int(0) ->
+                            (* Removre true brnach - x gets result of e2 *)
+                            splice x (inline_passed_map e2) (inline_passed_map e_next)
+                      (* Undetermined *)
+                      | _ ->
+                            LetIf(x, t, inline_passed_map e1, inline_passed_map e2, inline_passed_map e_next) in
+        inline_r StringMap.empty e
+        
 
 (* reduction of conditions
  * - Optimize conditionals based on contextual information, e.g.
