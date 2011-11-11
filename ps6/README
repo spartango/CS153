@@ -1,0 +1,30 @@
+Your job for this assignment is to implement the algebraic
+optimizations presented in class. (If you find bugs in what was
+presented, or you think there is a bug, then please contact me as soon
+as possible.)  The file monadic.ml has all of the code that you need
+to modify or extend.
+
+The functions that you need to implement are given in the file and
+raise TODO in their bodies. In particular you are to:
+
+(1) Implement common subexpression elimination (the cse function).
+(2) Implement constant folding (the cfold function).
+(3) Implement dead code elimination (the dce function).
+(4) Implement inlining and size_inline_thresh. 
+    * inline should inline values for which inline_threshold returns true.
+    * size_inline_thresh should return true if the number of constructors
+      used to make the program is less than i. 
+
+Make sure to test your code on plenty of examples. By default, the code
+is set up to always inline. If a threshold is specified, the code will
+use the size_inline_thresh function to determine whether to inline or not. 
+
+Usage:
+monadic file-to-optimize [thresh]
+
+[Extra Credit]
+The following will be considered extra credit.
+(5) redtest - perform reductions on redundant tests. Several examples are
+    given in the code. How much extra credit you get for this will be
+    dependent on how much (legal) optimization you perform.
+(max 1 point)
