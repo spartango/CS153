@@ -8,6 +8,13 @@ exception TODO
 exception IntAsFunction
 exception EXTRA_CREDIT
 
+let dce_enabled     = true  ;;
+let cprop_enabled   = true  ;;
+let redtest_enabled = true  ;;
+let cse_enabled     = true  ;;
+let cfold_enabled   = true  ;;
+let inline_enabled  = true  ;;
+
 (* Zips lets together *)
 let rec flatten (x: var) (e1: exp) (e2: exp) : exp =
     match e1 with
@@ -159,11 +166,14 @@ and cprop_oper (env : var -> operand option) (w:operand) =
       Var x -> (match env x with None -> w | Some w' -> w')
     | Int _ -> w
 
-let cprop e = cprop_exp empty_env e
+let cprop e =   
+if not cprop_enabled then e else
+  cprop_exp empty_env e
 
 (* common sub-value elimination -- as in the slides *)
 
 let cse (e : exp) : exp =
+if not cse_enabled then e else
   let rec cse_exp(env:value->var option)(e:exp):exp =
     match e with
       | Return w -> Return w
@@ -266,7 +276,8 @@ let snd_ops (args: operand list) : value =
         | [v1; v2] -> Op v2
         | _ -> PrimApp(S.Fst, args)
 
-let rec cfold (e : exp) : exp = 
+let rec cfold (e : exp) : exp =
+  if not cfold_enabled then e else 
     match e with
         | Return o -> Return o
         | LetVal (x, v, e) -> LetVal(x, cfold_val v, cfold e)
@@ -355,6 +366,7 @@ let count_table (e:exp) =
 
 (* dead code elimination *)
 let dce (e:exp) : exp = 
+if not cse_enabled then e else
     let ct_table = count_table e in
     let rec dce_r lam_map (e: exp) : exp =
         let dce_passed_map = dce_r lam_map in
@@ -475,6 +487,7 @@ let size_inline_thresh (i : int) (e : exp) : bool =
  * only inline the expression e if (inline_threshold e) return true.
  *)
 let inline (inline_threshold: exp -> bool) (e:exp) : exp = 
+    if not inline_enabled then e else
     (* INVARIANT: body of function only added to lambda map if it is below the inline threshold *)
     let rec inline_r lam_map (ex: exp) : exp = 
         let inline_passed_map = inline_r lam_map in
@@ -539,7 +552,8 @@ let inline (inline_threshold: exp -> bool) (e:exp) : exp =
  *   (since x < 1 implies x < 2)
  * - This is similar to constant folding + logic programming
  *)
-let redtest (e:exp) : exp = e
+let redtest (e:exp) : exp = 
+  if not redtest_enabled then e else e
  
 
 (* optimize the code by repeatedly performing optimization passes until
@@ -556,4 +570,3 @@ let optimize inline_threshold e =
       else e) in
     changed := true;
     loop 1 e
-
