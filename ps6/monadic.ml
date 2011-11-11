@@ -511,7 +511,7 @@ let redtest (e:exp) : exp = raise EXTRA_CREDIT
 (* optimize the code by repeatedly performing optimization passes until
  * there is no change. *)
 let optimize inline_threshold e = 
-    let opt = fun x -> (*dce (cprop (redtest (cse (cfold ((inline inline_threshold) x)))))*) dce (cprop (cfold x)) in
+    let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
