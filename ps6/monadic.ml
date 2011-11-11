@@ -341,7 +341,7 @@ let dce (e:exp) : exp =
                                 (* Remove function map of vars to functions - body optimized before inserted into map*)
                                 then
                                     let _ = print_endline (exp2string body) in
-                                    change (dce_r (StringMap.add x (y, body) lam_map) next_e)
+                                    (dce_r (StringMap.add x (y, body) lam_map) next_e)
                                 else LetVal(x, Lambda(y, body), dce_passed_map next_e)
                           (* Remove nothing if value is operand or primapp *)
                           | _ -> LetVal(x, v, dce_passed_map next_e))
@@ -505,7 +505,7 @@ let inline (inline_threshold: exp -> bool) (e:exp) : exp =
  *   (since x < 1 implies x < 2)
  * - This is similar to constant folding + logic programming
  *)
-let redtest (e:exp) : exp = raise EXTRA_CREDIT 
+let redtest (e:exp) : exp = e
  
 
 (* optimize the code by repeatedly performing optimization passes until
