@@ -526,17 +526,16 @@ let inline (inline_threshold: exp -> bool) (e:exp) : exp =
                       else 
                           (* Otherwise, do not inline this function and continue inlining *)
                           LetCall(x, f, ws, inline_passed_map e_next)
-            (* CHECK: Assumes that true is always 1 and false is always 0 *)
             | LetIf(x, t, e1, e2, e_next) ->
                   (* Potentially eliminate branches if t is always true or false while inlining branchs.
                    * Since functions in one branch not in scope in other, no need to get lam_maps back from branches *)
                   match t with
                       (* Always true *)
-                      | Int(1) ->
+                      | Int(0) ->
                             (* Remove false branch - x gets result of e1 *)
                             splice x (inline_passed_map e1) (inline_passed_map e_next)
                       (* Always false *)
-                      | Int(0) ->
+                      | Int(1) ->
                             (* Removre true brnach - x gets result of e2 *)
                             splice x (inline_passed_map e2) (inline_passed_map e_next)
                       (* Undetermined *)

@@ -58,6 +58,7 @@ test: mon
 	$(COMPILER) -c optimize_tests.ml
 	$(COMPILER) -o optimize_tests scish_ast.cmo scish_eval.cmo mlish_ast.cmo mlish_type_check.cmo mlish_compile.cmo ml_lex.cmo ml_parse.cmo utility.cmo monad.cmo monadic.cmo pretty_print.cmo test_framework.cmo optimize_tests.cmo
 	./optimize_tests
-
+	./compile_tests.sh
+	
 clean:
 	rm -rf *.cmo *.cmi optimize_tests monadic ps6_scish ps6_cish ml_parse.ml ml_parse.mli ml_lex.ml scish_parse.mli scish_parse.ml scish_lex.ml cish_parse.mli cish_parse.ml cish_lex.ml output_tests
