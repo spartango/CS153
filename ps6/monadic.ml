@@ -336,20 +336,24 @@ let dce (e:exp) : exp =
                           | Lambda(y, body) ->
                                 (* Eliminate dead code in body of lambda - does not need to get back
                                    lam_map because code in body is not in scope of rest of program *)
-                                let body1 = dce_r lam_map body in
-                                if (get_calls ct_table x) = 0
+                                (* let body1 = dce_r lam_map body in *)
+                                if (get_calls ct_table x) = 1
                                 (* Remove function map of vars to functions - body optimized before inserted into map*)
-                                then dce_r (StringMap.add x (y, body1) lam_map) next_e
-                                else LetVal(x, Lambda(y, body1), dce_passed_map next_e)
+                                then
+                                    let _ = print_endline (exp2string body) in
+                                    change (dce_r (StringMap.add x (y, body) lam_map) next_e)
+                                else LetVal(x, Lambda(y, body), dce_passed_map next_e)
                           (* Remove nothing if value is operand or primapp *)
                           | _ -> LetVal(x, v, dce_passed_map next_e))
             | LetCall(x, f, ws, next_e) ->
                   (* Look to see if function has been previously removed and insert body before call if so *)
                   let f_name = match f with
-                      | Var name -> name
+                      | Var name -> 
+                            let _ = print_endline (name) in
+                            name
                       | Int _ -> raise IntAsFunction in
-                  if (StringMap.mem f_name lam_map)
-                  then
+                      if (StringMap.mem f_name lam_map)
+                      then
                       (* Get lambda out of map *)
                       let (param, body) = StringMap.find f_name lam_map in
                           LetVal(param, Op(ws), flatten x body (dce_passed_map next_e))
@@ -507,7 +511,7 @@ let redtest (e:exp) : exp = raise EXTRA_CREDIT
 (* optimize the code by repeatedly performing optimization passes until
  * there is no change. *)
 let optimize inline_threshold e = 
-    let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
+    let opt = fun x -> (*dce (cprop (redtest (cse (cfold ((inline inline_threshold) x)))))*) dce (cprop (cfold x)) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
