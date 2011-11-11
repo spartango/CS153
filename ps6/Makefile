@@ -60,4 +60,4 @@ test: mon
 	./optimize_tests
 
 clean:
-	-rm *.cmo *.cmi optimize_tests monadic ps6_scish ps6_cish ml_parse.ml ml_parse.mli ml_lex.ml scish_parse.mli scish_parse.ml scish_lex.ml cish_parse.mli cish_parse.ml cish_lex.ml 
+	rm -rf *.cmo *.cmi optimize_tests monadic ps6_scish ps6_cish ml_parse.ml ml_parse.mli ml_lex.ml scish_parse.mli scish_parse.ml scish_lex.ml cish_parse.mli cish_parse.ml cish_lex.ml output_tests
