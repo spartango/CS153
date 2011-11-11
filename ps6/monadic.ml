@@ -120,6 +120,21 @@ let tomonadic (e:S.exp) : exp = tom e empty_env (fun x -> Return x)
 let changed : bool ref = ref true
 let change x = (changed := true; x)
 
+
+let compare_operands op1 op2 =
+  match (op1, op2) with
+  | (Var(v), Int(i))  -> 1
+  | (Int(i), Var(v))  -> -1
+  | (Var(v), Var(v2)) -> String.compare v v2
+  | (Int(i), Int(i2)) -> compare i i2
+
+(* Sorts commutative ops in an expression to allow for 
+ * More hits in cse env look ups *)
+let sort_ops (v : value) : value =
+  match v with
+  | PrimApp(op, operands) -> PrimApp(op, (List.sort compare_operands operands))
+  | _ -> v 
+
 (* naive 'a -> 'b option environments *)
 let empty_env x = None
 let extend env x w = fun y -> if y = x then Some w else env y
@@ -147,7 +162,26 @@ and cprop_oper (env : var -> operand option) (w:operand) =
 let cprop e = cprop_exp empty_env e
 
 (* common sub-value elimination -- as in the slides *)
-let cse (e : exp) : exp = e
+
+let cse (e : exp) : exp =
+  let rec cse_exp(env:value->var option)(e:exp):exp =
+    match e with
+      | Return w -> Return w
+      | LetVal(x,v,e) ->
+        let v = sort_ops v in
+        (match env v with
+        | None -> LetVal(x,cse_val env v,
+                            cse_exp (extend env v x) e)
+        | Some y -> LetVal(x,Op(Var y),cse_exp env e))
+      | LetCall(x,f,w,e) -> LetCall(x,f,w,cse_exp env e)
+      | LetIf(x,w,e1,e2,e) ->
+          LetIf(x,w,cse_exp env e1,cse_exp env e2,
+                cse_exp env e)
+  and cse_val env v =
+    match v with | Lambda(x,e) ->  Lambda(x,cse_exp env e)
+                 | v -> v
+  in
+  cse_exp empty_env e
 
 (* constant folding
  * Apply primitive operations which can be evaluated. e.g. fst (1,2) = 1
