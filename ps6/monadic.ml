@@ -557,9 +557,3 @@ let optimize inline_threshold e =
     changed := true;
     loop 1 e
 
-(*
-let optimizer (e: exp) (env:  : exp =
-    match e with 
-*)  
-  (* Make one downward pass to build environment *)
-(* Recurse back up, performing optimization, updating environment, passing up tree *)
