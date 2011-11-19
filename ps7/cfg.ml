@@ -1,5 +1,6 @@
 open Cfg_ast
 open I_graph
+open Utility
 exception Implement_Me
 exception FatalError
 
