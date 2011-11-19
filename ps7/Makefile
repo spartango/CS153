@@ -23,8 +23,9 @@ cish: mips
 cfg: mips cish
 	$(COMPILER) -c cish_ast.ml
 	$(COMPILER) -c cfg_ast.ml
+	$(COMPILER) -c i_graph.ml
 	$(COMPILER) -c cfg.ml
-	$(COMPILER) -o ps7_cfg cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo cfg.cmo
+	$(COMPILER) -o ps7_cfg cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo i_graph.cmo cfg.cmo
 
 clean:
 	-rm *.cmo *.cmi ps7_cfg cish_parse.ml cish_parse.mli cish_lex.ml 

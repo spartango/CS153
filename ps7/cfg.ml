@@ -1,15 +1,11 @@
 open Cfg_ast
+open I_graph
 exception Implement_Me
 exception FatalError
 
 (*******************************************************************)
 (* PS7 TODO:  interference graph construction *)
 
-(* an interference graph maps a variable x to the set of variables that
- * y such that x and y are live at the same point in time.  It's up to
- * you how you want to represent the graph.  I've just put in a dummy
- * definition for now.  *)
-type interfere_graph = unit
 
 (* given a function (i.e., list of basic blocks), construct the
  * interference graph for that function.  This will require that
