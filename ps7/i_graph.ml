@@ -1,4 +1,5 @@
 open Cfg_ast
+exception TODO
 
 type igedge = { left  : var;
                 right : var; 
@@ -35,3 +36,7 @@ module IGNodeSet = Set.Make(struct
  * you how you want to represent the graph.  I've just put in a dummy
  * definition for now.  *)
 type interfere_graph = IGNodeSet.t
+
+(* TODO : implement node lookup *)
+let get_node (v : var) : ignode = 
+  raise TODO
