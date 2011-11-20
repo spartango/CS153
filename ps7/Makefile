@@ -21,13 +21,14 @@ cish: mips
 	$(COMPILER) -c cish_compile.ml
 
 cfg: mips cish
+	$(COMPILER) -c utility.ml
 	$(COMPILER) -c cish_ast.ml
 	$(COMPILER) -c cfg_ast.ml
 	$(COMPILER) -c io_types.ml
 	$(COMPILER) -c cfg_gen.ml
 	$(COMPILER) -c i_graph.ml
 	$(COMPILER) -c cfg.ml
-	$(COMPILER) -o ps7_cfg cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo i_graph.cmo cfg.cmo
+	$(COMPILER) -o ps7_cfg utility.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo i_graph.cmo cfg.cmo
 
 test_files:
 	$(COMPILER) -c pretty_print.ml
