@@ -6,7 +6,17 @@ let get_block_label (b: block) : label =
         | Label l -> l
         | _ -> raise InvalidCFGCode
 
-let get_block_children (b: block) : 
+let get_block_children (b: block) : BlockSet.t = 
+    let get_last_inst = List.fold_left (fun accum elmnt ->
+                                            match accum with
+                                                | None -> Some elmnt
+                                                | Some i -> Some i) None b in
+        match get_last_inst with
+            | If(o1, compop, o2, l1, l2) -> BlockSet.add l2 (Block.singleton l1)
+            | Jump(l)                    -> BlockSet.singleton l
+            | Return                     -> BlockSet.empty
+            | _                          -> raise InvalidCFGCode (* Block does not end in control flow statement *)      
+
 
 let get_rw (i: inst) : io_inst =
     (* Builds a set from a list of operands *)

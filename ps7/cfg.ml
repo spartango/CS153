@@ -14,7 +14,12 @@ exception FatalError
 let build_interfere_graph (f : func) : interfere_graph =
 
     let build_io_block (b: block) : io_block =
-        let io_blck = new_io_block b in
+        (* Generate empty io_block - leave ins, outs, and moves empty *)
+        let io_block0 = new_io_block b in
+        (* Get block's label *)
+        let io_block1 = io_block_set_label (get_block_label b) io_block0 in
+        (* Get block's children *)
+        let io_block2 = io_block_set_children (get_block_children b) io_block1 in
         (* Build io_insts for block's instrucitons *)
         let rw_io_insts = List.map get_rw b in
         (* Build master read/write sets for block *)
