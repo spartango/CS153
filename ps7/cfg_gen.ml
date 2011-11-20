@@ -150,4 +150,19 @@ let io_block_set_write t target : io_block =
   }
 
 let get_rw (i: inst) : io_inst =
+(*
+  Move o1 o2 -> Write o1; Read o2
+  Arith o1 o2 Arithop o3 -> Write o1; Read o2, o3
+  Load o1 o2 Int -> Write o1; Read o2
+  Store o1 Int o2 Write -; Read o1 o2
+  Call o1 -> Write -; Read o1
+  Jump l -> Write -; Read -
+  If o1 Compareop o2 l1 l2 -> Write -; Read o1, o2
+  Return -> Write -; Read -
+*)
+
+
+
+
+
   { inst_read = ReadSet.empty; inst_write = WriteSet.empty; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = []; src_inst = i}
