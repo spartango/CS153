@@ -1,5 +1,7 @@
 open Cfg_ast
 open I_graph
+open Io_types
+open Cfg_gen
 exception Implement_Me
 exception FatalError
 
@@ -24,7 +26,7 @@ let build_interfere_graph (f : func) : interfere_graph =
         let rw_io_insts = List.map get_rw b in
         (* Build master read/write sets for block *)
         let (master_read, master_write) = 
-                List.fold_left (fun accumated io_rec ->
+                List.fold_left (fun accumulated io_rec ->
                                    let(read, writes) = accumulated in
                                        (ReadSet.union io_rec.inst_read, WriteSet.union io_rec.inst_write)) (ReadSet.empty, WriteSet.empty) rw_io_insts in
         (* Add master read/writes to io_block *)
