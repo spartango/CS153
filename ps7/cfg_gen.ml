@@ -26,4 +26,4 @@ type io_block = { block_in    : InSet.t          ;
                 }
 
 let get_rw (i: inst) : io_inst =
-    { inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = []; inst = i}
+    { inst_read = ReadSet.t; inst_write = WriteSet.t; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = []; inst = i}
