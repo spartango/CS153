@@ -61,3 +61,25 @@ let gen_in (out_set : OutSet.t)
 
 let gen_out (child_in_sets : InSet.t list) : OutSet.t = 
   List.fold_left VarSet.union VarSet.empty child_in_sets
+      
+let inst_gen_in (target : io_inst) : io_inst =
+  io_inst_set_in 
+    (gen_in target.inst_out target.inst_read target.inst_write)
+    target
+
+let inst_gen_out (target : io_inst) (next : io_inst) : io_inst =
+  io_inst_set_out
+    (gen_out [next.inst_in;])
+    target
+
+let block_gen_in (target : io_block) : io_block =
+  io_block_set_in 
+    (gen_in target.block_out target.master_read target.master_write)
+    target
+
+let block_gen_out (target : io_block) (children : io_block list) : io_block =
+  io_block_set_out
+    (gen_out 
+      (List.map (fun blk -> blk.block_in) children) 
+    )
+    target
