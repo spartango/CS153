@@ -150,6 +150,20 @@ let io_block_set_write t target : io_block =
   }
 
 let get_rw (i: inst) : io_inst =
+    (* Builds a set from a list of operands *)
+    let set_of_ops (os: operand list) : VarSet.t =
+        List.fold_left (fun a e -> match e with 
+                                Var x -> VarSet.add x a
+                                    _ -> a) VarSet.empty os in
+    let get_move_related (o1: operand) (o2: operand) : move_related = 
+        match (o1, o2) with
+            | (Var(x1),Var(x2) -> (x1, x2)
+                   _ -> raise InvalidCFGCode
+    let io_in = new_io_inst in
+    match i with
+        | Move(o1, o2) -> 
+              
+    
 (*
   Move o1 o2 -> Write o1; Read o2
   Arith o1 o2 Arithop o3 -> Write o1; Read o2, o3
