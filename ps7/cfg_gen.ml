@@ -22,3 +22,6 @@ type io_block = { block_in    : InSet.t          ;
                   insts       : io_inst list     ;
                   src_block   : block            ;
                 }
+
+let get_rw (i: inst) : io_inst =
+    { inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = []; inst = i}
