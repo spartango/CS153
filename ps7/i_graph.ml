@@ -39,4 +39,4 @@ type interfere_graph = IGNodeSet.t
 
 let get_node (v : var) (target : interfere_graph) : ignode = 
   let filtered = IGNodeSet.filter (fun node -> node.name = v) target in
-  IGNodeSet.choose target 
+  IGNodeSet.choose filtered 
