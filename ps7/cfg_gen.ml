@@ -8,7 +8,9 @@ module WriteSet = VarSet
 
 type move_related = var * var
   
-type io_inst  = { inst_in   : InSet.t          ;
+type io_inst  = { inst_read : ReadSet.t        ;
+                  inst_write: WriteSet.t       ; 
+                  inst_in   : InSet.t          ;
                   inst_out  : OutSet.t         ;
                   inst_move : move_related list;
                   src_inst  : inst             ;
