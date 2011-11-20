@@ -15,6 +15,14 @@ let varset_add set elt =
 let set_add_all (elements : var list) target = 
   List.fold_left varset_add target elements
 
+let set_map f set =
+  VarSet.fold 
+    (fun elt accum ->
+      let applied = (f elt) in
+      VarSet.add applied accum)
+    set
+    VarSet.empty
+
 type move_related = var * var
 
 type io_inst  = { inst_read : ReadSet.t        ;
@@ -190,7 +198,7 @@ let io_block_set_write t target : io_block =
     children     = target.children;
   }
 
-  let io_block_set_insts t target : io_block = 
+let io_block_set_insts t target : io_block = 
   { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
@@ -202,7 +210,7 @@ let io_block_set_write t target : io_block =
     children     = target.children;
   }
 
-  let io_block_set_label t target : io_block = 
+let io_block_set_label t target : io_block = 
   { block_label  = t;
     block_in     = target.block_in;
     block_out    = target.block_out;
@@ -214,7 +222,7 @@ let io_block_set_write t target : io_block =
     children     = target.children;
   }
 
-  let io_block_set_children t target : io_block = 
+let io_block_set_children t target : io_block = 
   { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
@@ -225,3 +233,10 @@ let io_block_set_write t target : io_block =
     src_block    = target.src_block;
     children     = t;
   }
+
+
+let lookup_block (name : label) (blocks : io_block list) =
+   (* Assume uniqueness *)
+   let search = List.filter (fun blk -> blk.block_label = name) blocks in
+   (List.hd search)
+

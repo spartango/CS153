@@ -2,18 +2,18 @@ open Io_types
 open Cfg_ast
 
 let get_block_label (b: block) : label =
-    match (List.dh b) with
+    match (List.hd b) with
         | Label l -> l
         | _ -> raise InvalidCFGCode
 
 let get_block_children (b: block) : BlockSet.t = 
-    let get_last_inst l = 
+    let rec get_last_inst l = 
         match l with
             | [] -> raise InvalidCFGCode
             | h::[] -> h
             | h::t -> get_last_inst t in
-        match get_last_inst with
-            | If(o1, compop, o2, l1, l2) -> BlockSet.add l2 (Block.singleton l1)
+        match get_last_inst b with
+            | If(o1, compop, o2, l1, l2) -> BlockSet.add l2 (BlockSet.singleton l1)
             | Jump(l)                    -> BlockSet.singleton l
             | Return                     -> BlockSet.empty
             | _                          -> raise InvalidCFGCode (* Block does not end in control flow statement *)      
@@ -88,16 +88,26 @@ let block_gen_in (target : io_block) : io_block =
     (gen_in target.block_out target.master_read target.master_write)
     target
 
-let block_gen_out (target : io_block) (children : io_block list) : io_block =
+let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
   io_block_set_out
     (gen_out 
-      (List.map (fun blk -> blk.block_in) children) 
+      (set_map (fun child_name -> 
+                  let blk = (lookup_block child_name blocks) in
+                  blk.block_in) 
+                target.children) 
     )
     target
 
-let inst_gen_io (target: io_inst list) : io_insts list =
+let inst_gen_io (target: io_inst list) : io_inst list =
     List.fold_left (fun accum io_i ->
                         (* next_ins holds state *)
                         let(io_inst_list, next_ins) = accum in
                         let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
                             (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target
+
+let block_gen_io (target: io_block list) : io_block list =
+  run_until_stable 
+    (fun () -> 
+      List.map (block_gen_in block_gen_out) target
+    )
+    10
