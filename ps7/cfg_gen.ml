@@ -53,5 +53,5 @@ let gen_in (out_set : OutSet.t)
   (VarSet.union read o_sub)
 
 let gen_out (child_in_sets : InSet.t list) : OutSet.t = 
-  List.fold_left VarSet.inter VarSet.empty child_in_sets
+  List.fold_left VarSet.union VarSet.empty child_in_sets
       
