@@ -25,6 +25,15 @@ let new_io_inst src : inst =
     src_inst   = src;
   }
 
+let io_inst_set_read readset target = 
+  { inst_read  = readset;
+    inst_write = target.inst_write;
+    inst_in    = target.inst_in;
+    inst_out   = target.inst_out;
+    inst_move  = target.inst_move;
+    src_inst   = target.src_inst;
+  }
+
 type io_block = { block_in    : InSet.t          ;
                   block_out   : OutSet.t         ;
                   block_move  : move_related list;
