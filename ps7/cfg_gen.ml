@@ -2,7 +2,7 @@ open Io_types
 open Cfg_ast
 
 let get_block_label (b: block) : label =
-    match (List.dh b) with
+    match (List.hd b) with
         | Label l -> l
         | _ -> raise InvalidCFGCode
 
@@ -107,6 +107,6 @@ let inst_gen_io (target: io_inst list) : io_inst list =
 let block_gen_io (target: io_block list) : io_block list =
   run_until_stable 
     (fun () -> 
-      List.Map (block_gen_in block_gen_out) target
+      List.map (block_gen_in block_gen_out) target
     )
     10
