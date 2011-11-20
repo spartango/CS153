@@ -36,7 +36,7 @@ let ioinst2str (io: io_inst) :string =
         "Write set:\t" ^ (varset2str io.inst_write) ^ "\n" ^
         "In set:\t" ^ (varset2str io.inst_in) ^ "\n" ^
         "Out set:\t" ^ (varset2str io.inst_out) ^ "\n" ^
-        "Move relateD:\t" ^ (mvrelatedlist2str io.inst_move) ^ "\n}\n"
+        "Move related:\t" ^ (mvrelatedlist2str io.inst_move) ^ "\n}\n"
 
 let io_inst_equal (i1: io_inst) (i2: io_inst) : bool = 
     (VarSet.equal i1.inst_read i2.inst_read) &

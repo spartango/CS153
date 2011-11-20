@@ -5,25 +5,24 @@ open Cfg_gen
 open Io_types
 
 (* Set to show verbose test results for debugging *)
-let mk_test_verbose = true
+let mk_test_verbose = false
 
 let mk_rw_test (i: inst) (rs: ReadSet.t) (ws: WriteSet.t) (mvs: (var * var) list) (name: string) =
     if mk_test_verbose
     then 
+        let expected = { inst_read = rs; inst_write = ws; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = mvs; src_inst = i} in
+        let to_string = ioinst2str in
         let t_test = fun () -> 
-            let result  =               in 
-            let pass    = (result = expected) in
+            let result  = get_rw i            in 
+            let pass    = io_inst_equal result expected in
             let message = 
                 if pass 
                 then "Got expected result -> "^(format_string (to_string result) Bright Green) 
                 else "Result doesn't match expected -> "^(format_string (to_string result) Bright Red)
                      ^" vs "^(format_string (to_string expected) Bright Green)
-        in (pass, message)
-    in
-    Verbose_Test(name, t_test)
-
-
-        mk_verbose_expect_test (fun () -> get_rw i) { inst_read = rs; inst_write = ws; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = mvs; src_inst = i} ioinst2str name
+            in (pass, message)
+        in
+            Verbose_Test(name, t_test)
     else 
 
     Test(name, (fun () ->
@@ -31,7 +30,7 @@ let mk_rw_test (i: inst) (rs: ReadSet.t) (ws: WriteSet.t) (mvs: (var * var) list
                ))
 
 let rw_test1 = mk_rw_test (Label("l")) ReadSet.empty WriteSet.empty [] "Label";;
-let rw_test2 = mk_rw_test (Move(Var("t2"), Var("t1"))) (ReadSet.singleton "t1") (WriteSet.singleton "t2") [("t1", "t2")] "Move";;
+let rw_test2 = mk_rw_test (Move(Var("t2"), Var("t1"))) (ReadSet.singleton "t1") (WriteSet.singleton "t2") [("t2", "t1")] "Move";;
 let rw_test3 = mk_rw_test (Arith(Var("t3"), Var("t2"), Plus, Var("t1"))) (ReadSet.add "t2" (ReadSet.singleton "t1")) (WriteSet.singleton "t3") [] "Arith, two vars"
 let rw_test4 = mk_rw_test (Arith(Var("t3"), Int(3), Plus, Var("t1"))) (ReadSet.singleton "t1") (WriteSet.singleton "t3") [] "Arith, one var";;
 let rw_test5 = mk_rw_test (Arith(Var("t3"), Int(3), Plus, Int(4))) (ReadSet.empty) (WriteSet.singleton "t3") [] "Arith, no vars";;

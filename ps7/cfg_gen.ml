@@ -4,9 +4,9 @@ open Cfg_ast
 let get_rw (i: inst) : io_inst =
     (* Builds a set from a list of operands *)
     let set_of_ops (os: operand list) : VarSet.t =
-        List.fold_right (fun e a -> match e with 
+        List.fold_left (fun a e -> match e with 
                             | Var x -> VarSet.add x a
-                            | _ -> a) os VarSet.empty in
+                            | _ -> a) VarSet.empty os in
     let get_move_related (o1: operand) (o2: operand) : move_related = 
         match (o1, o2) with
             | (Var(x1),Var(x2)) -> (x1, x2)
