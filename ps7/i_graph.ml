@@ -37,6 +37,6 @@ module IGNodeSet = Set.Make(struct
  * definition for now.  *)
 type interfere_graph = IGNodeSet.t
 
-(* TODO : implement node lookup *)
-let get_node (v : var) : ignode = 
-  raise TODO
+let get_node (v : var) (target : interfere_graph) : ignode = 
+  let filtered = IGNodeSet.filter (fun node -> node.name = v) target in
+  IGNodeSet.choose target 
