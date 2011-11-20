@@ -1,28 +1,30 @@
-type IGEdge = { left  : var;
+open Cfg_ast
+
+type igedge = { left  : var;
                 right : var; 
               } 
 
 (* Sort based on left edge, but prevents duplication *)
 module IGEdgeSet = Set.Make(struct 
-                              type t = IGEdge 
+                              type t = igedge 
                               let compare = 
                                 fun e1 e2 ->
                                   let l_comp = String.compare e1.left e2.left   in
                                   let r_comp = String.compare e1.right e2.right in 
-                                  if (lcomp = 0 && r_comp = 0) then 0 
+                                  if (l_comp = 0 && r_comp = 0) then 0 
                                   else l_comp
                             end)
 
 module IGMoveSet = IGEdgeSet
 
-type IGNode = { name  : var        ; 
-                edges : IGEdgeSet.t;
-                moves : IGMoveSet.t;
-                color : int option ;
+type ignode = { name  : var         ; 
+                edges : IGEdgeSet.t ;
+                moves : IGMoveSet.t ;
+                color : int option  ;
               } 
 
 module IGNodeSet = Set.Make(struct 
-                              type t = IGEdge 
+                              type t = ignode 
                               let compare = 
                                 fun e1 e2 ->
                                   String.compare e1.name e2.name 
