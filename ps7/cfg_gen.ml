@@ -52,7 +52,7 @@ let io_inst_set_in inset target =
     src_inst   = target.src_inst;
   }
 
-let io_inst_set_out inset target = 
+let io_inst_set_out outset target = 
   { inst_read  = target.inst_read;
     inst_write = target.inst_write;
     inst_in    = target.inst_in;
