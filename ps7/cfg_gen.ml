@@ -70,11 +70,10 @@ let block_gen_in (target : io_block) : io_block =
     (gen_in target.block_out target.master_read target.master_write)
     target
 
-let block_gen_out (target : io_block) (children : io_block list) : io_block =
+let block_gen_out (target : io_block) : io_block =
   io_block_set_out
     (gen_out 
-      (List.map (fun blk -> blk.block_in) children) 
+      (List.map (fun blk -> blk.block_in) target.children) 
     )
-    target
-
+    target 
 
