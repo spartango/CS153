@@ -1,5 +1,7 @@
 open Cfg_ast
 
+exception InvalidCFGCode
+
 module VarSet   = Set.Make(struct type t = var let compare = String.compare end)
 module OutSet   = VarSet
 module InSet    = VarSet
@@ -13,7 +15,7 @@ let set_add_all (elements : var list) target =
   List.fold_left varset_add target elements
 
 type move_related = var * var
-  
+
 type io_inst  = { inst_read : ReadSet.t        ;
                   inst_write: WriteSet.t       ; 
                   inst_in   : InSet.t          ;
@@ -22,6 +24,34 @@ type io_inst  = { inst_read : ReadSet.t        ;
                   src_inst  : inst             ;
                 }
 
+let varset2str (s: VarSet.t) : string = 
+    List.fold_left (fun s e ->
+                        s ^ " " ^ e) "" (VarSet.elements s)
+
+let moverelated2str (m: move_related) :string = 
+                        let(v1, v2) = m in
+                           "(" ^ v1 ^ "," ^ v2 ^ ")"
+
+let mvrelatedlist2str (ml: move_related list) : string =  
+    List.fold_left (fun s e -> s ^ (moverelated2str e) ^ " ") "" ml
+    
+let ioinst2str (io: io_inst) :string =
+    "{\n" ^
+        "Inst:\t\t" ^ (inst2string io.src_inst) ^ "\n" ^
+        "Read set:\t" ^ (varset2str io.inst_read) ^ "\n" ^
+        "Write set:\t" ^ (varset2str io.inst_write) ^ "\n" ^
+        "In set:\t" ^ (varset2str io.inst_in) ^ "\n" ^
+        "Out set:\t" ^ (varset2str io.inst_out) ^ "\n" ^
+        "Move related:\t" ^ (mvrelatedlist2str io.inst_move) ^ "\n}\n"
+
+let io_inst_equal (i1: io_inst) (i2: io_inst) : bool = 
+    (VarSet.equal i1.inst_read i2.inst_read) &
+        (VarSet.equal i1.inst_write i2.inst_write) & 
+        (VarSet.equal i1.inst_in i2.inst_in) & 
+        (VarSet.equal i1.inst_out i2.inst_out) & 
+        (i1.src_inst = i2.src_inst) &
+        (i1.inst_move = i2.inst_move)
+ 
 let new_io_inst src : io_inst = 
   { inst_read  = ReadSet.empty;
     inst_write = WriteSet.empty;
