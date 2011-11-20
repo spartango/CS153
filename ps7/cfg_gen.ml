@@ -34,6 +34,42 @@ let io_inst_set_read readset target =
     src_inst   = target.src_inst;
   }
 
+let io_inst_set_write writeset target = 
+  { inst_read  = target.inst_read;
+    inst_write = writeset;
+    inst_in    = target.inst_in;
+    inst_out   = target.inst_out;
+    inst_move  = target.inst_move;
+    src_inst   = target.src_inst;
+  }
+
+let io_inst_set_in inset target = 
+  { inst_read  = target.inst_read;
+    inst_write = target.inst_write;
+    inst_in    = inset;
+    inst_out   = target.inst_out;
+    inst_move  = target.inst_move;
+    src_inst   = target.src_inst;
+  }
+
+let io_inst_set_out inset target = 
+  { inst_read  = target.inst_read;
+    inst_write = target.inst_write;
+    inst_in    = target.inst_in;
+    inst_out   = outset;
+    inst_move  = target.inst_move;
+    src_inst   = target.src_inst;
+  }
+
+let io_inst_set_move move target = 
+  { inst_read  = target.inst_read;
+    inst_write = target.inst_write;
+    inst_in    = target.inst_in;
+    inst_out   = target.inst_out;
+    inst_move  = move;
+    src_inst   = target.src_inst;
+  }
+
 type io_block = { block_in    : InSet.t          ;
                   block_out   : OutSet.t         ;
                   block_move  : move_related list;
