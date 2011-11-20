@@ -73,10 +73,35 @@ let simple_out_test =
   "Simple Out Set Generation"
 ;;
 
+(* Simple Out-In Test 
+   * Two Children
+   * I_1 = a x y
+   * I_2 = z a 
+   * *
+   * R : x, y 
+   * W : a l x 
+   * O should be a x z y
+   * I should be x y z after iterating *)
+    
+let simple_out_in_test = 
+  mk_verbose_varset_test
+  (fun () -> 
+    let child_1_in = set_add_all ["x"; "y"; "a";] InSet.empty    in
+    let child_2_in = set_add_all ["z"; "a";]      InSet.empty    in
+    let read       = set_add_all ["x"; "y";]      ReadSet.empty  in
+    let write      = set_add_all ["x"; "a"; "l";] WriteSet.empty in 
+    let children   = [child_1_in; child_2_in;]                   in
+    let out_set    = (gen_out children) in
+    (gen_in out_set read write)
+  )
+  (set_add_all ["z"; "x"; "y";] InSet.empty)
+  "Simple Out-In Set Generation"
+;;
 
 run_test_set [ simple_in_test;
                simple_in_out_test;
-               simple_out_test
+               simple_out_test;
+               simple_out_in_test
              ]
              "IO Set Generation"
            ;;
