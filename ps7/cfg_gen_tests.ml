@@ -2,10 +2,32 @@ open Test_framework
 open Pretty_print
 open Cfg_ast
 open Cfg_gen
+open Io_types
 
-let mk_rw_test (i: inst) (rs: ReadSet.t) (ws: WriteSet.t) (mvs: (var * var) list) (name: string) = 
+(* Set to show verbose test results for debugging *)
+let mk_test_verbose = true
+
+let mk_rw_test (i: inst) (rs: ReadSet.t) (ws: WriteSet.t) (mvs: (var * var) list) (name: string) =
+    if mk_test_verbose
+    then 
+        let t_test = fun () -> 
+            let result  =               in 
+            let pass    = (result = expected) in
+            let message = 
+                if pass 
+                then "Got expected result -> "^(format_string (to_string result) Bright Green) 
+                else "Result doesn't match expected -> "^(format_string (to_string result) Bright Red)
+                     ^" vs "^(format_string (to_string expected) Bright Green)
+        in (pass, message)
+    in
+    Verbose_Test(name, t_test)
+
+
+        mk_verbose_expect_test (fun () -> get_rw i) { inst_read = rs; inst_write = ws; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = mvs; src_inst = i} ioinst2str name
+    else 
+
     Test(name, (fun () ->
-                    (get_rw i) = { inst_read = rs; inst_write = ws; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = mvs; src_inst = i} 
+                     io_inst_equal (get_rw i) { inst_read = rs; inst_write = ws; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = mvs; src_inst = i} 
                ))
 
 let rw_test1 = mk_rw_test (Label("l")) ReadSet.empty WriteSet.empty [] "Label";;

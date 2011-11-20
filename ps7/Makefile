@@ -41,8 +41,8 @@ i_graph_tests: cfg cish mips test_files
 	$(COMPILER) -c i_graph_tests.ml
 
 test: cfg_gen_tests i_graph_tests
-	$(COMPILER) -o cfg_gen_tests cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo  cfg_gen.cmo pretty_print.cmo test_framework.cmo cfg_gen_tests.cmo
-	$(COMPILER) -o i_graph_tests cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo  cfg_gen.cmo pretty_print.cmo test_framework.cmo i_graph_tests.cmo
+	$(COMPILER) -o cfg_gen_tests cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo pretty_print.cmo test_framework.cmo cfg_gen_tests.cmo
+	$(COMPILER) -o i_graph_tests cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo pretty_print.cmo test_framework.cmo i_graph_tests.cmo
 	./cfg_gen_tests
 	./i_graph_tests
 
