@@ -6,6 +6,12 @@ module InSet    = VarSet
 module ReadSet  = VarSet
 module WriteSet = VarSet
 
+let varset_add set elt =
+  VarSet.add elt set
+
+let set_add_all (elements : var list) target = 
+  List.fold_left varset_add target elements
+
 type move_related = var * var
   
 type io_inst  = { inst_read : ReadSet.t        ;
