@@ -7,10 +7,11 @@ let get_block_label (b: block) : label =
         | _ -> raise InvalidCFGCode
 
 let get_block_children (b: block) : BlockSet.t = 
-    let get_last_inst = List.fold_left (fun accum elmnt ->
-                                            match accum with
-                                                | None -> Some elmnt
-                                                | Some i -> Some i) None b in
+    let get_last_inst l = 
+        match l with
+            | [] -> raise InvalidCFGCode
+            | h::[] -> h
+            | h::t -> get_last_inst t in
         match get_last_inst with
             | If(o1, compop, o2, l1, l2) -> BlockSet.add l2 (Block.singleton l1)
             | Jump(l)                    -> BlockSet.singleton l
