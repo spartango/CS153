@@ -7,6 +7,7 @@ module OutSet   = VarSet
 module InSet    = VarSet
 module ReadSet  = VarSet
 module WriteSet = VarSet
+module BlockSet = VarSet
 
 let varset_add set elt =
   VarSet.add elt set
@@ -106,81 +107,121 @@ let io_inst_set_move move target =
     src_inst   = target.src_inst;
   }
 
-type io_block = { block_in    : InSet.t          ;
+type io_block = { block_label : var              ;
+                  block_in    : InSet.t          ;
                   block_out   : OutSet.t         ;
                   block_move  : move_related list;
                   master_read : ReadSet.t        ;
                   master_write: WriteSet.t       ;
                   insts       : io_inst list     ;
                   src_block   : block            ;
+                  children    : BlockSet.t       ;
                 }
 
 let new_io_block src : io_block = 
-  { block_in     = InSet.empty;
+  { block_label  = ""
+    block_in     = InSet.empty;
     block_out    = OutSet.empty;
     block_move   = [];
     master_read  = ReadSet.empty;
     master_write = WriteSet.empty;
     insts        = [];
     src_block    = src;
+    children     = BlockSet.empty;
   }
 
 let io_block_set_in t target : io_block = 
-  { block_in     = t;
+  { block_label  = target.block_label
+    block_in     = t;
     block_out    = target.block_out;
     block_move   = target.block_move;
     master_read  = target.master_read;
     master_write = target.master_write;
     insts        = target.insts;
     src_block    = target.src_block;
+    children     = target.children;
   }
 
 let io_block_set_out t target : io_block = 
-  { block_in     = target.block_in;
+  { block_label  = target.block_label
+    block_in     = target.block_in;
     block_out    = t;
     block_move   = target.block_move;
     master_read  = target.master_read;
     master_write = target.master_write;
     insts        = target.insts;
     src_block    = target.src_block;
+    children     = target.children;
   }
 
 let io_block_set_move t target : io_block = 
-  { block_in     = target.block_in;
+  { block_label  = target.block_label
+    block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = t;
     master_read  = target.master_read;
     master_write = target.master_write;
     insts        = target.insts;
     src_block    = target.src_block;
+    children     = target.children;
   }
 
 let io_block_set_read t target : io_block = 
-  { block_in     = target.block_in;
+  { block_label  = target.block_label
+    block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
     master_read  = t;
     master_write = target.master_write;
     insts        = target.insts;
     src_block    = target.src_block;
+    children     = target.children;
   }
 
 let io_block_set_write t target : io_block = 
-  { block_in     = target.block_in;
+  { block_label  = target.block_label
+    block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
     master_read  = target.master_read;
     master_write = t;
     insts        = target.insts;
     src_block    = target.src_block;
+    children     = target.children;
   }
 
   let io_block_set_insts t target : io_block = 
-  { block_in     = target.block_in;
+  { block_label  = target.block_label
+    block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
     master_read  = target.master_read;
     master_write = target.master_write;
     insts        = t;
     src_block    = target.src_block;
+    children     = target.children;
+  }
+
+  let io_block_set_label t target : io_block = 
+  { block_label  = t
+    block_in     = target.block_in;
+    block_out    = target.block_out;
+    block_move   = target.block_move;
+    master_read  = target.master_read;
+    master_write = target.master_write;
+    insts        = t;
+    src_block    = target.src_block;
+    children     = target.children;
+  }
+
+  let io_block_set_children t target : io_block = 
+  { block_label  = t
+    block_in     = target.block_in;
+    block_out    = target.block_out;
+    block_move   = target.block_move;
+    master_read  = target.master_read;
+    master_write = target.master_write;
+    insts        = t;
+    src_block    = target.src_block;
+    children     = t;
   }
