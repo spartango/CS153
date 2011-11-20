@@ -16,6 +16,24 @@ type io_inst  = { inst_read : ReadSet.t        ;
                   src_inst  : inst             ;
                 }
 
+let new_io_inst src : inst = 
+  { inst_read  = ReadSet.empty;
+    inst_write = WriteSet.empty;
+    inst_in    = InSet.empty;
+    inst_out   = OutSet.empty;
+    inst_move  = [];
+    src_inst   = src;
+  }
+
+let io_inst_set_read readset target = 
+  { inst_read  = readset;
+    inst_write = target.inst_write;
+    inst_in    = target.inst_in;
+    inst_out   = target.inst_out;
+    inst_move  = target.inst_move;
+    src_inst   = target.src_inst;
+  }
+
 type io_block = { block_in    : InSet.t          ;
                   block_out   : OutSet.t         ;
                   block_move  : move_related list;
@@ -24,6 +42,16 @@ type io_block = { block_in    : InSet.t          ;
                   insts       : io_inst list     ;
                   src_block   : block            ;
                 }
+
+let new_io_block src : block = 
+  { block_in     = InSet.empty;
+    block_out    = OutSet.empty;
+    block_move   = [];
+    master_read  = ReadSet.empty;
+    master_write = WriteSet.empty;
+    insts        = [];
+    src_block    = src;
+  }
 
 let get_rw (i: inst) : io_inst =
     { inst_read = ReadSet.t; inst_write = WriteSet.t; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = []; inst = i}
