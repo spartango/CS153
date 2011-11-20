@@ -23,10 +23,27 @@ cish: mips
 cfg: mips cish
 	$(COMPILER) -c cish_ast.ml
 	$(COMPILER) -c cfg_ast.ml
+	$(COMPILER) -c cfg_gen.ml
 	$(COMPILER) -c i_graph.ml
 	$(COMPILER) -c cfg.ml
-	$(COMPILER) -c utility.ml
-	$(COMPILER) -o ps7_cfg cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo i_graph.cmo utility.cmo cfg.cmo
+	$(COMPILER) -o ps7_cfg cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo cfg_gen.cmo i_graph.cmo cfg.cmo
+
+test_files:
+	$(COMPILER) -c pretty_print.ml
+	$(COMPILER) -c test_framework.ml	
+
+cfg_gen_tests: cfg cish mips test_files
+	$(COMPILER) -c cfg_gen_tests.ml
+
+
+i_graph_tests: cfg cish mips test_files
+	$(COMPILER) -c i_graph_tests.ml
+
+test: cfg_gen_tests i_graph_tests
+	$(COMPILER) -o cfg_gen_tests cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo  cfg_gen.cmo pretty_print.cmo test_framework.cmo cfg_gen_tests.cmo
+	$(COMPILER) -o i_graph_tests cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo  cfg_gen.cmo pretty_print.cmo test_framework.cmo i_graph_tests.cmo
+	./cfg_gen_tests
+	./i_graph_tests
 
 clean:
-	-rm *.cmo *.cmi ps7_cfg cish_parse.ml cish_parse.mli cish_lex.ml 
+	rm -rf *.cmo *.cmi ps7_cfg cfg_gen_tests i_graph_tests cish_parse.ml cish_parse.mli cish_lex.ml 
