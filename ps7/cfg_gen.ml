@@ -1,5 +1,6 @@
 open Io_types
 open Cfg_ast
+open Utility 
 
 let get_block_label (b: block) : label =
     match (List.hd b) with
@@ -78,9 +79,9 @@ let inst_gen_in (target : io_inst) : io_inst =
     (gen_in target.inst_out target.inst_read target.inst_write)
     target
 
-let inst_gen_out (target : io_inst) (next : io_inst) : io_inst =
+let inst_gen_out (target : io_inst) (next_ins : InSet.t) : io_inst =
   io_inst_set_out
-    (gen_out [next.inst_in;])
+    (gen_out [next_ins;])
     target
 
 let block_gen_in (target : io_block) : io_block =
@@ -91,7 +92,7 @@ let block_gen_in (target : io_block) : io_block =
 let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
   io_block_set_out
     (gen_out 
-      (set_map (fun child_name -> 
+      (set_map (fun (child_name : label)  -> 
                   let blk = (lookup_block child_name blocks) in
                   blk.block_in) 
                 target.children) 
@@ -99,15 +100,17 @@ let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
     target
 
 let inst_gen_io (target: io_inst list) : io_inst list =
-    List.fold_left (fun accum io_i ->
+    let (modified, _) = List.fold_left (fun accum io_i ->
                         (* next_ins holds state *)
                         let(io_inst_list, next_ins) = accum in
                         let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
                             (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target
+    in modified
 
 let block_gen_io (target: io_block list) : io_block list =
   run_until_stable 
     (fun () -> 
-      List.map (block_gen_in block_gen_out) target
+      let generator = fun t -> (block_gen_in (block_gen_out target t)) in
+      (List.map generator target)
     )
     10
