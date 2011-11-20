@@ -89,3 +89,62 @@ let new_io_block src : block =
     src_block    = src;
   }
 
+let io_block_set_in t target : block = 
+  { block_in     = t;
+    block_out    = target.block_out;
+    block_move   = target.block_move;
+    master_read  = target.master_read;
+    master_write = target.master_write;
+    insts        = target.insts;
+    src_block    = target.src_block;
+  }
+
+let io_block_set_out t target : block = 
+  { block_in     = target.block_in;
+    block_out    = t;
+    block_move   = target.block_move;
+    master_read  = target.master_read;
+    master_write = target.master_write;
+    insts        = target.insts;
+    src_block    = target.src_block;
+  }
+
+let io_block_set_move t target : block = 
+  { block_in     = target.block_in;
+    block_out    = target.block_out;
+    block_move   = t;
+    master_read  = target.master_read;
+    master_write = target.master_write;
+    insts        = target.insts;
+    src_block    = target.src_block;
+  }
+
+let io_block_set_read t target : block = 
+  { block_in     = target.block_in;
+    block_out    = target.block_out;
+    block_move   = target.block_move;
+    master_read  = t;
+    master_write = target.master_write;
+    insts        = target.insts;
+    src_block    = target.src_block;
+  }
+
+let io_block_set_write t target : block = 
+  { block_in     = target.block_in;
+    block_out    = target.block_out;
+    block_move   = target.block_move;
+    master_read  = target.master_read;
+    master_write = t;
+    insts        = target.insts;
+    src_block    = target.src_block;
+  }
+
+  let io_block_set_insts t target : block = 
+  { block_in     = target.block_in;
+    block_out    = target.block_out;
+    block_move   = target.block_move;
+    master_read  = target.master_read;
+    master_write = target.master_write;
+    insts        = t;
+    src_block    = target.src_block;
+  }
