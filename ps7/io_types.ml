@@ -119,7 +119,7 @@ type io_block = { block_label : var              ;
                 }
 
 let new_io_block src : io_block = 
-  { block_label  = ""
+  { block_label  = "";
     block_in     = InSet.empty;
     block_out    = OutSet.empty;
     block_move   = [];
@@ -131,7 +131,7 @@ let new_io_block src : io_block =
   }
 
 let io_block_set_in t target : io_block = 
-  { block_label  = target.block_label
+  { block_label  = target.block_label;
     block_in     = t;
     block_out    = target.block_out;
     block_move   = target.block_move;
@@ -143,7 +143,7 @@ let io_block_set_in t target : io_block =
   }
 
 let io_block_set_out t target : io_block = 
-  { block_label  = target.block_label
+  { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = t;
     block_move   = target.block_move;
@@ -155,7 +155,7 @@ let io_block_set_out t target : io_block =
   }
 
 let io_block_set_move t target : io_block = 
-  { block_label  = target.block_label
+  { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = t;
@@ -167,7 +167,7 @@ let io_block_set_move t target : io_block =
   }
 
 let io_block_set_read t target : io_block = 
-  { block_label  = target.block_label
+  { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
@@ -179,7 +179,7 @@ let io_block_set_read t target : io_block =
   }
 
 let io_block_set_write t target : io_block = 
-  { block_label  = target.block_label
+  { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
@@ -191,7 +191,7 @@ let io_block_set_write t target : io_block =
   }
 
   let io_block_set_insts t target : io_block = 
-  { block_label  = target.block_label
+  { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
@@ -203,25 +203,25 @@ let io_block_set_write t target : io_block =
   }
 
   let io_block_set_label t target : io_block = 
-  { block_label  = t
+  { block_label  = t;
     block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
     master_read  = target.master_read;
     master_write = target.master_write;
-    insts        = t;
+    insts        = target.insts;
     src_block    = target.src_block;
     children     = target.children;
   }
 
   let io_block_set_children t target : io_block = 
-  { block_label  = t
+  { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
     master_read  = target.master_read;
     master_write = target.master_write;
-    insts        = t;
+    insts        = target.insts;
     src_block    = target.src_block;
     children     = t;
   }
