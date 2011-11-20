@@ -1,6 +1,6 @@
 open Io_types
 open Cfg_gen
-open Test_framwork
+open Test_framework
 open Pretty_print
 
 (* Makes a test that expects a particular value from f, and prints differences
@@ -29,12 +29,13 @@ let mk_verbose_varset_test (f : unit -> VarSet.t) (expected : VarSet.t) (name : 
 let simple_in_test = 
   mk_verbose_varset_test 
     (fun () -> 
-      let out_set = OutSet.empty                               in
-      let read    = set_add_all ["x"; "y"; "z"] ReadSet.empty  in
-      let write   = set_add_all ["x"; "a"; "l"] WriteSet.empty in 
-      gen_in out_set read write )
-    (set_add_all ["x"; "y"; "z"] InSet.empty)
-    "Simple IN Set Generation"
+      let out_set = OutSet.empty                                in
+      let read    = set_add_all ["x"; "y"; "z";] ReadSet.empty  in
+      let write   = set_add_all ["x"; "a"; "l";] WriteSet.empty in 
+      (gen_in out_set read write) )
+    (set_add_all ["x"; "y"; "z";] InSet.empty)
+    ("Simple IN Set Generation")
+;;
 
 run_test_set [ simple_in_test;
              ]
