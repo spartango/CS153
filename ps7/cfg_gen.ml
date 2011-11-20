@@ -6,7 +6,7 @@ let get_block_label (b: block) : label =
         | Label l -> l
         | _ -> raise InvalidCFGCode
 
-let get_block_children 
+let get_block_children (b: block) : 
 
 let get_rw (i: inst) : io_inst =
     (* Builds a set from a list of operands *)
@@ -83,3 +83,10 @@ let block_gen_out (target : io_block) (children : io_block list) : io_block =
       (List.map (fun blk -> blk.block_in) children) 
     )
     target
+
+let inst_gen_io (target: io_inst list) : io_insts list =
+    List.fold_left (fun accum io_i ->
+                        (* next_ins holds state *)
+                        let(io_inst_list, next_ins) = accum in
+                        let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
+                            (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target
