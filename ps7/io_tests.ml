@@ -98,6 +98,55 @@ let simple_out_in_test =
   "Simple Out-In Set Generation"
 ;;
 
+(* Label and children getter tests *)
+
+(* 
+ * Label L1
+ * t2 = t1
+ * t3 = t2 * 1
+ * if t2 = t3 then L2 else L3
+ *)
+
+let basic_block1 =
+    [Label("L1");
+     Move(Var("t2"), Var("t1"));
+     Arith(Var("t3"), Var("t2"), Mul, Int 1);
+     If(Var "t2", Eq, Var "t3", "L2", "L3")]
+
+(*
+ * Label L5
+ * Return
+ *)
+
+let basic_block2 =
+    [Label("L5");
+     Return;]
+
+(* Label L4
+ * t2 = t1;
+ * Jump L3 
+ *)
+
+let basic_block3 = 
+    [Label("L4");
+     Move(Var("t2"), Var("t1"));
+     Jump("L3")]
+
+let mk_label_test (b: block) (expected: label) (name: string) =
+    mk_verbose_expect_test (fun () -> get_block_label) expected (fun s -> s) name
+
+let mk_children_test (b: block) (e: BlockSet.t) (name: string) =
+    mk_verbose_varset_test (fun () -> get_block_children) e name
+
+let label_test1 = mk_label_test basic_block1 "L1" "Label extraction test";;
+let label_test2 = mk_label_test basic_block2 "L5" "Label extraction test";;
+let label_test3 = mk_label_test basic_block3 "L4" "Label extraction test";;
+
+let children_test1 = mk_children_test basic_block1 (BlockSet.add "L2" (BlockSet.singleton "L3")) "Child extraction test on If";;
+let children_test2 = mk_children_test basic_block1 BlockSet.empty "Child extraction test on Return";;
+let children_test3 = mk_children_test basic_block1 (BlockSet.singleton "L3") "Child extraction test on Jump";;
+
+
 run_test_set [ simple_in_test;
                simple_in_out_test;
                simple_out_test;
@@ -105,3 +154,12 @@ run_test_set [ simple_in_test;
              ]
              "IO Set Generation"
            ;;
+
+run_test_set [
+    label_test1;
+    label_test2;
+    label_test3;
+    children_test1;
+    children_test2;
+    children_test3;
+] "Children and Label Getters"
