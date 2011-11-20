@@ -7,13 +7,13 @@ let get_block_label (b: block) : label =
         | _ -> raise InvalidCFGCode
 
 let get_block_children (b: block) : BlockSet.t = 
-    let get_last_inst l = 
+    let rec get_last_inst l = 
         match l with
             | [] -> raise InvalidCFGCode
             | h::[] -> h
             | h::t -> get_last_inst t in
-        match get_last_inst with
-            | If(o1, compop, o2, l1, l2) -> BlockSet.add l2 (Block.singleton l1)
+        match get_last_inst b with
+            | If(o1, compop, o2, l1, l2) -> BlockSet.add l2 (BlockSet.singleton l1)
             | Jump(l)                    -> BlockSet.singleton l
             | Return                     -> BlockSet.empty
             | _                          -> raise InvalidCFGCode (* Block does not end in control flow statement *)      
@@ -91,8 +91,8 @@ let block_gen_in (target : io_block) : io_block =
 let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
   io_block_set_out
     (gen_out 
-      (List.map (fun child_name -> 
-                  let blk = (lookup_block child_name) in
+      (set_map (fun child_name -> 
+                  let blk = (lookup_block child_name blocks) in
                   blk.block_in) 
                 target.children) 
     )

@@ -15,6 +15,14 @@ let varset_add set elt =
 let set_add_all (elements : var list) target = 
   List.fold_left varset_add target elements
 
+let set_map f set =
+  VarSet.fold 
+    (fun elt accum ->
+      let applied = (f elt) in
+      VarSet.add applied accum)
+    set
+    VarSet.empty
+
 type move_related = var * var
 
 type io_inst  = { inst_read : ReadSet.t        ;
