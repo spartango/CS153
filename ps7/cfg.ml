@@ -12,10 +12,32 @@ exception FatalError
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
 let build_interfere_graph (f : func) : interfere_graph = raise Implement_Me
+
 (*
-  Get the read and writes for each element in the list func -> (inst * rs * ws) list
-  Build master read/write list
-  Build In/Out for each element. Start with last instruction in the list. (inst * rs * ws) list -> (inst * in * out)
+  Build io_blocks for each block: func -> io_block list
+      For each block:
+      Get the read and writes for each element in the list: block -> io_inst list
+      Build master read/write list: io_inst list -> ReadSet.t * WriteSet.t
+      Build In/Out for each element. Start with last instruction in the list. io_inst list -> io_inst list (In/Out no longer empty)
+      Build io_block: Read/Writes are master read writes. In/Out initialized to empty. insts to the io_insts list. mv_related = []; block to original block -> io_block list
+
+  Loop until stable on io over blocks
+
+  Build i_graph by running over blocks: io_block list -> interference graph
+      For each block
+          For each instruction:
+          Add Ins to graph, if not there
+          Mark all Ins as intfering with other Ins
+          Add Outs to graph, if not there
+          Mark all Outs as intfering with other Outs
+      Mark all vars in block as interfering with intersection of block Ins with block Outs
+          
+
+
+
+
+
+  
 *)
 
 (*******************************************************************)
