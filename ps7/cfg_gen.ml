@@ -16,7 +16,7 @@ type io_inst  = { inst_read : ReadSet.t        ;
                   src_inst  : inst             ;
                 }
 
-let new_io_inst src : inst = 
+let new_io_inst src : io_inst = 
   { inst_read  = ReadSet.empty;
     inst_write = WriteSet.empty;
     inst_in    = InSet.empty;
@@ -79,7 +79,7 @@ type io_block = { block_in    : InSet.t          ;
                   src_block   : block            ;
                 }
 
-let new_io_block src : block = 
+let new_io_block src : io_block = 
   { block_in     = InSet.empty;
     block_out    = OutSet.empty;
     block_move   = [];
@@ -89,7 +89,7 @@ let new_io_block src : block =
     src_block    = src;
   }
 
-let io_block_set_in t target : block = 
+let io_block_set_in t target : io_block = 
   { block_in     = t;
     block_out    = target.block_out;
     block_move   = target.block_move;
@@ -99,7 +99,7 @@ let io_block_set_in t target : block =
     src_block    = target.src_block;
   }
 
-let io_block_set_out t target : block = 
+let io_block_set_out t target : io_block = 
   { block_in     = target.block_in;
     block_out    = t;
     block_move   = target.block_move;
@@ -109,7 +109,7 @@ let io_block_set_out t target : block =
     src_block    = target.src_block;
   }
 
-let io_block_set_move t target : block = 
+let io_block_set_move t target : io_block = 
   { block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = t;
@@ -119,7 +119,7 @@ let io_block_set_move t target : block =
     src_block    = target.src_block;
   }
 
-let io_block_set_read t target : block = 
+let io_block_set_read t target : io_block = 
   { block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
@@ -129,7 +129,7 @@ let io_block_set_read t target : block =
     src_block    = target.src_block;
   }
 
-let io_block_set_write t target : block = 
+let io_block_set_write t target : io_block = 
   { block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
@@ -139,7 +139,7 @@ let io_block_set_write t target : block =
     src_block    = target.src_block;
   }
 
-  let io_block_set_insts t target : block = 
+  let io_block_set_insts t target : io_block = 
   { block_in     = target.block_in;
     block_out    = target.block_out;
     block_move   = target.block_move;
@@ -148,3 +148,6 @@ let io_block_set_write t target : block =
     insts        = t;
     src_block    = target.src_block;
   }
+
+let get_rw (i: inst) : io_inst =
+  { inst_read = ReadSet.empty; inst_write = WriteSet.empty; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = []; src_inst = i}
