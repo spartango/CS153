@@ -107,7 +107,7 @@ let io_inst_set_move move target =
     src_inst   = target.src_inst;
   }
 
-type io_block = { block_label : var              ;
+type io_block = { block_label : label            ;
                   block_in    : InSet.t          ;
                   block_out   : OutSet.t         ;
                   block_move  : move_related list;

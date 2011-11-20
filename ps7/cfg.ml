@@ -25,7 +25,7 @@ let build_interfere_graph (f : func) : interfere_graph =
         (* Add master read/writes to io_block *)
         let rw_io_blck = io_block_set_read master_read (io_block_set_write master_write) in
         (* Build In/Outs for each instruction *)
-        let complete_io_insts = (fun () -> raise Implement me) in
+        let complete_io_insts = inst_gen_io rw_io_insts in
             
 
 
