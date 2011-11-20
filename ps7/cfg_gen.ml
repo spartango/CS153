@@ -1,6 +1,13 @@
 open Io_types
 open Cfg_ast
 
+let get_block_label (b: block) : label =
+    match (List.dh b) with
+        | Label l -> l
+        | _ -> raise InvalidCFGCode
+
+let get_block_children 
+
 let get_rw (i: inst) : io_inst =
     (* Builds a set from a list of operands *)
     let set_of_ops (os: operand list) : VarSet.t =
@@ -76,4 +83,3 @@ let block_gen_out (target : io_block) : io_block =
       (List.map (fun blk -> blk.block_in) target.children) 
     )
     target 
-

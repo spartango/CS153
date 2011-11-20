@@ -11,11 +11,50 @@ exception FatalError
  * interference graph for that function.  This will require that
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
-let build_interfere_graph (f : func) : interfere_graph = raise Implement_Me
+let build_interfere_graph (f : func) : interfere_graph =
+
+    let build_io_block (b: block) : io_block =
+        let io_blck = new_io_block b in
+        (* Build io_insts for block's instrucitons *)
+        let rw_io_insts = List.map get_rw b in
+        (* Build master read/write sets for block *)
+        let (master_read, master_write) = 
+                List.fold_left (fun accumated io_rec ->
+                                   let(read, writes) = accumulated in
+                                       (ReadSet.union io_rec.inst_read, WriteSet.union io_rec.inst_write)) (ReadSet.empty, WriteSet.empty) rw_io_insts in
+        (* Add master read/writes to io_block *)
+        let rw_io_blck = io_block_set_read master_read (io_block_set_write master_write) in
+        (* Build In/Outs for each instruction *)
+        let complete_io_insts = (fun () -> raise Implement me) in
+            
+
+
+
 (*
-  Get the read and writes for each element in the list func -> (inst * rs * ws) list
-  Build master read/write list
-  Build In/Out for each element. Start with last instruction in the list. (inst * rs * ws) list -> (inst * in * out)
+  Build io_blocks for each block: func -> io_block list
+      For each block:
+      Get the read and writes for each element in the list: block -> io_inst list
+      Build master read/write list: io_inst list -> ReadSet.t * WriteSet.t
+      Build In/Out for each element. Start with last instruction in the list. io_inst list -> io_inst list (In/Out no longer empty)
+      Build io_block: Read/Writes are master read writes. In/Out initialized to empty. insts to the io_insts list. mv_related = []; block to original block -> io_block list
+
+  Loop until stable on io over blocks
+
+  Build i_graph by running over blocks: io_block list -> interference graph
+      For each block
+          For each instruction:
+          Add Ins to graph, if not there
+          Mark all Ins as intfering with other Ins
+          Add Outs to graph, if not there
+          Mark all Outs as intfering with other Outs
+      Mark all vars in block as interfering with intersection of block Ins with block Outs
+          
+
+
+
+
+
+  
 *)
 
 (*******************************************************************)
