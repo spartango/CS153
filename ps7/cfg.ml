@@ -11,7 +11,24 @@ exception FatalError
  * interference graph for that function.  This will require that
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
-let build_interfere_graph (f : func) : interfere_graph = raise Implement_Me
+let build_interfere_graph (f : func) : interfere_graph =
+
+    let build_io_block (b: block) : io_block =
+        let io_blck = new_io_block b in
+        (* Build io_insts for block's instrucitons *)
+        let rw_io_insts = List.map get_rw b in
+        (* Build master read/write sets for block *)
+        let (master_read, master_write) = 
+                List.fold_left (fun accumated io_rec ->
+                                   let(read, writes) = accumulated in
+                                       (ReadSet.union io_rec.inst_read, WriteSet.union io_rec.inst_write)) (ReadSet.empty, WriteSet.empty) rw_io_insts in
+        (* Add master read/writes to io_block *)
+        let rw_io_blck = io_block_set_read master_read (io_block_set_write master_write) in
+        (* Build In/Outs for each instruction *)
+        let complete_io_insts = (fun () -> raise Implement me) in
+            
+
+
 
 (*
   Build io_blocks for each block: func -> io_block list
