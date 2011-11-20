@@ -77,16 +77,26 @@ let block_gen_in (target : io_block) : io_block =
     (gen_in target.block_out target.master_read target.master_write)
     target
 
-let block_gen_out (target : io_block) : io_block =
+let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
   io_block_set_out
     (gen_out 
-      (List.map (fun blk -> blk.block_in) target.children) 
+      (List.map (fun child_name -> 
+                  let blk = (lookup_block child_name) in
+                  blk.block_in) 
+                target.children) 
     )
     target
 
-let inst_gen_io (target: io_inst list) : io_insts list =
+let inst_gen_io (target: io_inst list) : io_inst list =
     List.fold_left (fun accum io_i ->
                         (* next_ins holds state *)
                         let(io_inst_list, next_ins) = accum in
                         let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
                             (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target
+
+let block_gen_io (target: io_block list) : io_block list =
+  run_until_stable 
+    (fun () -> 
+      List.Map (block_gen_in block_gen_out) target
+    )
+    10

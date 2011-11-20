@@ -190,7 +190,7 @@ let io_block_set_write t target : io_block =
     children     = target.children;
   }
 
-  let io_block_set_insts t target : io_block = 
+let io_block_set_insts t target : io_block = 
   { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
@@ -202,7 +202,7 @@ let io_block_set_write t target : io_block =
     children     = target.children;
   }
 
-  let io_block_set_label t target : io_block = 
+let io_block_set_label t target : io_block = 
   { block_label  = t;
     block_in     = target.block_in;
     block_out    = target.block_out;
@@ -214,7 +214,7 @@ let io_block_set_write t target : io_block =
     children     = target.children;
   }
 
-  let io_block_set_children t target : io_block = 
+let io_block_set_children t target : io_block = 
   { block_label  = target.block_label;
     block_in     = target.block_in;
     block_out    = target.block_out;
@@ -225,3 +225,10 @@ let io_block_set_write t target : io_block =
     src_block    = target.src_block;
     children     = t;
   }
+
+
+let lookup_block (name : label) (blocks : io_block list) =
+   (* Assume uniqueness *)
+   let search = List.filter (fun blk -> blk.block_label = name) blocks in
+   (List.hd search)
+
