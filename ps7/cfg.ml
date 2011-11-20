@@ -1,6 +1,5 @@
 open Cfg_ast
 open I_graph
-open Utility
 exception Implement_Me
 exception FatalError
 
@@ -12,12 +11,12 @@ exception FatalError
  * interference graph for that function.  This will require that
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
-let build_interfere_graph (f : func) : interfere_graph = 
+let build_interfere_graph (f : func) : interfere_graph = raise Implement_Me
 (*
   Get the read and writes for each element in the list func -> (inst * rs * ws) list
   Build master read/write list
   Build In/Out for each element. Start with last instruction in the list. (inst * rs * ws) list -> (inst * in * out)
-  
+*)
 
 (*******************************************************************)
 (* PS8 TODO:  graph-coloring, coalescing register assignment *)
