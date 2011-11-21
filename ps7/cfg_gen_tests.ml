@@ -97,8 +97,8 @@ let b1a = Label("L1")
 let b1a_io = 
     {inst_read   = set_add_all [] ReadSet.empty ;
      inst_write  = set_add_all [] WriteSet.empty;
-     inst_in     = set_add_all [] InSet.empty;
-     inst_out    = set_add_all [] OutSet.empty;
+     inst_in     = set_add_all ["t1"] InSet.empty;
+     inst_out    = set_add_all ["t1"] OutSet.empty;
      inst_move   = [];
      src_inst    = b1a}    
 
@@ -158,8 +158,8 @@ let b2a = Label("L2")
 let b2a_io = 
     {inst_read   = set_add_all [] ReadSet.empty ;
      inst_write  = set_add_all [] WriteSet.empty;
-     inst_in     = set_add_all [] InSet.empty;
-     inst_out    = set_add_all [] OutSet.empty;
+     inst_in     = set_add_all ["t2"] InSet.empty;
+     inst_out    = set_add_all ["t2"] OutSet.empty;
      inst_move   = [];
      src_inst    = b2a}       
 
@@ -225,8 +225,8 @@ let b3a = Label("L3")
 let b3a_io =
     {inst_read   = set_add_all [] ReadSet.empty ;
      inst_write  = set_add_all [] WriteSet.empty;
-     inst_in     = set_add_all [] InSet.empty;
-     inst_out    = set_add_all [] OutSet.empty;
+     inst_in     = set_add_all ["t3";"t2"] InSet.empty;
+     inst_out    = set_add_all ["t3";"t2"] OutSet.empty;
      inst_move   = [];
      src_inst    = b3a}  
 
@@ -274,8 +274,8 @@ let b4a = Label("L4")
 let b4a_io =
     {inst_read   = set_add_all [] ReadSet.empty ;
      inst_write  = set_add_all [] WriteSet.empty;
-     inst_in     = set_add_all [] InSet.empty;
-     inst_out    = set_add_all [] OutSet.empty;
+     inst_in     = set_add_all ["t1"] InSet.empty;
+     inst_out    = set_add_all ["t1"] OutSet.empty;
      inst_move   = [];
      src_inst    = b4a}  
 
@@ -283,9 +283,9 @@ let b4b = Move(Var "t2", Var "t1")
 let b4b_io =
     {inst_read   = set_add_all ["t1"] ReadSet.empty ;
      inst_write  = set_add_all ["t2"] WriteSet.empty;
-     inst_in     = set_add_all ["t1";"t2"] InSet.empty;
+     inst_in     = set_add_all ["t1"] InSet.empty;
      inst_out    = set_add_all [] OutSet.empty;
-     inst_move   = [];
+     inst_move   = [("t2", "t1")];
      src_inst    = b4b}   
   
 let b4c = Jump("L3")
@@ -319,6 +319,7 @@ let block3_test = mk_block_expect_test block3 io_block3 "Block 3"
 let block4_test = mk_block_expect_test block4 io_block4 "Block 4";;
 
 let func_test = mk_func_expect_test [block1; block2; block3; block4] [io_block1; io_block2; io_block3; io_block4] "Function io block creation test";;
+let io_inst1 = mk_io_inst_tests block1 block1_insts_io "io_insts tests";;
 let io_insts_test = List.flatten (List.map (fun e ->
                                                 let(bs, expcts) = e in
                                                     mk_io_inst_tests bs expcts "io insts tests") [(block1, block1_insts_io);
@@ -348,6 +349,6 @@ run_test_set [ block1_test;
              ] "Block generation tests";;
 *)
 
+
 run_test_set func_test "Function io block generation test";;
 run_test_set io_insts_test "Examine io insts";;
-
