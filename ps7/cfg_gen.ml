@@ -120,6 +120,15 @@ let inst_gen_io (target: io_inst list) : io_inst list =
                                             let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
                                                 (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target1
     in modified
+(* Fold right version of this - it's clearly the better version, but Anand doesn't like it *)
+(*
+    let (modified, _) = List.fold_right (fun io_i accum ->
+                        (* next_ins holds state *)
+                                            let (io_inst_list, next_ins) = accum in
+                                            let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
+                                                (new_io_i::io_inst_list, new_io_i.inst_in)) target ([], InSet.empty)
+    in modified
+*)
 
 let block_gen_io (io_blks: io_block list) : io_block list =
     let step target = List.map (fun t -> (block_gen_in (block_gen_out target t))) in
