@@ -47,6 +47,9 @@ type io_inst  = { inst_read : ReadSet.t        ;
                   src_inst  : inst             ;
                 }
 
+let io_inst_compare (i1: io_inst) (i2: io_inst) : int =
+    String.compare (inst2string i1.src_inst) (inst2string i2.src_inst)
+
 let strlist2str (ss: string list) : string =
     List.fold_left (fun s e ->
                         s ^ " " ^ e) 
@@ -157,7 +160,6 @@ let ioblock2str (show_insts: bool) (show_block: bool) (io: io_block)  :string =
         (if show_insts then "Source Block:\t\t" ^ (block2string io.src_block) ^ "\n" else "") ^
         "Children:\t\t" ^ (varset2str io.children) ^ "\n}\n"
 
-
 let io_block_equal (i1: io_block) (i2: io_block) : bool = 
     (i1.block_label = i2.block_label) &
         (VarSet.equal i1.block_in i2.block_in) & 
@@ -175,6 +177,8 @@ let io_block_equal (i1: io_block) (i2: io_block) : bool =
 let io_block_compare (b1: io_block) (b2: io_block) : int =
     String.compare b1.block_label b2.block_label
 
+let io_block_list_equal (bl1: io_block list) (bl2: io_block list) =
+    equal_lists bl1 bl2 io_block_compare io_block_equal
 
 let new_io_block src : io_block = 
   { block_label  = "";

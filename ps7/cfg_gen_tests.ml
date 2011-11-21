@@ -59,12 +59,28 @@ let mk_block_expect_test (b: block) (e: io_block) (name: string) =
     mk_generic_equals_test io_block_equal (fun () -> build_io_block b) e ib2str name
 
 let mk_func_expect_test (f: func) (e: io_block list) (name: string) =
+    let result = block_gen_io (List.map build_io_block f) in
+    let ordered_results = List.sort io_block_compare result in
+    let ordered_expected = List.sort io_block_compare e in
+        List.fold_left2 (fun tests r_block e_block ->
+                             (mk_verbose_expect_test (fun () -> r_block) e_block ib2str "Block Test")::tests) [] ordered_results ordered_expected
+                                                  
+(*
+let mk_io_inst_test (b: block) (e: io_inst list) (name: string) =
+    let ordered_results = List.sort io_inst_compare (io_blockbuild_io_block b) in
+        
+*)
+
+(*
+let mk_func_expect_test2 (f: func) (e: io_block list) (name: string) =
         mk_generic_equals_test 
-            (fun l1 l2 -> equal_lists l1 l2 io_block_compare io_block_equal)
+            
             (fun () -> block_gen_io (List.map build_io_block f)) 
             e
             (fun l -> String.concat "\n" (List.map ib2str l)) 
             name
+*)
+
 
 
 (* 
@@ -314,10 +330,13 @@ run_test_set [ rw_test1;
                rw_test10;
                rw_test11;
              ] "Read Write tests";;
- 
+
+(* 
 run_test_set [ block1_test;
                block2_test;
                block3_test;
                block4_test;
-               func_test
              ] "Block generation tests";;
+*)
+
+run_test_set func_test "Function io block generation test";;
