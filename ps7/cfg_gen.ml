@@ -124,7 +124,9 @@ let block_gen_io (io_blks: io_block list) : io_block list =
     let step target = List.map (fun t -> (block_gen_in (block_gen_out target t))) in
     let s1 = step io_blks io_blks in
     let s2 = step s1 s1 in
-    s2
+    let s3 = step s2 s2 in
+    let s4 = step s3 s3 in
+    s4
 
 let build_io_block (b: block) : io_block =
     (* Generate empty io_block - leave ins, outs, and moves empty *)
