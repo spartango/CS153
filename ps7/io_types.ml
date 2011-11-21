@@ -23,6 +23,20 @@ let set_map f set =
     set
     []
 
+let equal_lists (l1: 'a list) (l2: 'a list) (sorter: 'a -> 'a -> int) (eq: 'a -> 'a -> bool) =
+    let sorted1 = List.sort sorter l1 in
+    let sorted2 = List.sort sorter l2 in
+    let rec element_eq lst1 lst2 =
+        match (lst1, lst2) with
+            (* Lists are equal *)
+            | ([], []) -> true
+            | (h1::t1,h2::t2) ->
+                  if eq h1 h2
+                  then element_eq t1 t2
+                  else false
+            | (_,_) -> false in
+        element_eq sorted1 sorted2
+
 type move_related = var * var
 
 type io_inst  = { inst_read : ReadSet.t        ;
@@ -130,6 +144,36 @@ type io_block = { block_label : label            ;
                   src_block   : block            ;
                   children    : BlockSet.t       ;
                 }
+
+let ioblock2str (io: io_block) (show_insts: bool) (show_block: bool) :string =
+    "{\n" ^
+        "Block Label:\t" ^ io.block_label ^ "\n" ^
+        "Block Read set:\t" ^ (varset2str io.master_read) ^ "\n" ^
+        "Block Write set:\t" ^ (varset2str io.master_write) ^ "\n" ^
+        "Block In set:\t" ^ (varset2str io.block_in) ^ "\n" ^
+        "Block Out set:\t" ^ (varset2str io.block_out) ^ "\n" ^
+        "Move related:\t" ^ (mvrelatedlist2str io.block_move) ^ "\n}\n" ^
+        (if show_insts then "Inst io_blocks:\t" ^ (String.concat " " (List.map ioinst2str io.insts)) ^ "\n" else "") ^
+        (if show_insts then "Source Block:\t" ^ (block2string io.src_block) ^ "\n" else "") ^
+        "Children:\t" ^ (varset2str io.children) ^ "\n}\n"
+
+
+let io_block_equal (i1: io_block) (i2: io_block) : bool = 
+    (i1.block_label = i2.block_label) &
+        (VarSet.equal i1.block_in i2.block_in) & 
+        (VarSet.equal i1.block_out i2.block_out) &
+        (i1.block_move = i2.block_move) &
+        (VarSet.equal i1.master_read i2.master_read) &
+        (VarSet.equal i1.master_write i2.master_write) & 
+        (equal_lists i1.insts 
+             i2.insts 
+             (fun r1 r2 -> String.compare (inst2string r1.src_inst) (inst2string r2.src_inst))
+             io_inst_equal) &
+        (i1.src_block = i2.src_block) &
+        (VarSet.equal i1.children i2.children)
+
+
+
 
 let new_io_block src : io_block = 
   { block_label  = "";

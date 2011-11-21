@@ -92,6 +92,20 @@ let block3 =
      Return];;
 
 
+let io_block1 =
+    {
+        block_label   = "L1";
+        master_reads  = varset_add ["t1";"t2";"t3"] ReadSet.empty;
+        master_writes = varset_add ["t2"; "t3"] WriteSet.empty;
+        block_in      = varset_add ["t1"] InSet.empty;
+        block_out     = varset_add ["t1"; "t3"] OutSet.empty;
+        block_move    = [("t2", "t1")];
+        insts         = [];
+        src_blcok     = block1;
+        children      = varset_add ["L2";"L4"] BlockSet.empty
+     };;
+
+
 
 run_test_set [ rw_test1;
                rw_test2;
