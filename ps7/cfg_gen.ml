@@ -103,12 +103,11 @@ let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
     target
 
 let inst_gen_io (target: io_inst list) : io_inst list =
+    let target1 = List.rev target in
     let (modified, _) = List.fold_left (fun accum io_i ->
-                        (* next_ins holds state *)
-                        let(io_inst_list, next_ins) = accum in
-                        let _ = print_string ("Ins: "^(inst2string io_i.src_inst)^" -> "^(varset2str next_ins)^"\n") in
-                        let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
-                            (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) (List.rev target)
+                                            let (io_inst_list, next_ins) = accum in
+                                            let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
+                                                (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target1
     in modified
 
 let block_gen_io (io_blks: io_block list) : io_block list =
