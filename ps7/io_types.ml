@@ -145,17 +145,17 @@ type io_block = { block_label : label            ;
                   children    : BlockSet.t       ;
                 }
 
-let ioblock2str (io: io_block) (show_insts: bool) (show_block: bool) :string =
+let ioblock2str (show_insts: bool) (show_block: bool) (io: io_block)  :string =
     "{\n" ^
-        "Block Label:\t" ^ io.block_label ^ "\n" ^
-        "Block Read set:\t" ^ (varset2str io.master_read) ^ "\n" ^
-        "Block Write set:\t" ^ (varset2str io.master_write) ^ "\n" ^
-        "Block In set:\t" ^ (varset2str io.block_in) ^ "\n" ^
-        "Block Out set:\t" ^ (varset2str io.block_out) ^ "\n" ^
-        "Move related:\t" ^ (mvrelatedlist2str io.block_move) ^ "\n}\n" ^
-        (if show_insts then "Inst io_blocks:\t" ^ (String.concat " " (List.map ioinst2str io.insts)) ^ "\n" else "") ^
-        (if show_insts then "Source Block:\t" ^ (block2string io.src_block) ^ "\n" else "") ^
-        "Children:\t" ^ (varset2str io.children) ^ "\n}\n"
+        "Block Label:\t\t " ^ io.block_label ^ "\n" ^
+        "Master Read Set:\t" ^ (varset2str io.master_read) ^ "\n" ^
+        "Master Write Set:\t" ^ (varset2str io.master_write) ^ "\n" ^
+        "Block In Set:\t\t" ^ (varset2str io.block_in) ^ "\n" ^
+        "Block Out Set:\t\t" ^ (varset2str io.block_out) ^ "\n" ^
+        "Move related:\t\t " ^ (mvrelatedlist2str io.block_move) ^ "\n" ^
+        (if show_insts then "Inst io_blocks:\t\t" ^ (String.concat " " (List.map ioinst2str io.insts)) ^ "\n" else "") ^
+        (if show_insts then "Source Block:\t\t" ^ (block2string io.src_block) ^ "\n" else "") ^
+        "Children:\t\t" ^ (varset2str io.children) ^ "\n}\n"
 
 
 let io_block_equal (i1: io_block) (i2: io_block) : bool = 
@@ -172,7 +172,8 @@ let io_block_equal (i1: io_block) (i2: io_block) : bool =
         (i1.src_block = i2.src_block) &
         (VarSet.equal i1.children i2.children)
 
-
+let io_block_compare (b1: io_block) (b2: io_block) : int =
+    String.compare b1.block_label b2.block_label
 
 
 let new_io_block src : io_block = 

@@ -114,3 +114,34 @@ let block_gen_io (target: io_block list) : io_block list =
       (List.map generator target)
     )
     10
+
+let build_io_block (b: block) : io_block =
+    (* Generate empty io_block - leave ins, outs, and moves empty *)
+    let io_block0 = new_io_block b in
+    (* Get block's label *)
+    let io_block1 = io_block_set_label (get_block_label b) io_block0 in
+    (* Get block's children *)
+    let io_block2 = io_block_set_children (get_block_children b) io_block1 in
+    (* Build io_insts for block's instrucitons *)
+    let rw_io_insts = List.map get_rw b in
+    (* Build master read/write sets for block *)
+    let (master_read, master_write, master_moves) = 
+        List.fold_left 
+            (fun accumulated io_rec ->
+                 let(reads, writes, moves) = accumulated in
+                     (ReadSet.union io_rec.inst_read reads,
+                      WriteSet.union io_rec.inst_write writes, 
+                      moves @ io_rec.inst_move)
+            ) 
+            (ReadSet.empty, WriteSet.empty, []) 
+            rw_io_insts 
+    in
+        (* Add master read/writes to io_block *)
+    let io_block3 = io_block_set_move master_moves 
+        (io_block_set_read master_read 
+             (io_block_set_write master_write io_block2)) in
+        (* Build In/Outs for each instruction *)
+    let complete_io_insts = inst_gen_io rw_io_insts in
+        (* Place modified io_insts into block and return *)
+        io_block_set_insts complete_io_insts io_block3
+            
