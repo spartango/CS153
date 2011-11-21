@@ -50,9 +50,28 @@ let rw_test11 = mk_rw_test Return ReadSet.empty WriteSet.empty [] "Return";;
  * if t2 = t3 then L2 else L3
  *)
 
+let b1a = Label("L1")
+let b1a_io = 
+    {inst_read   = set_add_all [] ReadSet.empty ;
+     inst_write  = set_add_all [] WriteSet.empty;
+     inst_in     = set_add_all [] InSet.empty;
+     inst_out    = set_add_all [] OutSet.empty;
+     inst_move   = [];
+     src_inst    = b1a}    
+
+let b1b = Move(Var("t2"), Var("t1"))
+let b1b_io = 
+    {inst_read   = set_add_all ["t1"] ReadSet.empty ;
+     inst_write  = set_add_all ["t2"] WriteSet.empty;
+     inst_in     = set_add_all ["t1"] InSet.empty;
+     inst_out    = set_add_all ["t2"] OutSet.empty;
+     inst_move   = [];
+     src_inst    = b1b}
+
+
 let block1 =
-    [Label("L1");
-     Move(Var("t2"), Var("t1"));
+    [b1a;
+     b1b;
      Arith(Var("t3"), Var("t2"), Times, Int 1);
      If(Var "t2", Eq, Var "t3", "L2", "L3")]
 
@@ -95,14 +114,14 @@ let block3 =
 let io_block1 =
     {
         block_label   = "L1";
-        master_reads  = varset_add ["t1";"t2";"t3"] ReadSet.empty;
-        master_writes = varset_add ["t2"; "t3"] WriteSet.empty;
-        block_in      = varset_add ["t1"] InSet.empty;
-        block_out     = varset_add ["t1"; "t3"] OutSet.empty;
+        master_read   = set_add_all ["t1";"t2";"t3"] ReadSet.empty;
+        master_write  = set_add_all ["t2"; "t3"] WriteSet.empty;
+        block_in      = set_add_all ["t1"] InSet.empty;
+        block_out     = set_add_all ["t1"; "t3"] OutSet.empty;
         block_move    = [("t2", "t1")];
         insts         = [];
-        src_blcok     = block1;
-        children      = varset_add ["L2";"L4"] BlockSet.empty
+        src_block     = block1;
+        children      = set_add_all ["L2";"L4"] BlockSet.empty
      };;
 
 
