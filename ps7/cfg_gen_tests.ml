@@ -120,7 +120,7 @@ let b1c_io =
      inst_move   = [];
      src_inst    = b1c}
 
-let b1d = If(Var "t2", Eq, Var "t3", "L2", "L3")
+let b1d = If(Var "t2", Eq, Var "t3", "L2", "L4")
 let b1d_io =
     {inst_read   = set_add_all ["t2"; "t3"] ReadSet.empty ;
      inst_write  = set_add_all [] WriteSet.empty;
