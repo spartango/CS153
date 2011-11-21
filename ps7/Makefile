@@ -52,5 +52,8 @@ io_tests: cfg cish mips test_files
 
 test: cfg_gen_tests i_graph_tests io_tests
 
+toplevel: cfg
+	ocamlmktop -o toplevel utility.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo pretty_print.cmo test_framework.cmo cfg_gen_tests.cmo
+
 clean:
-	rm -rf *.cmo *.cmi ps7_cfg cfg_gen_tests i_graph_tests cish_parse.ml cish_parse.mli cish_lex.ml 
+	rm -rf *.cmo *.cmi ps7_cfg cfg_gen_tests i_graph_tests io_tests cish_parse.ml cish_parse.mli cish_lex.ml toplevel

@@ -2,6 +2,18 @@ open Io_types
 open Cfg_ast
 open Utility 
 
+exception FailedStabilization
+
+let run_until_stable t_func init_arg limit =
+  let rec until_stable arg count =
+    if count >= limit then raise FailedStabilization
+    else
+      let out = t_func arg in
+      if (io_block_list_equal out arg) then let _ = print_string ("Ran "^(string_of_int count)^"x\n") in out
+      else until_stable out (count + 1) 
+  in
+  until_stable init_arg 1
+
 let get_block_label (b: block) : label =
     match (List.hd b) with
         | Label l -> l
@@ -108,11 +120,11 @@ let inst_gen_io (target: io_inst list) : io_inst list =
                             (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target
     in modified
 
-let block_gen_io (target: io_block list) : io_block list =
-  run_until_stable 
-    (List.map (fun t -> (block_gen_in (block_gen_out target t)))) 
-    target
-    10
+let block_gen_io (io_blks: io_block list) : io_block list =
+    let step target = List.map (fun t -> (block_gen_in (block_gen_out target t))) in
+    let s1 = step io_blks io_blks in
+    let s2 = step s1 s1 in
+    s2
 
 let build_io_block (b: block) : io_block =
     (* Generate empty io_block - leave ins, outs, and moves empty *)
