@@ -34,7 +34,7 @@ let simple_in_test =
       let read    = set_add_all ["x"; "y"; "z";] ReadSet.empty  in
       let write   = set_add_all ["x"; "a"; "l";] WriteSet.empty in 
       (gen_in out_set read write) )
-    (set_add_all ["x"; "y"; "z";] InSet.empty)
+    (set_add_all ["y"; "z";] InSet.empty)
     ("Simple IN Set Generation")
 ;;
 
@@ -49,7 +49,7 @@ let simple_in_out_test =
     (fun () -> 
       let out_set = set_add_all ["f";]           OutSet.empty   in
       let read    = set_add_all ["x"; "y"; "z";] ReadSet.empty  in
-      let write   = set_add_all ["x"; "a"; "l";] WriteSet.empty in 
+      let write   = set_add_all ["a"; "l";] WriteSet.empty in 
       (gen_in out_set read write) 
     )
     (set_add_all ["x"; "y"; "z"; "f";] InSet.empty)
@@ -95,7 +95,7 @@ let simple_out_in_test =
     let out_set    = (gen_out children) in
     (gen_in out_set read write)
   )
-  (set_add_all ["z"; "x"; "y";] InSet.empty)
+  (set_add_all ["z"; "y";] InSet.empty)
   "Simple Out-In Set Generation"
 ;;
 

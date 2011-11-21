@@ -69,7 +69,8 @@ let gen_in (out_set : OutSet.t)
            (read    : ReadSet.t) 
            (write   : WriteSet.t) : InSet.t =
   let o_sub = (VarSet.inter (VarSet.diff out_set write) out_set) in
-  (VarSet.union read o_sub)
+  let r_sub = (VarSet.inter (VarSet.diff read write) read) in
+  (VarSet.union r_sub o_sub)
 
 let gen_out (child_in_sets : InSet.t list) : OutSet.t = 
   List.fold_left VarSet.union VarSet.empty child_in_sets
