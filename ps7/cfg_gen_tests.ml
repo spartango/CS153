@@ -65,11 +65,16 @@ let mk_func_expect_test (f: func) (e: io_block list) (name: string) =
         List.fold_left2 (fun tests r_block e_block ->
                              (mk_verbose_expect_test (fun () -> r_block) e_block ib2str "Block Test")::tests) [] ordered_results ordered_expected
                                                   
+(*
+let mk_io_inst_test (b: block) (e: io_inst list) (name: string) =
+    let ordered_results = List.sort io_inst_compare (io_blockbuild_io_block b) in
+        
+*)
 
 (*
 let mk_func_expect_test2 (f: func) (e: io_block list) (name: string) =
         mk_generic_equals_test 
-            (fun l1 l2 -> equal_lists l1 l2  )
+            
             (fun () -> block_gen_io (List.map build_io_block f)) 
             e
             (fun l -> String.concat "\n" (List.map ib2str l)) 
