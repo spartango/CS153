@@ -49,6 +49,10 @@ let rw_test11 = mk_rw_test Return ReadSet.empty WriteSet.empty [] "Return";;
 
 (* io_block Build Tests *)
 
+let mk_block_expect_test = (b: block) (e: io_block) (name: string) =
+    mk_generic_equals_test io_block_equal (fun () -> build_io_block b) e ioblock2str name
+
+
 (* 
  * Label L1
  * t2 = t1
