@@ -7,22 +7,28 @@ open Io_types
 (* Set to show verbose test results for debugging *)
 let mk_test_verbose = false
 
+let mk_generic_equals_test (eq: 'a -> 'a -> bool) (f: unit -> 'a) (expected: 'a) (to_string: 'a -> string) (name: string) =
+    let t_test = fun () -> 
+        let result  = f ()              in 
+        let pass    = eq result expected in
+        let message = 
+            if pass 
+            then "Got expected result -> "^(format_string (to_string result) Bright Green) 
+            else "Result doesn't match expected -> "^(format_string (to_string result) Bright Red)
+                ^" vs "^(format_string (to_string expected) Bright Green)
+        in (pass, message)
+    in
+        Verbose_Test(name, t_test)
+
 let mk_rw_test (i: inst) (rs: ReadSet.t) (ws: WriteSet.t) (mvs: (var * var) list) (name: string) =
     if mk_test_verbose
     then 
-        let expected = { inst_read = rs; inst_write = ws; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = mvs; src_inst = i} in
-        let to_string = ioinst2str in
-        let t_test = fun () -> 
-            let result  = get_rw i            in 
-            let pass    = io_inst_equal result expected in
-            let message = 
-                if pass 
-                then "Got expected result -> "^(format_string (to_string result) Bright Green) 
-                else "Result doesn't match expected -> "^(format_string (to_string result) Bright Red)
-                     ^" vs "^(format_string (to_string expected) Bright Green)
-            in (pass, message)
-        in
-            Verbose_Test(name, t_test)
+        mk_generic_equals_test 
+            io_inst_equal
+            (fun () -> get_rw i) 
+            { inst_read = rs; inst_write = ws; inst_in = InSet.empty; inst_out = OutSet.empty; inst_move = mvs; src_inst = i}
+            ioinst2str
+            name
     else 
 
     Test(name, (fun () ->
@@ -68,12 +74,29 @@ let b1b_io =
      inst_move   = [];
      src_inst    = b1b}
 
+let b1c = Arith(Var("t3"), Var("t2"), Times, Int 1)
+let b1c_io =
+    {inst_read   = set_add_all ["t2"] ReadSet.empty ;
+     inst_write  = set_add_all ["t3"] WriteSet.empty;
+     inst_in     = set_add_all ["t2"] InSet.empty;
+     inst_out    = set_add_all ["t2"] OutSet.empty;
+     inst_move   = [];
+     src_inst    = b1c}
+
+let b1d = If(Var "t2", Eq, Var "t3", "L2", "L3")
+let b1d_io =
+    {inst_read   = set_add_all ["t2"; "t3"] ReadSet.empty ;
+     inst_write  = set_add_all [] WriteSet.empty;
+     inst_in     = set_add_all ["t2";"t3"] InSet.empty;
+     inst_out    = set_add_all [] OutSet.empty;
+     inst_move   = [];
+     src_inst    = b1d}  
 
 let block1 =
     [b1a;
      b1b;
-     Arith(Var("t3"), Var("t2"), Times, Int 1);
-     If(Var "t2", Eq, Var "t3", "L2", "L3")]
+     b1c;
+     b1d]
 
 (*
  * L4
