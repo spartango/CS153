@@ -110,10 +110,8 @@ let inst_gen_io (target: io_inst list) : io_inst list =
 
 let block_gen_io (target: io_block list) : io_block list =
   run_until_stable 
-    (fun () -> 
-      let generator = fun t -> (block_gen_in (block_gen_out target t)) in
-      (List.map generator target)
-    )
+    (List.map (fun t -> (block_gen_in (block_gen_out target t)))) 
+    target
     10
 
 let build_io_block (b: block) : io_block =
