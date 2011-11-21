@@ -1,3 +1,4 @@
+open Cfg_ast
 open Io_types
 open Cfg_gen
 open Test_framework
@@ -110,7 +111,7 @@ let simple_out_in_test =
 let basic_block1 =
     [Label("L1");
      Move(Var("t2"), Var("t1"));
-     Arith(Var("t3"), Var("t2"), Mul, Int 1);
+     Arith(Var("t3"), Var("t2"), Times, Int 1);
      If(Var "t2", Eq, Var "t3", "L2", "L3")]
 
 (*
@@ -132,11 +133,11 @@ let basic_block3 =
      Move(Var("t2"), Var("t1"));
      Jump("L3")]
 
-let mk_label_test (b: block) (expected: label) (name: string) =
-    mk_verbose_expect_test (fun () -> get_block_label) expected (fun s -> s) name
+let mk_label_test (b: block) (e: label) (name: string) =
+    mk_verbose_expect_test (fun () -> get_block_label b) e (fun s -> s) name
 
 let mk_children_test (b: block) (e: BlockSet.t) (name: string) =
-    mk_verbose_varset_test (fun () -> get_block_children) e name
+    mk_verbose_varset_test (fun () -> get_block_children b) e name
 
 let label_test1 = mk_label_test basic_block1 "L1" "Label extraction test";;
 let label_test2 = mk_label_test basic_block2 "L5" "Label extraction test";;

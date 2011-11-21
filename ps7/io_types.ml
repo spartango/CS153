@@ -33,9 +33,14 @@ type io_inst  = { inst_read : ReadSet.t        ;
                   src_inst  : inst             ;
                 }
 
-let varset2str (s: VarSet.t) : string = 
+let strlist2str (ss: string list) : string =
     List.fold_left (fun s e ->
-                        s ^ " " ^ e) "" (VarSet.elements s)
+                        s ^ " " ^ e) 
+        ""
+        ss
+
+let varset2str (s: VarSet.t) : string = 
+    strlist2str (VarSet.elements s)
 
 let moverelated2str (m: move_related) :string = 
                         let(v1, v2) = m in

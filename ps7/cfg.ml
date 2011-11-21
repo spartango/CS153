@@ -27,14 +27,14 @@ let build_interfere_graph (f : func) : interfere_graph =
         (* Build master read/write sets for block *)
         let (master_read, master_write) = 
                 List.fold_left (fun accumulated io_rec ->
-                                   let(read, writes) = accumulated in
-                                       (ReadSet.union io_rec.inst_read, WriteSet.union io_rec.inst_write)) (ReadSet.empty, WriteSet.empty) rw_io_insts in
+                                   let(reads, writes) = accumulated in
+                                       (ReadSet.union io_rec.inst_read reads, WriteSet.union io_rec.inst_write writes)) (ReadSet.empty, WriteSet.empty) rw_io_insts in
         (* Add master read/writes to io_block *)
         let io_block3 = io_block_set_read master_read (io_block_set_write master_write io_block2) in
         (* Build In/Outs for each instruction *)
         let complete_io_insts = inst_gen_io rw_io_insts in
             (* Place modified io_insts into block and return *)
-            io_block_set_insts complete_io_insts in
+            io_block_set_insts complete_io_insts io_block3 in
         
     let initial_io_blocks = List.map build_io_block f in
 raise Implement_Me
