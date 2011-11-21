@@ -4,16 +4,6 @@ open Utility
 
 exception FailedStabilization
 
-let run_until_stable t_func init_arg limit =
-  let rec until_stable arg count =
-    if count >= limit then raise FailedStabilization
-    else
-      let out = t_func arg in
-      if (io_block_list_equal out arg) then let _ = print_string ("Ran "^(string_of_int count)^"x\n") in out
-      else until_stable out (count + 1) 
-  in
-  until_stable init_arg 1
-
 let get_block_label (b: block) : label =
     match (List.hd b) with
         | Label l -> l
@@ -116,17 +106,21 @@ let inst_gen_io (target: io_inst list) : io_inst list =
     let (modified, _) = List.fold_left (fun accum io_i ->
                         (* next_ins holds state *)
                         let(io_inst_list, next_ins) = accum in
+                        let _ = print_string ("Ins: "^(inst2string io_i.src_inst)^" -> "^(varset2str next_ins)^"\n") in
                         let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
-                            (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target
+                            (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) (List.rev target)
     in modified
 
 let block_gen_io (io_blks: io_block list) : io_block list =
     let step target = List.map (fun t -> (block_gen_in (block_gen_out target t))) in
-    let s1 = step io_blks io_blks in
-    let s2 = step s1 s1 in
-    let s3 = step s2 s2 in
-    let s4 = step s3 s3 in
-    s4
+    let rec run_until current attempts_left =
+      let next = step current current in
+      if (io_block_list_equal next current) then next
+      else 
+        if attempts_left <= 0 then raise FailedStabilization
+        else (run_until next (attempts_left - 1))
+    in
+    run_until io_blks 10
 
 let build_io_block (b: block) : io_block =
     (* Generate empty io_block - leave ins, outs, and moves empty *)
