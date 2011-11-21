@@ -108,7 +108,7 @@ let b1b_io =
      inst_write  = set_add_all ["t2"] WriteSet.empty;
      inst_in     = set_add_all ["t1"] InSet.empty;
      inst_out    = set_add_all ["t2"] OutSet.empty;
-     inst_move   = [];
+     inst_move   = [("t2", "t1")];
      src_inst    = b1b}
 
 let b1c = Arith(Var("t3"), Var("t2"), Times, Int 1)
@@ -142,7 +142,7 @@ let io_block1 =
         block_move    = [("t2", "t1")];
         insts         = block1_insts_io;
         src_block     = block1;
-        children      = set_add_all ["L2";"L3"] BlockSet.empty
+        children      = set_add_all ["L2";"L4"] BlockSet.empty
      };;
 
 (*
@@ -321,10 +321,10 @@ let block4_test = mk_block_expect_test block4 io_block4 "Block 4";;
 let func_test = mk_func_expect_test [block1; block2; block3; block4] [io_block1; io_block2; io_block3; io_block4] "Function io block creation test";;
 let io_insts_test = List.flatten (List.map (fun e ->
                                                 let(bs, expcts) = e in
-                                                    mk_io_inst_tests bs expcts "io insts tests") [(block1, io_block1.insts);
-                                                                                                  (block2, io_block2.insts);
-                                                                                                  (block3, io_block3.insts);
-                                                                                                  (block4, io_block4.insts)]);;
+                                                    mk_io_inst_tests bs expcts "io insts tests") [(block1, block1_insts_io);
+                                                                                                  (block2, block2_insts_io);
+                                                                                                  (block3, block3_insts_io);
+                                                                                                  (block4, block4_insts_io)]);;
 
 
 run_test_set [ rw_test1;
