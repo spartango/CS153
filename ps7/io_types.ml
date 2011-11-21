@@ -68,12 +68,12 @@ let mvrelatedlist2str (ml: move_related list) : string =
     
 let ioinst2str (io: io_inst) :string =
     "{\n" ^
-        "Inst:\t\t" ^ (inst2string io.src_inst) ^ "\n" ^
+        "Inst:\t\t " ^ (inst2string io.src_inst) ^ "\n" ^
         "Read set:\t" ^ (varset2str io.inst_read) ^ "\n" ^
         "Write set:\t" ^ (varset2str io.inst_write) ^ "\n" ^
-        "In set:\t" ^ (varset2str io.inst_in) ^ "\n" ^
+        "In set:\t\t" ^ (varset2str io.inst_in) ^ "\n" ^
         "Out set:\t" ^ (varset2str io.inst_out) ^ "\n" ^
-        "Move related:\t" ^ (mvrelatedlist2str io.inst_move) ^ "\n}\n"
+        "Move related:\t " ^ (mvrelatedlist2str io.inst_move) ^ "\n}\n"
 
 let io_inst_equal (i1: io_inst) (i2: io_inst) : bool = 
     (VarSet.equal i1.inst_read i2.inst_read) &

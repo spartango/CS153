@@ -9,8 +9,6 @@ let mk_test_verbose = false
 let show_insts = false
 let show_src_block = true
 
-
-
 let mk_generic_equals_test (eq: 'a -> 'a -> bool) (f: unit -> 'a) (expected: 'a) (to_string: 'a -> string) (name: string) =
     let t_test = fun () -> 
         let result  = f ()              in 
@@ -55,21 +53,26 @@ let rw_test11 = mk_rw_test Return ReadSet.empty WriteSet.empty [] "Return";;
 
 let ib2str = (ioblock2str show_insts show_src_block)
 
+let mk_list_compare_tests (f: 'a -> 'b list) (compare: 'b -> 'b -> int) (eq: 'b -> 'b -> bool) 
+        (to_string: 'b -> string) (labeler: 'b -> string) (input: 'a) (e: 'b list) (name: string) =
+    let ordered_results = List.sort compare (f input) in
+    let ordered_expected = List.sort compare e in
+        List.fold_left2 (fun tests res exp ->
+                             (mk_generic_equals_test eq (fun () -> res) exp to_string (labeler exp))::tests) 
+            [] 
+            ordered_results 
+            ordered_expected
+
 let mk_block_expect_test (b: block) (e: io_block) (name: string) =
     mk_generic_equals_test io_block_equal (fun () -> build_io_block b) e ib2str name
 
 let mk_func_expect_test (f: func) (e: io_block list) (name: string) =
-    let result = block_gen_io (List.map build_io_block f) in
-    let ordered_results = List.sort io_block_compare result in
-    let ordered_expected = List.sort io_block_compare e in
-        List.fold_left2 (fun tests r_block e_block ->
-                             (mk_verbose_expect_test (fun () -> r_block) e_block ib2str "Block Test")::tests) [] ordered_results ordered_expected
+    mk_list_compare_tests (fun b_list -> block_gen_io (List.map build_io_block b_list)) io_block_compare io_block_equal ib2str (fun e -> e.block_label) f e name
                                                   
-(*
-let mk_io_inst_test (b: block) (e: io_inst list) (name: string) =
-    let ordered_results = List.sort io_inst_compare (io_blockbuild_io_block b) in
-        
-*)
+let mk_io_inst_tests (b: block) (e: io_inst list) (name: string) = 
+    mk_list_compare_tests (fun inst_list -> 
+                               let result = build_io_block inst_list in
+                          result.insts) io_inst_compare io_inst_equal ioinst2str (fun e -> inst2string e.src_inst) b e name
 
 (*
 let mk_func_expect_test2 (f: func) (e: io_block list) (name: string) =
@@ -113,7 +116,7 @@ let b1c_io =
     {inst_read   = set_add_all ["t2"] ReadSet.empty ;
      inst_write  = set_add_all ["t3"] WriteSet.empty;
      inst_in     = set_add_all ["t2"] InSet.empty;
-     inst_out    = set_add_all ["t2"] OutSet.empty;
+     inst_out    = set_add_all ["t2";"t3"] OutSet.empty;
      inst_move   = [];
      src_inst    = b1c}
 
@@ -316,6 +319,12 @@ let block3_test = mk_block_expect_test block3 io_block3 "Block 3"
 let block4_test = mk_block_expect_test block4 io_block4 "Block 4";;
 
 let func_test = mk_func_expect_test [block1; block2; block3; block4] [io_block1; io_block2; io_block3; io_block4] "Function io block creation test";;
+let io_insts_test = List.flatten (List.map (fun e ->
+                                                let(bs, expcts) = e in
+                                                    mk_io_inst_tests bs expcts "io insts tests") [(block1, io_block1.insts);
+                                                                                                  (block2, io_block2.insts);
+                                                                                                  (block3, io_block3.insts);
+                                                                                                  (block4, io_block4.insts)]);;
 
 
 run_test_set [ rw_test1;
@@ -340,3 +349,5 @@ run_test_set [ block1_test;
 *)
 
 run_test_set func_test "Function io block generation test";;
+run_test_set io_insts_test "Examine io insts";;
+
