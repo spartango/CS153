@@ -41,6 +41,58 @@ let rw_test9 = mk_rw_test (Jump("label")) ReadSet.empty WriteSet.empty [] "Jump"
 let rw_test10 = mk_rw_test (If(Var("t1"), Eq, Var("t2"), "label1", "label2")) (ReadSet.add "t2" (ReadSet.singleton "t1")) WriteSet.empty [] "If, two vars";;
 let rw_test11 = mk_rw_test Return ReadSet.empty WriteSet.empty [] "Return";;
 
+(* io_block Build Tests *)
+
+(* 
+ * Label L1
+ * t2 = t1
+ * t3 = t2 * 1
+ * if t2 = t3 then L2 else L3
+ *)
+
+let block1 =
+    [Label("L1");
+     Move(Var("t2"), Var("t1"));
+     Arith(Var("t3"), Var("t2"), Times, Int 1);
+     If(Var "t2", Eq, Var "t3", "L2", "L3")]
+
+(*
+ * L4
+ * t2 = t1;
+ * J L3
+ *)
+let block4 =
+    [Label("L4");
+     Move(Var "t2", Var "t1");
+     Jump("L3")]
+
+(*
+ * L2
+ * t5 = t2 +7;
+ * t4 = t5 + t5
+ * t6 = 4 + 5
+ * Return
+ *)
+
+let block2 =
+    [Label("L2");
+     Arith(Var "t5", Var "t2", Plus, Int 7);
+     Arith(Var "t4", Var "t5", Plus, Var "t5");
+     Arith(Var "t6", Int 4, Plus, Int 5);
+     Return]
+
+(* L3
+ * t7 =t3 + t2
+ * return
+ *)
+
+let block3 =
+    [Label("L3");
+     Arith(Var "t7", Var "t3", Plus, Var "t2");
+     Return];;
+
+
+
 run_test_set [ rw_test1;
                rw_test2;
                rw_test3;

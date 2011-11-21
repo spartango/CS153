@@ -32,7 +32,7 @@ let build_io_block (b: block) : io_block =
   (* Build In/Outs for each instruction *)
   let complete_io_insts = inst_gen_io rw_io_insts in
   (* Place modified io_insts into block and return *)
-  io_block_set_insts complete_io_insts io_block3 in
+  io_block_set_insts complete_io_insts io_block3
 
 (* given a function (i.e., list of basic blocks), construct the
  * interference graph for that function.  This will require that
