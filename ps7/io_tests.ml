@@ -144,8 +144,8 @@ let label_test2 = mk_label_test basic_block2 "L5" "Label extraction test";;
 let label_test3 = mk_label_test basic_block3 "L4" "Label extraction test";;
 
 let children_test1 = mk_children_test basic_block1 (BlockSet.add "L2" (BlockSet.singleton "L3")) "Child extraction test on If";;
-let children_test2 = mk_children_test basic_block1 BlockSet.empty "Child extraction test on Return";;
-let children_test3 = mk_children_test basic_block1 (BlockSet.singleton "L3") "Child extraction test on Jump";;
+let children_test2 = mk_children_test basic_block2 BlockSet.empty "Child extraction test on Return";;
+let children_test3 = mk_children_test basic_block3 (BlockSet.singleton "L3") "Child extraction test on Jump";;
 
 
 run_test_set [ simple_in_test;
