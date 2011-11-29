@@ -31,6 +31,14 @@ module IGNodeSet = Set.Make(struct
                                   String.compare e1.name e2.name 
                             end)
 
+let new_ignode (v: var) : ignode =
+    { name = v                ;
+      edges = IGEdgeSet.empty ;
+      moves = IGEdgeSet.empty ;
+      color = None            ;
+    }
+
+
 (* an interference graph maps a variable x to the set of variables that
  * y such that x and y are live at the same point in time.  It's up to
  * you how you want to represent the graph.  I've just put in a dummy
@@ -40,3 +48,44 @@ type interfere_graph = IGNodeSet.t
 let get_node (v : var) (target : interfere_graph) : ignode = 
   let filtered = IGNodeSet.filter (fun node -> node.name = v) target in
   IGNodeSet.choose filtered 
+
+(* Build interference graph *)
+
+(* Helper - adds e to graph if not already present *)
+let add_var (e: var) (graph: interference_graph) : interference_graph = raise TODO
+
+(* Adds variables in s to graph if not already present *)
+let add_vars (s: VarSet.t) (graph: interference_graph) : interference_graph = raise TODO
+
+(* Sets e as conflicting with all the variables in s in graph *)
+let mark_interfere (e: var) (s: VarSet.t) (graph: interference_graph) : interference_graph = raise TODO
+
+(* Marks all variables in s as conflicting with each other in graph *)
+let mark_set_interfere (s: VarSet.t) (graph: interference_graph) : interference_graph = raise TODO
+
+(* Fold over blocks *)
+
+(* FOREACH BLOCK *)
+
+(* Mark all variables in block In set as conflicting *)
+(* Mark all variables in block Out set as conflicting *)
+
+(* Intersect In and Out sets *)
+
+(* For each instruction in a block *)
+      (* Check if variable whose value is assigned in instruction is in graph 
+       * - Add if not in graph
+       * - Ignore if/jump/return - i.e. ignore control flow instructions that terminate blocks*)
+
+      (* Mark all variables in In Set as conflicting with each other in graph 
+       * - Fold over In set
+       * - Pass removed element to mark_set_conflict with the complete In set minus the remove element *)
+      (* Mark all variables in Out set as conflicting with each other - same procedure as In set *)
+
+(* Mark variables in the resulting union as interfering with all variables in the block *)
+
+(* Merge graph with accumulated i_graph *)
+
+(* END FOREACH *)  
+
+(* Mark move related variables and unmark them as interferening *)
