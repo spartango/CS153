@@ -39,6 +39,26 @@ let new_ignode (v: var) : ignode =
       color = None            ;
     }
 
+let ignode_set_edges (edgeset: IGEdgeSet.t) (n: ignode) : ignode =
+    { name = n.name   ;
+      edges = edgeset ;
+      moves = n.moves ;
+      color = n.color ;
+    }
+
+let ignode_set_moves (moveset: IGMoveSet.t) (n: ignode) : ignode =
+    { name = n.name   ;
+      edges = n.edges ;
+      moves = moveset ;
+      color = n.color ;
+    }
+
+let ignode_set_color (color: int option) (n: ignode) : ignode =
+    { name = n.name   ;
+      edges = n.edges ;
+      moves = n.moves ;
+      color = color   ;
+    }
 
 (* an interference graph maps a variable x to the set of variables that
  * y such that x and y are live at the same point in time.  It's up to
@@ -61,8 +81,15 @@ let add_var (e: var) (graph: interfere_graph) : interfere_graph =
 let add_vars (s: VarSet.t) (graph: interfere_graph) : interfere_graph = 
     VarSet.fold add_var s graph 
 
+(* Updates node for v to reflect that it conflicts with e. Does not change e's node to reflect that v interferences with e *)
+let mark_interfere (v: var) (e: var) (graph: interfere_graph) : interfere_graph = raise TODO
+    (* let v_node = get_node v graph *)
+
 (* Sets e as conflicting with all the variables in s in graph *)
-let mark_interfere (e: var) (s: VarSet.t) (graph: interfere_graph) : interfere_graph = raise TODO
+let mark_interferes (e: var) (s: VarSet.t) (graph: interfere_graph) : interfere_graph = 
+
+
+raise TODO
 
 (* Marks all variables in s as conflicting with each other in graph *)
 let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph = raise TODO
