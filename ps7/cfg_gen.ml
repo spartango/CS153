@@ -112,14 +112,21 @@ let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
     )
     target
 
-let inst_gen_io (target: io_inst list) : io_inst list =
+(* Builds the In/Out sets for each instruction. block_out is the Out set for the final insturction *)
+let inst_gen_io_base (block_out: OutSet.t) (target: io_inst list) : io_inst list =
     let target1 = List.rev target in
     let (modified, _) = List.fold_left (fun accum io_i ->
                         (* next_ins holds state *)
                                             let (io_inst_list, next_ins) = accum in
                                             let new_io_i = inst_gen_in (inst_gen_out io_i next_ins) in
-                                                (new_io_i::io_inst_list, new_io_i.inst_in)) ([], InSet.empty) target1
+                                                (new_io_i::io_inst_list, new_io_i.inst_in)) ([], block_out) target1
     in modified
+
+(* Builds In/Out sets for each instruction where the Out set for the last instruction is empty *)
+let inst_gen_io (target: io_inst list) : io_inst list =
+    inst_gen_io_base OutSet.empty target
+
+
 (* Fold right version of this - it's clearly the better version, but Anand doesn't like it *)
 (*
     let (modified, _) = List.fold_right (fun io_i accum ->

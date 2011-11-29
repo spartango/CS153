@@ -1,5 +1,6 @@
 open Cfg_ast
 open Io_types
+open Cfg_gen
 exception TODO
 
 (* Why do we have this left/right edge piece. Can an edge set simply be a var set of the variables the node's variable conflicts with? *)
@@ -90,6 +91,7 @@ let add_vars (s: VarSet.t) (graph: interfere_graph) : interfere_graph =
     VarSet.fold add_var s graph 
 
 (* Updates node for v to reflect that it conflicts with e. Does not change e's node to reflect that v interferences with e *)
+(* Assumes v is already in graph *)
 let mark_interfere (v: var) (e: var) (graph: interfere_graph) : interfere_graph =
     let v_node = get_node v graph in
     (* New edge set - TODO CHECK whether this is the "right" idea with right/left edges?*)
@@ -109,25 +111,45 @@ let mark_interferes (s: VarSet.t) (base_var: var) (graph: interfere_graph) : int
 let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph = 
     VarSet.fold (mark_interferes s) s graph
 
-(* Fold over blocks *)
+(* Adds set of variables s to graph and marks variables in s as conflicting with each other *)
+let add_interfere_set (s: VarSet.t) (g: interfere_graph) : interfere_graph = 
+    mark_set_interfere s (add_vars s g)
+
+(* CHANGED ALGORITHM 
+ * Our original algorithm, at least according to my understanding, would not produce the correct result in this case:
+ * a = 5 + 4
+ * b = 7 + 2
+ * c = b + 1
+ * if c > 3 then L2 else L3
+ * where the In set is {} and Out {a}
+ * Our original algorithm would not mark a as conflicting with b and c
+ * The new algorithm is simpler - recalculate the in and out sets for each instruction, except starting with the block Out set as the Out 
+ * set of the last instruction in the list. Then mark the element in each in/out at the instruction level as conflicting with each other. *)
+
+
+(* Map over blocks *)
 
 (* FOREACH BLOCK *)
 
+(* Revise io_insts - recalculate inst IN/OUT sets starting with the block Out as the Out of the final insts *)
+
+(* FOREACH INST *)
+
+(* Add var to graph, if defines var *)
+(* Add In set vars and mark as interfering with each other *)
+(* Add Out set vars and mark as interfering with each other *)
+
+(* END FOREACH INST *)
+
 let build_block_igraph (b: io_block) : interfere_graph =
-    (* Add block In/Out variables to graph *)
-    let igraph1 = add_vars b.block_in IGNodeSet.empty in
-    let igraph2 = add_vars b.block_out igraph1 in
-    (* Mark In block vars as conflicting *)
-    let igraph3 = mark_set_interfere b.block_in igraph2 in
-    let igraph4 = mark_set_interfere b.block_out igraph3 in
+
+
+    (* Add block In/Out variables to graph and mark as interfering with themselves *)
+    let igraph1 = add_interfere_set b.block_in IGNodeSet.empty in
+    let igraph2 = add_interfere_set b.block_out igraph1 in
     (* Get intersections of In/Out sets *)
     let io_intersect = VarSet.inter b.block_in b.block_out in
-        igraph4
-
-(* Mark all variables in block In set as conflicting - Use mark_set_interfere *)
-(* Mark all variables in block Out set as conflicting  - Use mark_set_interfere *)
-
-(* Intersect In and Out sets *)
+        igraph2
 
 (* For each instruction in a block *)
       (* Check if variable whose value is assigned in instruction is in graph 

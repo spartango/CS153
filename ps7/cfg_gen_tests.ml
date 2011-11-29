@@ -6,7 +6,7 @@ open Io_types
 
 (* Set to show verbose test results for debugging *)
 let mk_test_verbose = false
-let show_insts = false
+let show_insts = true
 let show_src_block = true
 
 let mk_generic_equals_test (eq: 'a -> 'a -> bool) (f: unit -> 'a) (expected: 'a) (to_string: 'a -> string) (name: string) =
@@ -144,6 +144,9 @@ let io_block1 =
         src_block     = block1;
         children      = set_add_all ["L2";"L4"] BlockSet.empty
      };;
+
+
+
 
 (*
  * L2
@@ -352,3 +355,7 @@ run_test_set [ block1_test;
 
 run_test_set func_test "Function io block generation test";;
 run_test_set io_insts_test "Examine io insts";;
+
+(*
+print_endline (ib2str (io_block_set_insts (inst_gen_io_base io_block4.block_out io_block4.insts) io_block4))
+*)
