@@ -2,6 +2,7 @@ open Cfg_ast
 open Io_types
 exception TODO
 
+(* Why do we have this left/right edge piece. Can an edge set simply be a var set of the variables the node's variable conflicts with? *)
 type igedge = { left  : var;
                 right : var; 
               } 
@@ -70,6 +71,13 @@ let get_node (v : var) (target : interfere_graph) : ignode =
   let filtered = IGNodeSet.filter (fun node -> node.name = v) target in
   IGNodeSet.choose filtered 
 
+(* Updates graph with new copy of node *)
+let update_graph (n: ignode) (graph: interfere_graph) : interfere_graph =
+    (* Remove node from graph - nodes compared by name *)
+    let graph1 = IGNodeSet.remove n graph in
+    (* Add node back into graph *)
+        IGNodeSet.add n graph1
+
 (* Build interference graph *)
 
 (* Helper - adds e to graph if not already present *)
@@ -82,8 +90,12 @@ let add_vars (s: VarSet.t) (graph: interfere_graph) : interfere_graph =
     VarSet.fold add_var s graph 
 
 (* Updates node for v to reflect that it conflicts with e. Does not change e's node to reflect that v interferences with e *)
-let mark_interfere (v: var) (e: var) (graph: interfere_graph) : interfere_graph = raise TODO
-    (* let v_node = get_node v graph *)
+let mark_interfere (v: var) (e: var) (graph: interfere_graph) : interfere_graph =
+    let v_node = get_node v graph in
+    (* New edge set - TODO CHECK whether this is the "right" idea with right/left edges?*)
+    let updated_edges = IGEdgeSet.add {left = e; right = v} v_node.edges in
+    let updated_node = ignode_set_edges updated_edges v_node in
+        update_graph updated_node graph 
 
 (* Sets e as conflicting with all the variables in s in graph *)
 let mark_interferes (e: var) (s: VarSet.t) (graph: interfere_graph) : interfere_graph = 
@@ -98,8 +110,8 @@ let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph 
 
 (* FOREACH BLOCK *)
 
-(* Mark all variables in block In set as conflicting *)
-(* Mark all variables in block Out set as conflicting *)
+(* Mark all variables in block In set as conflicting - Use mark_set_interfere *)
+(* Mark all variables in block Out set as conflicting  - Use mark_set_interfere *)
 
 (* Intersect In and Out sets *)
 
