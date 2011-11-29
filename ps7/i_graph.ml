@@ -98,7 +98,7 @@ let mark_interfere (v: var) (e: var) (graph: interfere_graph) : interfere_graph 
         update_graph updated_node graph 
 
 (* Sets e as conflicting with all the variables in s in graph *)
-let mark_interferes (base_var: var) (s: VarSet.t) (graph: interfere_graph) : interfere_graph = 
+let mark_interferes (s: VarSet.t) (base_var: var) (graph: interfere_graph) : interfere_graph = 
     VarSet.fold (fun interfere_var partial_graph ->
                      (* Check that a variable is not interfering with itself *)
                          if base_var = interfere_var
@@ -106,11 +106,23 @@ let mark_interferes (base_var: var) (s: VarSet.t) (graph: interfere_graph) : int
                          else mark_interfere base_var interfere_var partial_graph) s graph 
 
 (* Marks all variables in s as conflicting with each other in graph *)
-let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph = raise TODO
+let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph = 
+    VarSet.fold (mark_interferes s) s graph
 
 (* Fold over blocks *)
 
 (* FOREACH BLOCK *)
+
+let build_block_igraph (b: io_block) : interfere_graph =
+    (* Add block In/Out variables to graph *)
+    let igraph1 = add_vars b.block_in IGNodeSet.empty in
+    let igraph2 = add_vars b.block_out igraph1 in
+    (* Mark In block vars as conflicting *)
+    let igraph3 = mark_set_interfere b.block_in igraph2 in
+    let igraph4 = mark_set_interfere b.block_out igraph3 in
+    (* Get intersections of In/Out sets *)
+    let io_intersect = VarSet.inter b.block_in b.block_out in
+        igraph4
 
 (* Mark all variables in block In set as conflicting - Use mark_set_interfere *)
 (* Mark all variables in block Out set as conflicting  - Use mark_set_interfere *)
