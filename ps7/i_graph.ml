@@ -1,4 +1,5 @@
 open Cfg_ast
+open Io_types
 exception TODO
 
 type igedge = { left  : var;
@@ -52,16 +53,16 @@ let get_node (v : var) (target : interfere_graph) : ignode =
 (* Build interference graph *)
 
 (* Helper - adds e to graph if not already present *)
-let add_var (e: var) (graph: interference_graph) : interference_graph = raise TODO
+let add_var (e: var) (graph: interfere_graph) : interfere_graph = raise TODO
 
 (* Adds variables in s to graph if not already present *)
-let add_vars (s: VarSet.t) (graph: interference_graph) : interference_graph = raise TODO
+let add_vars (s: VarSet.t) (graph: interfere_graph) : interfere_graph = raise TODO
 
 (* Sets e as conflicting with all the variables in s in graph *)
-let mark_interfere (e: var) (s: VarSet.t) (graph: interference_graph) : interference_graph = raise TODO
+let mark_interfere (e: var) (s: VarSet.t) (graph: interfere_graph) : interfere_graph = raise TODO
 
 (* Marks all variables in s as conflicting with each other in graph *)
-let mark_set_interfere (s: VarSet.t) (graph: interference_graph) : interference_graph = raise TODO
+let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph = raise TODO
 
 (* Fold over blocks *)
 
