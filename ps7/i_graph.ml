@@ -127,6 +127,28 @@ let add_interfere_set (s: VarSet.t) (g: interfere_graph) : interfere_graph =
  * set of the last instruction in the list. Then mark the element in each in/out at the instruction level as conflicting with each other. *)
 
 
+(* We could simplify this function if we didn't add the defined variable. That should
+ * be ok to do, because if either the variable is read later, in which case it appears
+ * in the out set, or it is not read later and should be removed *)
+let add_inst_interferes (graph: interfere_graph) (i: io_inst) : interfere_graph =
+
+    (* Helper - marks In/Out sets as interfering with themselves in the graph *)
+    let io_interfere (g: interfere_graph) : interfere_graph =
+        let igraph1 = add_interfere_set i.inst_in g in
+            add_interfere_set i.inst_out igraph1 in
+
+    (* Adds a single variable to a graph and marks In/Out sets as interfering *)
+    let var_io_interfere (v: var) : interfere_graph =
+        let igraph1 = add_var v graph in
+            io_interfere igraph1 in
+        (* Match on inst to see if it defines a var *)
+        match i.src_inst with
+            | Move(Var x, _) -> var_io_interfere x
+            | Arith(Var x, _, _, _) -> var_io_interfere x
+            | Load(Var x, _, _) -> var_io_interfere x
+            | _ -> io_interfere graph
+
+
 (* Map over blocks *)
 
 (* FOREACH BLOCK *)
@@ -142,15 +164,18 @@ let add_interfere_set (s: VarSet.t) (g: interfere_graph) : interfere_graph =
 (* END FOREACH INST *)
 
 let build_block_igraph (b: io_block) : interfere_graph =
+    (* inst_gen_io_base is a more general version of inst_gen_io that allows you to specify the base out set *)
+    let updated_insts = inst_gen_io_base b.block_out b.insts in
+        List.fold_left add_inst_interferes IGNodeSet.empty updated_insts
 
-
+(*
     (* Add block In/Out variables to graph and mark as interfering with themselves *)
     let igraph1 = add_interfere_set b.block_in IGNodeSet.empty in
     let igraph2 = add_interfere_set b.block_out igraph1 in
     (* Get intersections of In/Out sets *)
     let io_intersect = VarSet.inter b.block_in b.block_out in
         igraph2
-
+*)
 (* For each instruction in a block *)
       (* Check if variable whose value is assigned in instruction is in graph 
        * - Add if not in graph
