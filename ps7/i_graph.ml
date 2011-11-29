@@ -79,8 +79,6 @@ let update_graph (n: ignode) (graph: interfere_graph) : interfere_graph =
     (* Add node back into graph *)
         IGNodeSet.add n graph1
 
-(* Build interference graph *)
-
 (* Helper - adds e to graph if not already present *)
 let add_var (e: var) (graph: interfere_graph) : interfere_graph = 
     (* Set.add will return graph unchanged if e is already a member *)
@@ -115,6 +113,13 @@ let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph 
 let add_interfere_set (s: VarSet.t) (g: interfere_graph) : interfere_graph = 
     mark_set_interfere s (add_vars s g)
 
+
+(* Merges two IGNodeSets
+ * Returns the union of the two sets. When both sets contain the same member, unions their edge and move sets *)
+(* WILL RESET COLOR to "None" *)
+let igraph_merge (graph1: interfere_graph) (graph2: interfere_graph) : interfere_graph =
+graph2
+
 (* CHANGED ALGORITHM 
  * Our original algorithm, at least according to my understanding, would not produce the correct result in this case:
  * a = 5 + 4
@@ -148,6 +153,7 @@ let add_inst_interferes (graph: interfere_graph) (i: io_inst) : interfere_graph 
             | Load(Var x, _, _) -> var_io_interfere x
             | _ -> io_interfere graph
 
+(* NEW ALGORITHM *)
 
 (* Map over blocks *)
 
@@ -163,19 +169,37 @@ let add_inst_interferes (graph: interfere_graph) (i: io_inst) : interfere_graph 
 
 (* END FOREACH INST *)
 
+(* END FOREACH BLOCK *)
+
+
+(* Merge block igraphs into one *)
+(* Deal with move related variables *)
+
+
 let build_block_igraph (b: io_block) : interfere_graph =
     (* inst_gen_io_base is a more general version of inst_gen_io that allows you to specify the base out set *)
     let updated_insts = inst_gen_io_base b.block_out b.insts in
         List.fold_left add_inst_interferes IGNodeSet.empty updated_insts
 
+
+
+
+(* OLD ALGORITHM *)
+
 (*
-    (* Add block In/Out variables to graph and mark as interfering with themselves *)
+    
     let igraph1 = add_interfere_set b.block_in IGNodeSet.empty in
     let igraph2 = add_interfere_set b.block_out igraph1 in
     (* Get intersections of In/Out sets *)
     let io_intersect = VarSet.inter b.block_in b.block_out in
         igraph2
 *)
+
+(* FOREACH BLOCK *)
+
+(* Add block In/Out variables to graph and mark as interfering with themselves *)
+(* Get intersection of In/Out sets *)
+
 (* For each instruction in a block *)
       (* Check if variable whose value is assigned in instruction is in graph 
        * - Add if not in graph
