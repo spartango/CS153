@@ -98,10 +98,12 @@ let mark_interfere (v: var) (e: var) (graph: interfere_graph) : interfere_graph 
         update_graph updated_node graph 
 
 (* Sets e as conflicting with all the variables in s in graph *)
-let mark_interferes (e: var) (s: VarSet.t) (graph: interfere_graph) : interfere_graph = 
-
-
-raise TODO
+let mark_interferes (base_var: var) (s: VarSet.t) (graph: interfere_graph) : interfere_graph = 
+    VarSet.fold (fun interfere_var partial_graph ->
+                     (* Check that a variable is not interfering with itself *)
+                         if base_var = interfere_var
+                         then partial_graph
+                         else mark_interfere base_var interfere_var partial_graph) s graph 
 
 (* Marks all variables in s as conflicting with each other in graph *)
 let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph = raise TODO
