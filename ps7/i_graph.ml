@@ -228,11 +228,23 @@ let add_inst_interferes (graph: interfere_graph) (i: io_inst) : interfere_graph 
 (* Merge block igraphs into one *)
 (* Deal with move related variables *)
 
+let make_move_edges (ms: move_related list) (graph: interfere_graph) : interfere_graph =
+    List.fold_left (fun g mv -> 
+                        let (var1, var2) = mv in
+                        let node1 = get_node var1 g in
+                        let node2 = get_node var2 g in
+                        let move1 = { left = var1; right = var2 } in
+                        let move2 = { left = var2; right = var1 } in
+                        let node1_updated = ignode_set_moves (IGMoveSet.add move1 node1.moves) node1 in
+                        let node2_updated = ignode_set_moves (IGMoveSet.add move2 node2.moves) node2 in
+                            update_igraph node1_updated (update_igraph node2_updated g)) graph ms
 
 let build_block_igraph (b: io_block) : interfere_graph =
     (* inst_gen_io_base is a more general version of inst_gen_io that allows you to specify the base out set *)
     let updated_insts = inst_gen_io_base b.block_out b.insts in
-        List.fold_left add_inst_interferes IGNodeSet.empty updated_insts
+    let igraph1 = List.fold_left add_inst_interferes IGNodeSet.empty updated_insts in
+        make_move_edges b.block_move igraph1
+        
 
 let build_igraph (bs: io_block list) : interfere_graph =
     List.fold_left (fun g1 b ->
