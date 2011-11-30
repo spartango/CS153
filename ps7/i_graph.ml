@@ -54,12 +54,14 @@ let ignode2str (i: ignode) : string =
         "\tMoves:\t " ^ (igedgeset2str i.moves) ^ "\n" ^
         "\tColor:\t " ^ (color2str i.color) ^ "\n}\n"
 
+let igraph2str (ig: interfere_graph) : string = 
+    IGNodeSet.fold (fun n str -> str ^ (ignode2str n)) ig ""
 
 let new_ignode (v: var) : ignode =
-    { name = v                ;
-      edges = IGEdgeSet.empty ;
-      moves = IGEdgeSet.empty ;
-      color = None            ;
+    { name = v                 ;
+      edges = IGEdgeSet.empty  ;
+      moves = IGEdgeSet.empty  ;
+      color = None             ;
     }
 
 let ignode_set_edges (edgeset: IGEdgeSet.t) (n: ignode) : ignode =
