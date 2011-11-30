@@ -9,19 +9,19 @@ let raw_blocks =
   [ Label("main");
     Move( Var("j"), Int(5));
     Move( Var("k"), Int(2));
-    Load( Var("g"), Var("j"), Int(12));
+    Load( Var("g"), Var("j"), 12);
     Arith( Var("h"), Var("k"), Minus, Int(1));
     Arith( Var("f"), Var("g"), Times, Var("h"));
-    Load( Var("e"), Var("j"), Int(8 ) );
-    Load( Var("m"), Var("j"), Int(16)  );
-    Load( Var("b"), Var("f"), Int(0 ));
+    Load( Var("e"), Var("j"), 8);
+    Load( Var("m"), Var("j"), 16  );
+    Load( Var("b"), Var("f"), 0 );
     Arith( Var("c"), Var("e"), Plus, Int(8));
     Move( Var("d"), Var("c"));
     Arith( Var("k"), Var("m"), Plus, Int(4));
     Move( Var("j"), Var("b"));  
     Arith( Var("u"), Var("d"), Plus, Var("k"));
     Arith( Var("u1"), Var("j"), Plus, Int(2));
-    Move( Reg(R2), Var("u1"));
+    Move( Reg(Mips.R2), Var("u1"));
     Return 
   ]
 ;;
