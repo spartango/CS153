@@ -2,7 +2,10 @@ open Io_types
 open Cfg_ast
 open Utility 
 
+exception InvalidLabel
 exception FailedStabilization
+exception InvalidControlFlow
+exception InvalidMoveRelated
 
 let run_until_stable t_func init_arg limit =
   let rec until_stable arg count =
@@ -17,7 +20,7 @@ let run_until_stable t_func init_arg limit =
 let get_block_label (b: block) : label =
     match (List.hd b) with
         | Label l -> l
-        | _ -> raise InvalidCFGCode
+        | _ -> raise InvalidLabel
 
 let get_block_children (b: block) : BlockSet.t = 
     let rec get_last_inst l = 
@@ -29,7 +32,7 @@ let get_block_children (b: block) : BlockSet.t =
             | If(o1, compop, o2, l1, l2) -> BlockSet.add l2 (BlockSet.singleton l1)
             | Jump(l)                    -> BlockSet.singleton l
             | Return                     -> BlockSet.empty
-            | _                          -> raise InvalidCFGCode (* Block does not end in control flow statement *)      
+            | _                          -> raise InvalidControlFlow (* Block does not end in control flow statement *)      
 
 
 let get_rw (i: inst) : io_inst =
@@ -41,7 +44,7 @@ let get_rw (i: inst) : io_inst =
     let get_move_related (o1: operand) (o2: operand) : move_related = 
         match (o1, o2) with
             | (Var(x1),Var(x2)) -> (x1, x2)
-            | _ -> raise InvalidCFGCode in 
+            | _ -> raise InvalidMoveRelated in 
     (* Builds a new io_inst record with reads rs and writes ws *)
     let set_rw (rs: operand list) (ws: operand list) = 
         io_inst_set_read (set_of_ops rs) (io_inst_set_write (set_of_ops ws) (new_io_inst i)) in
