@@ -1,0 +1,86 @@
+This README describes what must be done for both problem sets 7 and 8.
+Ultimately, your goal is to map CFG intermediate code to MIPS code.
+For PS 7, your job is to construct a liveness dataflow analysis and
+then use the information to build an interference graph.  For PS 8,
+your job is to take the interference graph and build a graph-coloring,
+coalescing register allocator and finally map the CFG code to MIPS
+code.
+
+Start early on both of them as they will each take up a lot of time.
+
+The file cfg_ast.ml contains the definition of the CFG intermediate form.
+At a conceptual level, it's quite close to MIPS code except that it
+allows variables to serve as operands.
+
+I have chosen to represent basic blocks as lists of instructions that
+includes labels and control-flow operators (e.g., jump, return,
+if-then-goto.)  Although this fails to capture the structural
+constraints on basic blocks (always start with a label, always end
+with control-flow, no-intervening label or control-flow), it will make
+compilation and analysis a little easier.
+
+Included in cfg_ast.ml is a function fn2blocks which translates the
+abstract syntax of a Cish function into a list of basic blocks.
+**Warning!** This code has not been heavily tested and undoubtably has
+bugs within it.  If you encounter a bug, please let me know and I will
+post a fix as soon as possible.  Regardless, you are not responsible
+for any bugs that I introduced.
+
+For PS7, your goal is to write the function:
+
+  build_interfere_graph : function -> interfere_graph
+
+where "function" is a list of CFG basic blocks.  I have not defined
+"interfere_graph"---it's up to you to pick a good representation.  In
+particular, you will want to think ahead regarding what operations you
+need to support on interference graphs during the register allocation
+process.
+
+To construct the interference graph, you will have to build a liveness
+dataflow analysis that calculates for each instruction a set of
+variables that are live coming in to the instruction, and a set of
+variables that are live coming out of the instruction.  Refer to the
+lecture notes and the Appel book for details on the dataflow algorithm
+for liveness.
+
+For PS8, your goal is to write two functions:
+
+  reg_alloc : function -> function
+  cfg_to_mips : function -> Mips.inst list
+
+The reg_alloc function should perform coalescing, coloring register
+allocation as described in the lecture notes and the book.  The input
+should be a list of basic blocks, and the output should be a list of
+basic blocks that doesn't use any variables (except for function
+names.)  The function cfg_to_mips, which will be much easier to write,
+should map the output of reg_alloc to MIPS code.
+
+A good strategy for PS8 is to implement reg_alloc without any
+spilling.  Get all of this code working, check-point it, and then go
+back and consider spilling.  You will receive more credit for an
+allocator that doesn't spill, but otherwise works correctly than an
+allocator that doesn't work at all.
+
+This assignment leaves many design decisions up to you. Please document
+your code with comments. Additionally, you will need to submit test cases and
+describe how you tested your code. 
+
+---------------------------------------------------------------
+For super extra bonus credit, here are some things that you might
+consider (but only after completing and fully testing the other parts
+of the assignment):
+
+1) write a translation from Monadic to Cish.  This will give you an
+optimizing compiler that can take either core-ML or core-Scheme to
+optimized MIPS code.  (An easy way to do this is to just map Monadic
+back into Scish, and then use your simple Scish-to-Cish compiler, but
+this will lead to fairly inefficient code.  A better way is to
+directly translate Monadic into Cish code.  To do so, you'll want to
+build environments for closures that only contain the variables used
+by the function.)
+
+2) build an optimizer for the CFG representation.  To do so, you'll
+need to build dataflow analyses, such as available expressions, to
+support common-sub-expression elimination, constant propagation, and
+constant folding.
+
