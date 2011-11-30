@@ -15,9 +15,10 @@ exception FatalError
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
 let build_interfere_graph (f : func) : interfere_graph =
-        
+    (* See cfg_gen.ml for build_io_block *)    
     let initial_io_blocks = List.map build_io_block f in
-raise Implement_Me
+    (* See i_graph.ml for implementation *)
+        build_igraph initial_io_blocks
 
             
 

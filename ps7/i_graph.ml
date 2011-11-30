@@ -8,6 +8,9 @@ type igedge = { left  : var;
                 right : var; 
               } 
 
+let igedge2str (e: igedge) : string = 
+        "(" ^ e.left ^ ", " ^ e.right ^ ")"
+
 (* Sort based on left edge, but prevents duplication *)
 module IGEdgeSet = Set.Make(struct 
                               type t = igedge 
@@ -19,7 +22,11 @@ module IGEdgeSet = Set.Make(struct
                                   else l_comp
                             end)
 
+let igedgeset2str (es: IGEdgeSet.t) : string =
+    IGEdgeSet.fold (fun e str -> str ^ " " ^ (igedge2str e)) es ""
+
 module IGMoveSet = IGEdgeSet
+
 
 type ignode = { name  : var         ; 
                 edges : IGEdgeSet.t ;
@@ -33,6 +40,20 @@ module IGNodeSet = Set.Make(struct
                                 fun e1 e2 ->
                                   String.compare e1.name e2.name 
                             end)
+
+
+let color2str (c: int option) : string =
+    match c with
+        | Some i -> (string_of_int i)
+        | None -> "None"
+
+let ignode2str (i: ignode) : string = 
+    "{" ^ 
+        "\tName:\t " ^ i.name ^"\n" ^
+        "\tEdges:\t " ^ (igedgeset2str i.edges) ^ "\n" ^
+        "\tMoves:\t " ^ (igedgeset2str i.moves) ^ "\n" ^
+        "\tColor:\t " ^ (color2str i.color) ^ "\n}\n"
+
 
 let new_ignode (v: var) : ignode =
     { name = v                ;
@@ -73,7 +94,7 @@ let get_node (v : var) (target : interfere_graph) : ignode =
   IGNodeSet.choose filtered 
 
 (* Updates graph with new copy of node *)
-let update_graph (n: ignode) (graph: interfere_graph) : interfere_graph =
+let update_igraph (n: ignode) (graph: interfere_graph) : interfere_graph =
     (* Remove node from graph - nodes compared by name *)
     let graph1 = IGNodeSet.remove n graph in
     (* Add node back into graph *)
@@ -95,7 +116,7 @@ let mark_interfere (v: var) (e: var) (graph: interfere_graph) : interfere_graph 
     (* New edge set - TODO CHECK whether this is the "right" idea with right/left edges?*)
     let updated_edges = IGEdgeSet.add {left = e; right = v} v_node.edges in
     let updated_node = ignode_set_edges updated_edges v_node in
-        update_graph updated_node graph 
+        update_igraph updated_node graph 
 
 (* Sets e as conflicting with all the variables in s in graph *)
 let mark_interferes (s: VarSet.t) (base_var: var) (graph: interfere_graph) : interfere_graph = 
@@ -118,7 +139,34 @@ let add_interfere_set (s: VarSet.t) (g: interfere_graph) : interfere_graph =
  * Returns the union of the two sets. When both sets contain the same member, unions their edge and move sets *)
 (* WILL RESET COLOR to "None" *)
 let igraph_merge (graph1: interfere_graph) (graph2: interfere_graph) : interfere_graph =
-graph2
+
+    let merge_node (node: ignode) ((g2, igraph): interfere_graph * interfere_graph) : interfere_graph * interfere_graph =
+        (* If given node from graph1 is member of graph2 *)
+        if (IGNodeSet.mem node g2)
+        then 
+            let g2_node = get_node node.name g2 in
+            (* Create new node with union of edges and moves *)
+            let new_node = ignode_set_edges (IGEdgeSet.union node.edges g2_node.edges) (ignode_set_moves (IGMoveSet.union node.moves g2_node.moves) node) in 
+            (* Remove g2_node from g2 *)
+            let reduced_g2 = IGNodeSet.remove g2_node g2 in
+            (* Add new node to igraph under construction *)
+            let new_igraph = IGNodeSet.add new_node igraph in
+                (reduced_g2, new_igraph)
+        else 
+            (* Add node unchanged to new graph *)
+            let new_igraph = IGNodeSet.add node igraph in
+                (g2, new_igraph) in
+        
+    let (reduced_g2, new_igraph) = IGNodeSet.fold merge_node graph1 (graph2, IGNodeSet.empty) in
+        (* Union remainder of graph2 with new_igraph. *)
+        IGNodeSet.union new_igraph reduced_g2;;
+
+    (* choose element out of graph1 *)
+    (* if element is in graph2, merge edges and moves and insert into new graph. Remove element from graph2 *)
+    (* otherwise, insert into new graph *)
+
+    (* Once graph1 is empty, add remainder of graph2 to new graph *)
+
 
 (* CHANGED ALGORITHM 
  * Our original algorithm, at least according to my understanding, would not produce the correct result in this case:
@@ -181,6 +229,9 @@ let build_block_igraph (b: io_block) : interfere_graph =
     let updated_insts = inst_gen_io_base b.block_out b.insts in
         List.fold_left add_inst_interferes IGNodeSet.empty updated_insts
 
+let build_igraph (bs: io_block list) : interfere_graph =
+    List.fold_left (fun g1 b ->
+                        igraph_merge g1 (build_block_igraph b)) IGNodeSet.empty bs
 
 
 
