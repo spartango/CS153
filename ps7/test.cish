@@ -1,16 +1,16 @@
 main() {
-       let j = 5;
-       let k = 2;
-       let g = *(j+12);
-        let h = k - 1;
-        let f = g * h;
-          let e = *(j+8);
-            let m = *(j+16);
-            let b = *(f+0);
-             let c = e + 8;
-             let d  = c;
-              let k = m + 4;
-              let j = b;  
+        j = 5;
+        k = 2;
+        g = *(j+12);
+         h = k - 1;
+         f = g * h;
+           e = *(j+8);
+             m = *(j+16);
+             b = *(f+0);
+              c = e + 8;
+              d  = c;
+               k = m + 4;
+              j = b;  
 
               u = d + k;
               u1 = j +2;
