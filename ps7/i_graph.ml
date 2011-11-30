@@ -241,7 +241,9 @@ let make_move_edges (ms: move_related list) (graph: interfere_graph) : interfere
 
 let build_block_igraph (b: io_block) : interfere_graph =
     (* inst_gen_io_base is a more general version of inst_gen_io that allows you to specify the base out set *)
+    let _ = print_endline (ioblock2str false false b) in 
     let updated_insts = inst_gen_io_base b.block_out b.insts in
+    let _ = List.map (fun i -> print_endline (ioinst2str i)) updated_insts in
     let igraph1 = List.fold_left add_inst_interferes IGNodeSet.empty updated_insts in
         make_move_edges b.block_move igraph1
         

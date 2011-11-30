@@ -17,8 +17,9 @@ exception FatalError
 let build_interfere_graph (f : func) : interfere_graph =
     (* See cfg_gen.ml for build_io_block *)    
     let initial_io_blocks = List.map build_io_block f in
+    let io_set_built_blocks = block_gen_io initial_io_blocks in
     (* See i_graph.ml for implementation *)
-        build_igraph initial_io_blocks
+        build_igraph io_set_built_blocks
 
 
 
