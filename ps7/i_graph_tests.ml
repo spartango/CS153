@@ -5,7 +5,8 @@ open I_graph
 open Cfg_gen
 open Test_ioblocks
 
-let raw_blocks = 
+
+let raw_block = 
   [ Label("main");
     Move( Var("j"), Int(5));
     Move( Var("k"), Int(2));
@@ -35,4 +36,13 @@ let build_node (v: var) (interferes: var list) : ignode =
 
 let node1 = build_node "n1" ["n2"]
 let node2 = build_node "n2" ["n1"; "n3"]
-let node3 = build_node "n3" ["n2"]
+let node3 = build_node "n3" ["n2"];;
+
+let build_interfere_graph (f : func) : interfere_graph =
+    (* See cfg_gen.ml for build_io_block *)    
+    let initial_io_blocks = List.map build_io_block f in
+    (* See i_graph.ml for implementation *)
+        build_igraph initial_io_blocks
+
+
+let _ = print_endline (igraph2str (build_interfere_graph [raw_block]))
