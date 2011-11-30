@@ -1,10 +1,11 @@
 open Pretty_print
 open Test_framework
+open Cfg_ast
 open I_graph
 open Cfg_gen
 
 let build_edge_set (v: var) (edge_vars: var list) : IGEdgeSet.t =
-    List.fold_left (fun edge_var set -> IGEdgeSet.add { left = edge_var; right = v}) IGEdgeSet.empty edge_vars
+    List.fold_left (fun set edge_var  -> IGEdgeSet.add { left = edge_var; right = v} set) IGEdgeSet.empty edge_vars
 
 let build_node (v: var) (interferes: var list) : ignode =
     let node1 = new_ignode v in
