@@ -3,6 +3,7 @@ open Test_framework
 open Cfg_ast
 open I_graph
 open Cfg_gen
+open Test_ioblocks
 
 let build_edge_set (v: var) (edge_vars: var list) : IGEdgeSet.t =
     List.fold_left (fun set edge_var  -> IGEdgeSet.add { left = edge_var; right = v} set) IGEdgeSet.empty edge_vars
