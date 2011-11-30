@@ -40,6 +40,7 @@ let create_blocks prog =
 let _ =
     let prog = parse_file () in
     let blocks = create_blocks prog in
+    let _ = print_endline (prog2string blocks) in
     let igraphs = List.map build_interfere_graph blocks in
         List.map (fun ig -> print_endline (igraph2str ig)) igraphs
 
