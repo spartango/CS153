@@ -3,6 +3,7 @@ open Test_framework
 open Cfg_ast
 open I_graph
 open Cfg_gen
+open Test_ioblocks
 
 let raw_blocks = 
   [ Label("main");
