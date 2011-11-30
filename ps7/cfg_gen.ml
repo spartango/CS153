@@ -112,7 +112,7 @@ let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
     )
     target
 
-(* Builds the In/Out sets for each instruction. block_out is the Out set for the final insturction *)
+(* Builds the In/Out sets for each instruction. block_out is the Out set for the final instruction *)
 let inst_gen_io_base (block_out: OutSet.t) (target: io_inst list) : io_inst list =
     let target1 = List.rev target in
     let (modified, _) = List.fold_left (fun accum io_i ->

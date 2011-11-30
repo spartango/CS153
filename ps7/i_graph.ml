@@ -58,28 +58,28 @@ let igraph2str (ig: interfere_graph) : string =
     IGNodeSet.fold (fun n str -> str ^ (ignode2str n)) ig ""
 
 let new_ignode (v: var) : ignode =
-    { name = v                 ;
-      edges = IGEdgeSet.empty  ;
-      moves = IGEdgeSet.empty  ;
-      color = None             ;
+    { name  = v               ;
+      edges = IGEdgeSet.empty ;
+      moves = IGEdgeSet.empty ;
+      color = None            ;
     }
 
 let ignode_set_edges (edgeset: IGEdgeSet.t) (n: ignode) : ignode =
-    { name = n.name   ;
+    { name  = n.name  ;
       edges = edgeset ;
       moves = n.moves ;
       color = n.color ;
     }
 
 let ignode_set_moves (moveset: IGMoveSet.t) (n: ignode) : ignode =
-    { name = n.name   ;
+    { name  = n.name  ;
       edges = n.edges ;
       moves = moveset ;
       color = n.color ;
     }
 
 let ignode_set_color (color: int option) (n: ignode) : ignode =
-    { name = n.name   ;
+    { name  = n.name  ;
       edges = n.edges ;
       moves = n.moves ;
       color = color   ;
@@ -190,19 +190,20 @@ let add_inst_interferes (graph: interfere_graph) (i: io_inst) : interfere_graph 
     (* Helper - marks In/Out sets as interfering with themselves in the graph *)
     let io_interfere (g: interfere_graph) : interfere_graph =
         let igraph1 = add_interfere_set i.inst_in g in
-            add_interfere_set i.inst_out igraph1 in
-
+            add_interfere_set i.inst_out igraph1 
+    in
     (* Adds a single variable to a graph and marks In/Out sets as interfering *)
     let var_io_interfere (v: var) : interfere_graph =
         let igraph1 = add_var v graph in
-            io_interfere igraph1 in
-        (* Match on inst to see if it defines a var *)
-        match i.src_inst with
-            | Move(Var x, _) -> var_io_interfere x
-            | Arith(Var x, _, _, _) -> var_io_interfere x
-            | Load(Var x, _, _) -> var_io_interfere x
-            | _ -> io_interfere graph
-
+            io_interfere igraph1 
+    in
+    (* Match on inst to see if it defines a var *)
+    match i.src_inst with
+        | Move(Var x, _)        
+        | Arith(Var x, _, _, _) 
+        | Load(Var x, _, _)      -> var_io_interfere x
+        | _                      -> io_interfere graph
+    
 (* NEW ALGORITHM *)
 
 (* Map over blocks *)
