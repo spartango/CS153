@@ -1,6 +1,7 @@
 open Cfg_ast
 open Io_types
 open Cfg_gen
+open Pretty_print
 exception TODO
 
 (* Why do we have this left/right edge piece. Can an edge set simply be a var set of the variables the node's variable conflicts with? *)
@@ -49,10 +50,10 @@ let color2str (c: int option) : string =
 
 let ignode2str (i: ignode) : string = 
     "{" ^ 
-        "\tName:\t " ^ i.name ^"\n" ^
-        "\tEdges:\t " ^ (igedgeset2str i.edges) ^ "\n" ^
-        "\tMoves:\t " ^ (igedgeset2str i.moves) ^ "\n" ^
-        "\tColor:\t " ^ (color2str i.color) ^ "\n}\n"
+        (format_string "\tName:\t "  Bright Cyan)^ i.name ^"\n" ^
+        (format_string "\tEdges:\t " Bright Cyan) ^ (igedgeset2str i.edges) ^ "\n" ^
+        (format_string "\tMoves:\t " Bright Cyan) ^ (igedgeset2str i.moves) ^ "\n" ^
+        (format_string "\tColor:\t " Bright Cyan) ^ (color2str i.color) ^ "\n}\n"
 
 let new_ignode (v: var) : ignode =
     { name  = v               ;
