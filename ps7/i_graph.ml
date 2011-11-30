@@ -54,9 +54,6 @@ let ignode2str (i: ignode) : string =
         "\tMoves:\t " ^ (igedgeset2str i.moves) ^ "\n" ^
         "\tColor:\t " ^ (color2str i.color) ^ "\n}\n"
 
-let igraph2str (ig: interfere_graph) : string = 
-    IGNodeSet.fold (fun n str -> str ^ (ignode2str n)) ig ""
-
 let new_ignode (v: var) : ignode =
     { name  = v               ;
       edges = IGEdgeSet.empty ;
@@ -90,6 +87,10 @@ let ignode_set_color (color: int option) (n: ignode) : ignode =
  * you how you want to represent the graph.  I've just put in a dummy
  * definition for now.  *)
 type interfere_graph = IGNodeSet.t
+
+let igraph2str (ig: interfere_graph) : string = 
+    IGNodeSet.fold (fun n str -> str ^ (ignode2str n)) ig ""
+
 
 let get_node (v : var) (target : interfere_graph) : ignode = 
   let filtered = IGNodeSet.filter (fun node -> node.name = v) target in
@@ -228,6 +229,7 @@ let add_inst_interferes (graph: interfere_graph) (i: io_inst) : interfere_graph 
 
 
 let build_block_igraph (b: io_block) : interfere_graph =
+    let _ = print_endline "hi" in
     (* inst_gen_io_base is a more general version of inst_gen_io that allows you to specify the base out set *)
     let updated_insts = inst_gen_io_base b.block_out b.insts in
         List.fold_left add_inst_interferes IGNodeSet.empty updated_insts
