@@ -8,8 +8,6 @@ exception FatalError
 (*******************************************************************)
 (* PS7 TODO:  interference graph construction *)
 
-
-
 (* given a function (i.e., list of basic blocks), construct the
  * interference graph for that function.  This will require that
  * you build a dataflow analysis for calculating what set of variables
@@ -92,3 +90,33 @@ let reg_alloc (f : func) : func =
 let cfg_to_mips (f : func ) : Mips.inst list = 
     raise Implement_Me
 
+(* Helpers *)
+
+(* High level *)
+(* Removes*)
+
+
+
+(* Performs a map on an inteference graph *)
+let igraph_map (f: ignode -> ignode) (g: interfere_graph) : interfere_graph =
+    raise Implement_Me
+
+(* Gets number of edges of a node *)
+let count_edges (n: ignode) : ignode =
+    raise Implement_Me
+
+(* Remove an edge from a node *)
+let remove_edge (n: ignode) (e: igedge) : ignode =
+    raise Implement_Me
+
+(* Takes a node out of the graph, removing edges to it *)
+let remove_node (n: node) (g: interfere_graph) : interfere_graph =
+    raise Implement_Me
+
+(* Combines the edge and move sets of two nodes *)
+let coalesce_node (n: node) (coalesced_node: ignode) : ignode =
+    raise Implement_Me
+
+(* Maps coalesced nodes into graph -  *)
+let map_coalesced (n: node) (coalesced_node: ignode) (g: intfere_graph) : interfere_graph =
+    raise Implement_Me
