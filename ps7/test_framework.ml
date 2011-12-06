@@ -23,6 +23,20 @@ let mk_verbose_expect_test (f : unit -> 'a) (expected : 'a) (to_string : 'a -> s
     in
     Verbose_Test(name, t_test)
 
+(* Makes a verbose expect test, but allows for specification of function to test for equality *)
+let mk_generic_equals_test (eq: 'a -> 'a -> bool) (f: unit -> 'a) (expected: 'a) (to_string: 'a -> string) (name: string) =
+    let t_test = fun () -> 
+        let result  = f ()              in 
+        let pass    = eq result expected in
+        let message = 
+            if pass 
+            then "Got expected result -> "^(format_string (to_string result) Bright Green) 
+            else "Result doesn't match expected -> "^(format_string (to_string result) Bright Red)
+                ^" vs "^(format_string (to_string expected) Bright Green)
+        in (pass, message)
+    in
+        Verbose_Test(name, t_test)
+
 (* Runs a single test *)
 let run_test  (t_test : test) : (bool * string) = 
     match t_test with 

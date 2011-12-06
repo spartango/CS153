@@ -54,10 +54,14 @@ io_tests: cfg cish mips test_files
 	$(COMPILER) -o io_tests utility.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo pretty_print.cmo test_framework.cmo io_tests.cmo
 	./io_tests
 
-test: cfg_gen_tests i_graph_tests io_tests
+reg_allocation_tests: cfg cish mips test_files
+	$(COMPILER) -c reg_allocation_tests.ml
+	$(COMPILER) -o io_tests utility.cmo pretty_print.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo i_graph.cmo stack.cmo reg_allocation.cmo test_framework.cmo reg_allocation_tests.ml
+
+test: cfg_gen_tests i_graph_tests io_tests reg_allocation_tests
 
 toplevel: cfg
-	ocamlmktop -o toplevel utility.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo pretty_print.cmo test_framework.cmo cfg_gen_tests.cmo
+	ocamlmktop -o toplevel utility.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo  test_framework.cmo cfg_gen_tests.cmo
 
 clean:
 	rm -rf *.cmo *.cmi ps7_cfg cfg_gen_tests i_graph_tests io_tests cish_parse.ml cish_parse.mli cish_lex.ml toplevel

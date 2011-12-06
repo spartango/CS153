@@ -93,6 +93,15 @@ type interfere_graph = IGNodeSet.t
 let igraph2str (ig: interfere_graph) : string = 
     IGNodeSet.fold (fun n str -> str ^ (ignode2str n)) ig ""
 
+let build_edge_set (v: var) (edge_vars: var list) : IGEdgeSet.t =
+    List.fold_left (fun set edge_var  -> IGEdgeSet.add { interfere_var = edge_var; node_var = v} set) IGEdgeSet.empty edge_vars
+
+let build_node (v: var) (interferes: var list) : ignode =
+    let node1 = new_ignode v in
+        ignode_set_edges (build_edge_set v interferes) node1
+
+let build_graph (nodes: ignode list) : interfere_graph =
+    List.fold_left (fun g n -> IGNodeSet.add n g) IGNodeSet.empty nodes
 
 let get_node (v : var) (target : interfere_graph) : ignode = 
   let filtered = IGNodeSet.filter (fun node -> node.name = v) target in
