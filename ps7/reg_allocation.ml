@@ -14,6 +14,14 @@ let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph 
 let count_edges (node: ignode) : int =
     IGEdgeSet.cardinal node.edges
 
+let is_move_related (node: ignode) : bool =
+    not (IGMoveSet.is_empty node.moves)
+
+let is_colored (node: ignode) : bool =
+    match node.color with 
+        | None -> false
+        | Some i -> true
+
 (* Unmarks interfering as interfering with node. *)
 (* Makes no change to node if does not already interfere with interfereing *)
 let remove_interfere (node: ignode) (interfering: var) : ignode =
@@ -30,12 +38,17 @@ let remove_node (node: ignode) (graph: interfere_graph) : interfere_graph =
     (* Removes all remaining interference edges to that node in the graph *)
         igraph_map (fun n -> remove_interfere n node.name) updated_graph
 
+(* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
+let simplify (graph: interfere_graph) : interfere_graph =
+    let is_removable (n: ignode) : bool = (count_edges n) < number_registers || not (is_move_related n) || not (is_colored n) in
+        graph
+    (* Iterates over graph until finds removable node *)
 
 (* ALGORITHM FOR REGISTER ALLOCATION *)
 
 (* Simplify graph *)
-            (* Fold on interference graph *)
-            (* If an element has fewer than k edges *)
+            (* Loop over interference graph *)
+            (* If an element has fewer than k edges and is not move related or pre-colored *)
                  (* Add node to stack *)
                  (* Remove node from graph *)
                  (* Start folding again on new graph *)
