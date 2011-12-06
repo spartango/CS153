@@ -11,15 +11,15 @@ type igedge = { interfere_var  : var;
               } 
 
 let igedge2str (e: igedge) : string = 
-        "(" ^ e.interfere_var ^ ", " ^ e.right ^ ")"
+        "(" ^ e.interfere_var ^ ", " ^ e.node_var ^ ")"
 
-(* Sort based on left edge, but prevents duplication *)
+(* Sort based on interfere_var edge, but prevents duplication *)
 module IGEdgeSet = Set.Make(struct 
                               type t = igedge 
                               let compare = 
                                 fun e1 e2 ->
-                                  let l_comp = String.compare e1.left e2.left   in
-                                  let r_comp = String.compare e1.right e2.right in 
+                                  let l_comp = String.compare e1.interfere_var e2.interfere_var   in
+                                  let r_comp = String.compare e1.node_var e2.node_var in 
                                   if (l_comp = 0 && r_comp = 0) then 0 
                                   else l_comp
                             end)
@@ -119,7 +119,7 @@ let add_vars (s: VarSet.t) (graph: interfere_graph) : interfere_graph =
 let mark_interfere (v: var) (e: var) (graph: interfere_graph) : interfere_graph =
     let v_node = get_node v graph in
     (* New edge set - TODO CHECK whether this is the "right" idea with right/left edges?*)
-    let updated_edges = IGEdgeSet.add {left = e; right = v} v_node.edges in
+    let updated_edges = IGEdgeSet.add {interfere_var = e; node_var = v} v_node.edges in
     let updated_node = ignode_set_edges updated_edges v_node in
         update_igraph updated_node graph 
 
@@ -226,8 +226,8 @@ let make_move_edges (ms: move_related list) (graph: interfere_graph) : interfere
                         let (var1, var2) = mv in
                         let node1 = get_node var1 g in
                         let node2 = get_node var2 g in
-                        let move1 = { left = var1; right = var2 } in
-                        let move2 = { left = var2; right = var1 } in
+                        let move1 = { interfere_var = var1; node_var = var2 } in
+                        let move2 = { interfere_var = var2; node_var = var1 } in
                         let node1_updated = ignode_set_moves (IGMoveSet.add move1 node1.moves) node1 in
                         let node2_updated = ignode_set_moves (IGMoveSet.add move2 node2.moves) node2 in
                             update_igraph node1_updated (update_igraph node2_updated g)) graph ms
