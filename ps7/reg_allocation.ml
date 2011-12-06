@@ -2,6 +2,8 @@ open Cfg_ast
 open Io_types
 open I_graph
 
+let number_registers = 28
+
 (* Helper functions *)
 
 (* Performs a map on an inteference graph *)
@@ -27,3 +29,14 @@ let remove_node (node: ignode) (graph: interfere_graph) : interfere_graph =
     let updated_graph = IGNodeSet.remove node graph in 
     (* Removes all remaining interference edges to that node in the graph *)
         igraph_map (fun n -> remove_interfere n node.name) updated_graph
+
+
+(* ALGORITHM FOR REGISTER ALLOCATION *)
+
+(* Simplify graph *)
+            (* Fold on interference graph *)
+            (* If an element has fewer than k edges *)
+                 (* Add node to stack *)
+                 (* Remove node from graph *)
+                 (* Start folding again on new graph *)
+            (* Else continue to next node *)
