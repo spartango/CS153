@@ -4,13 +4,14 @@ open Cfg_gen
 open Pretty_print
 exception TODO
 
-(* Why do we have this left/right edge piece. Can an edge set simply be a var set of the variables the node's variable conflicts with? *)
-type igedge = { left  : var;
-                right : var; 
+(* node_var: Var of the node the edge belongs to 
+   interfere_var Var interfering with node_var *)
+type igedge = { interfere_var  : var;
+                node_var       : var; 
               } 
 
 let igedge2str (e: igedge) : string = 
-        "(" ^ e.left ^ ", " ^ e.right ^ ")"
+        "(" ^ e.interfere_var ^ ", " ^ e.right ^ ")"
 
 (* Sort based on left edge, but prevents duplication *)
 module IGEdgeSet = Set.Make(struct 
@@ -138,7 +139,6 @@ let mark_set_interfere (s: VarSet.t) (graph: interfere_graph) : interfere_graph 
 let add_interfere_set (s: VarSet.t) (g: interfere_graph) : interfere_graph = 
     mark_set_interfere s (add_vars s g)
 
-
 (* Merges two IGNodeSets
  * Returns the union of the two sets. When both sets contain the same member, unions their edge and move sets *)
 (* WILL RESET COLOR to "None" *)
@@ -164,13 +164,6 @@ let igraph_merge (graph1: interfere_graph) (graph2: interfere_graph) : interfere
     let (reduced_g2, new_igraph) = IGNodeSet.fold merge_node graph1 (graph2, IGNodeSet.empty) in
         (* Union remainder of graph2 with new_igraph. *)
         IGNodeSet.union new_igraph reduced_g2;;
-
-    (* choose element out of graph1 *)
-    (* if element is in graph2, merge edges and moves and insert into new graph. Remove element from graph2 *)
-    (* otherwise, insert into new graph *)
-
-    (* Once graph1 is empty, add remainder of graph2 to new graph *)
-
 
 (* CHANGED ALGORITHM 
  * Our original algorithm, at least according to my understanding, would not produce the correct result in this case:
@@ -249,39 +242,3 @@ let build_block_igraph (b: io_block) : interfere_graph =
 let build_igraph (bs: io_block list) : interfere_graph =
     List.fold_left (fun g1 b ->
                         igraph_merge g1 (build_block_igraph b)) IGNodeSet.empty bs
-
-
-
-(* OLD ALGORITHM *)
-
-(*
-    
-    let igraph1 = add_interfere_set b.block_in IGNodeSet.empty in
-    let igraph2 = add_interfere_set b.block_out igraph1 in
-    (* Get intersections of In/Out sets *)
-    let io_intersect = VarSet.inter b.block_in b.block_out in
-        igraph2
-*)
-
-(* FOREACH BLOCK *)
-
-(* Add block In/Out variables to graph and mark as interfering with themselves *)
-(* Get intersection of In/Out sets *)
-
-(* For each instruction in a block *)
-      (* Check if variable whose value is assigned in instruction is in graph 
-       * - Add if not in graph
-       * - Ignore if/jump/return - i.e. ignore control flow instructions that terminate blocks*)
-
-      (* Mark all variables in In Set as conflicting with each other in graph 
-       * - Fold over In set
-       * - Pass removed element to mark_set_conflict with the complete In set minus the remove element *)
-      (* Mark all variables in Out set as conflicting with each other - same procedure as In set *)
-
-(* Mark variables in the resulting union as interfering with all variables in the block *)
-
-(* Merge graph with accumulated i_graph *)
-
-(* END FOREACH *)  
-
-(* Mark move related variables and unmark them as interferening *)

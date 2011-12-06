@@ -98,10 +98,6 @@ let cfg_to_mips (f : func ) : Mips.inst list =
 
 
 
-(* Takes a node out of the graph, removing edges to it *)
-let remove_node (n: ignode) (g: interfere_graph) : interfere_graph =
-    raise Implement_Me
-
 (* Combines the edge and move sets of two nodes *)
 let coalesce_node (n: ignode) (coalesced_node: ignode) : ignode =
     raise Implement_Me
