@@ -2,6 +2,7 @@ open Cfg_ast
 open I_graph
 open Io_types
 open Cfg_gen
+open Reg_allocation
 exception Implement_Me
 exception FatalError
 
@@ -110,13 +111,13 @@ let remove_edge (n: ignode) (e: igedge) : ignode =
     raise Implement_Me
 
 (* Takes a node out of the graph, removing edges to it *)
-let remove_node (n: node) (g: interfere_graph) : interfere_graph =
+let remove_node (n: ignode) (g: interfere_graph) : interfere_graph =
     raise Implement_Me
 
 (* Combines the edge and move sets of two nodes *)
-let coalesce_node (n: node) (coalesced_node: ignode) : ignode =
+let coalesce_node (n: ignode) (coalesced_node: ignode) : ignode =
     raise Implement_Me
 
 (* Maps coalesced nodes into graph -  *)
-let map_coalesced (n: node) (coalesced_node: ignode) (g: intfere_graph) : interfere_graph =
+let map_coalesced (n: ignode) (coalesced_node: ignode) (g: interfere_graph) : interfere_graph =
     raise Implement_Me
