@@ -98,16 +98,6 @@ let cfg_to_mips (f : func ) : Mips.inst list =
 
 
 
-(* Performs a map on an inteference graph *)
-let igraph_map (f: ignode -> ignode) (g: interfere_graph) : interfere_graph =
-    raise Implement_Me
-
-
-
-(* Remove an edge from a node *)
-let remove_edge (n: ignode) (e: igedge) : ignode =
-    raise Implement_Me
-
 (* Takes a node out of the graph, removing edges to it *)
 let remove_node (n: ignode) (g: interfere_graph) : interfere_graph =
     raise Implement_Me
