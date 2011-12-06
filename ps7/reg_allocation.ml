@@ -6,6 +6,15 @@ let number_registers = 28
 
 (* Helper functions *)
 
+(* Gets a single element off the igraph. returns an tuple of a node and the remaining igraph or None if empty igraph *)
+
+let get_node (graph: interfere_graph) : (ignode * interfere_graph) option =
+    try
+        let node = IGNodeSet.choose graph in
+            Some (node, (IGNodeSet.remove node graph))
+    with
+            Not_found -> None
+ 
 (* Performs a map on an inteference graph *)
 let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph =
     IGNodeSet.fold (fun node g -> IGNodeSet.add (f node) g) graph IGNodeSet.empty
@@ -38,14 +47,6 @@ let remove_node (node: ignode) (graph: interfere_graph) : interfere_graph =
     (* Removes all remaining interference edges to that node in the graph *)
         igraph_map (fun n -> remove_interfere n node.name) updated_graph
 
-(* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
-let simplify (graph: interfere_graph) : interfere_graph =
-    let is_removable (n: ignode) : bool = (count_edges n) < number_registers || not (is_move_related n) || not (is_colored n) in
-        graph
-    (* Iterates over graph until finds removable node *)
-
-(* ALGORITHM FOR REGISTER ALLOCATION *)
-
 (* Simplify graph *)
             (* Loop over interference graph *)
             (* If an element has fewer than k edges and is not move related or pre-colored *)
@@ -53,3 +54,22 @@ let simplify (graph: interfere_graph) : interfere_graph =
                  (* Remove node from graph *)
                  (* Start folding again on new graph *)
             (* Else continue to next node *)
+
+(* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
+let rec simplify (graph: interfere_graph) : interfere_graph =
+    let is_removable (n: ignode) : bool = (count_edges n) < number_registers || not (is_move_related n) || not (is_colored n) in
+        match (get_node graph) with
+            (* None means that the graph is empty and there are no more nodes to possibly reduce *)
+            | None -> graph
+            | Some(node, remainder) ->
+                  if (is_removable node)
+                  then 
+                      let new_graph = remove_node node remainder in
+                          simplify new_graph
+                  else 
+                      simplify remainder
+    (* Iterates over graph until finds removable node *)
+
+(* ALGORITHM FOR REGISTER ALLOCATION *)
+
+
