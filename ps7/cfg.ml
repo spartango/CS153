@@ -102,9 +102,7 @@ let cfg_to_mips (f : func ) : Mips.inst list =
 let igraph_map (f: ignode -> ignode) (g: interfere_graph) : interfere_graph =
     raise Implement_Me
 
-(* Gets number of edges of a node *)
-let count_edges (n: ignode) : ignode =
-    raise Implement_Me
+
 
 (* Remove an edge from a node *)
 let remove_edge (n: ignode) (e: igedge) : ignode =
