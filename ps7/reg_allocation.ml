@@ -1,6 +1,7 @@
 open Cfg_ast
 open Io_types
 open I_graph
+open Stack
 
 let number_registers = 28
 
@@ -56,18 +57,19 @@ let remove_node (node: ignode) (graph: interfere_graph) : interfere_graph =
             (* Else continue to next node *)
 
 (* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
-let rec simplify (graph: interfere_graph) : interfere_graph =
+let rec simplify (graph: interfere_graph) (v_stack: VarStack.t): interfere_graph * VarStack.t =
     let is_removable (n: ignode) : bool = (count_edges n) < number_registers || not (is_move_related n) || not (is_colored n) in
         match (get_node graph) with
             (* None means that the graph is empty and there are no more nodes to possibly reduce *)
-            | None -> graph
+            | None -> (graph, v_stack)
             | Some(node, remainder) ->
                   if (is_removable node)
                   then 
+                      let new_stack = VarStack.push node.name v_stack in
                       let new_graph = remove_node node remainder in
-                          simplify new_graph
+                          simplify new_graph new_stack
                   else 
-                      simplify remainder
+                      simplify remainder v_stack
     (* Iterates over graph until finds removable node *)
 
 (* ALGORITHM FOR REGISTER ALLOCATION *)
