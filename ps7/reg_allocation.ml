@@ -3,18 +3,7 @@ open Io_types
 open I_graph
 open Stack
 
-let number_registers = 28
-
 (* Helper functions *)
-
-(* Gets a single element off the igraph. returns an tuple of a node and the remaining igraph or None if empty igraph *)
-
-let get_node (graph: interfere_graph) : (ignode * interfere_graph) option =
-    try
-        let node = IGNodeSet.choose graph in
-            Some (node, (IGNodeSet.remove node graph))
-    with
-            Not_found -> None
  
 (* Performs a map on an inteference graph *)
 let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph =
@@ -31,6 +20,9 @@ let is_colored (node: ignode) : bool =
     match node.color with 
         | None -> false
         | Some i -> true
+
+(* Determines whether it is is safe to remove a given element from the graph *)
+let is_removable (n: ignode) (num_regs: int) : bool = ((count_edges n) < num_regs) && (not (is_move_related n)) && (not (is_colored n))
 
 (* Unmarks interfering as interfering with node. *)
 (* Makes no change to node if does not already interfere with interfereing *)
@@ -49,27 +41,44 @@ let remove_node (node: ignode) (graph: interfere_graph) : interfere_graph =
         igraph_map (fun n -> remove_interfere n node.name) updated_graph
 
 (* Simplify graph *)
-            (* Loop over interference graph *)
-            (* If an element has fewer than k edges and is not move related or pre-colored *)
-                 (* Add node to stack *)
-                 (* Remove node from graph *)
-                 (* Start folding again on new graph *)
-            (* Else continue to next node *)
+            (* Get list of element in graph *)
+            (* Run through list of elements *)
+                 (* If an element has fewer than k edges and is not move related or pre-colored *)
+                     (* Add node to stack *)
+                     (* Remove node from graph *)
+                     (* Continue to element using new graph  *)
+                 (* Else continue to next node *)
+            (* Check if graph has changed at all *)
 
 (* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
-let rec simplify (num_regs: int) (graph: interfere_graph) (v_stack: VarStack.t) : interfere_graph * VarStack.t =
-    let is_removable (n: ignode) : bool = (count_edges n) < num_regs || not (is_move_related n) || not (is_colored n) in
-        match (get_node graph) with
-            (* None means that the graph is empty and there are no more nodes to possibly reduce *)
-            | None -> (graph, v_stack)
-            | Some(node, remainder) ->
-                  if (is_removable node)
+let simplify (num_regs: int) (initial_graph: interfere_graph) : interfere_graph * VarStack.t =
+
+    (* Performs one round of simplification over the graph *)
+    let rec simplify_r (g: interfere_graph) (v_stack: VarStack.t) (work_stack: ignode list) : interfere_graph * VarStack.t =
+        match work_stack with 
+            | [] -> (g, v_stack)
+            | node::work_stack_tail ->
+                  if (is_removable node num_regs)
                   then 
                       let new_stack = VarStack.push node.name v_stack in
-                      let new_graph = remove_node node remainder in
-                          simplify num_regs new_graph new_stack
+                      let new_graph = remove_node node g in
+                          simplify_r new_graph new_stack work_stack_tail
                   else 
-                      simplify num_regs remainder v_stack
+                      simplify_r g v_stack work_stack_tail in
+
+    (* Performs simplification on the grpah until it is stable *)
+    let rec loop (g: interfere_graph) (v_stack: VarStack.t) : interfere_graph * VarStack.t =
+        let work_stack = IGNodeSet.elements g in
+        let (new_graph, new_v_stack) = simplify_r g v_stack work_stack in
+            if new_graph = g
+            then 
+                (* Graph is stable, so simplification is over *)
+                (new_graph, new_v_stack)
+            else
+                (* Do another round of simplification *)
+                loop new_graph new_v_stack in
+            loop initial_graph VarStack.empty
+                 
     (* Iterates over graph until finds removable node *)
 
 (* ALGORITHM FOR REGISTER ALLOCATION *)

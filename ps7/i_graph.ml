@@ -240,9 +240,9 @@ let make_move_edges (ms: move_related list) (graph: interfere_graph) : interfere
     List.fold_left (fun g mv -> 
                         let (var1, var2) = mv in
                         let node1 = get_node var1 g in
+                        let move1 = { interfere_var = var2; node_var = var1 } in
                         let node2 = get_node var2 g in
-                        let move1 = { interfere_var = var1; node_var = var2 } in
-                        let move2 = { interfere_var = var2; node_var = var1 } in
+                        let move2 = { interfere_var = var1; node_var = var2 } in
                         let node1_updated = ignode_set_moves (IGMoveSet.add move1 node1.moves) node1 in
                         let node2_updated = ignode_set_moves (IGMoveSet.add move2 node2.moves) node2 in
                             update_igraph node1_updated (update_igraph node2_updated g)) graph ms
@@ -257,3 +257,24 @@ let build_block_igraph (b: io_block) : interfere_graph =
 let build_igraph (bs: io_block list) : interfere_graph =
     List.fold_left (fun g1 b ->
                         igraph_merge g1 (build_block_igraph b)) IGNodeSet.empty bs
+
+(* Gets a single element off the igraph. returns an tuple of a node and the remaining igraph or None if empty igraph *)
+let get_node (graph: interfere_graph) : (ignode * interfere_graph) option =
+    try
+        let node = IGNodeSet.choose graph in
+            Some (node, (IGNodeSet.remove node graph))
+    with
+            Not_found -> None
+
+(*
+let equal_edge_set
+
+let rec equal_igraph (g1: interfere_graph) (g2: interfere_graph) : bool =
+    match (get_node g1, get_node g2) with
+        | (None, None) ->
+              true
+        | (Some(n1, g1_remainder), Some(n2, g2_remainder)) ->
+              if (n1.name = n2.name &&
+                     IGVarSet.
+                       
+*)
