@@ -10,19 +10,6 @@ let mk_test_verbose = false
 let show_insts = true
 let show_src_block = true
 
-let mk_generic_equals_test (eq: 'a -> 'a -> bool) (f: unit -> 'a) (expected: 'a) (to_string: 'a -> string) (name: string) =
-    let t_test = fun () -> 
-        let result  = f ()              in 
-        let pass    = eq result expected in
-        let message = 
-            if pass 
-            then "Got expected result -> "^(format_string (to_string result) Bright Green) 
-            else "Result doesn't match expected -> "^(format_string (to_string result) Bright Red)
-                ^" vs "^(format_string (to_string expected) Bright Green)
-        in (pass, message)
-    in
-        Verbose_Test(name, t_test)
-
 let mk_rw_test (i: inst) (rs: ReadSet.t) (ws: WriteSet.t) (mvs: (var * var) list) (name: string) =
     if mk_test_verbose
     then 

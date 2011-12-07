@@ -6,35 +6,7 @@ open Io_types
 open Cfg_gen
 open Test_ioblocks
 
-let raw_block0 =
-    [ Label("L0");
-      Move( Var("j"), Int(5));
-      Move( Var("k"), Int(2));
-      Jump("L1")
-    ]
 
-let raw_block1 = 
-  [ Label("L1");
-    Load( Var("g"), Var("j"), 12);
-    Arith( Var("h"), Var("k"), Minus, Int(1));
-    Arith( Var("f"), Var("g"), Times, Var("h"));
-    Load( Var("e"), Var("j"), 8);
-    Load( Var("m"), Var("j"), 16  );
-    Load( Var("b"), Var("f"), 0 );
-    Arith( Var("c"), Var("e"), Plus, Int(8));
-    Move( Var("d"), Var("c"));
-    Arith( Var("k"), Var("m"), Plus, Int(4));
-    Move( Var("j"), Var("b"));  
-    Jump("L2")
-  ]
-
-let raw_block2 =
-  [ Label("L2");
-    Arith( Var("u"), Var("d"), Plus, Var("k"));
-    Arith( Var("u1"), Var("j"), Plus, Int(2));
-    Move( Reg(Mips.R2), Var("u1"));
-    Return ;
-  ]
 ;;
 
 let node1 = build_node "n1" ["n2"]
@@ -50,4 +22,4 @@ let build_interfere_graph (f : func) : interfere_graph =
         build_igraph io_set_built_blocks
 
 
-let _ = print_endline (igraph2str (build_interfere_graph [raw_block0; raw_block1; raw_block2;]))
+let _ = print_endline (igraph2str (build_interfere_graph [example0_block0; example0_block1; example0_block2;]))

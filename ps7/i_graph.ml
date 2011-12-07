@@ -103,6 +103,12 @@ let build_node (v: var) (interferes: var list) : ignode =
 let build_graph (nodes: ignode list) : interfere_graph =
     List.fold_left (fun g n -> IGNodeSet.add n g) IGNodeSet.empty nodes
 
+let equal_nodes (n1: ignode) (n2: ignode) : bool =
+    n1.name = n2.name &&
+    IGEdgeSet.equal n1.edges n2.edges &&
+    IGMoveSet.equal n1.moves n2.moves &&
+    n1.color = n2.color
+
 let get_node (v : var) (target : interfere_graph) : ignode = 
   let filtered = IGNodeSet.filter (fun node -> node.name = v) target in
   IGNodeSet.choose filtered 
