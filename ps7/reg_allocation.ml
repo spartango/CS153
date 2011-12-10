@@ -9,6 +9,11 @@ open Stack
 let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph =
     IGNodeSet.fold (fun node g -> IGNodeSet.add (f node) g) graph IGNodeSet.empty
 
+(* Returns a list of the nodes that satisfy p *)
+let igraph_filter_elements (g: interfere_graph) (p: ignode -> bool) : ignode list =
+    IGNodeSet.elements (IGNodeSet.filter p g)
+
+
 (* Gets number of edges of a node *)
 let count_edges (node: ignode) : int =
     IGEdgeSet.cardinal node.edges
@@ -39,16 +44,6 @@ let remove_node (node: ignode) (graph: interfere_graph) : interfere_graph =
     let updated_graph = IGNodeSet.remove node graph in 
     (* Removes all remaining interference edges to that node in the graph *)
         igraph_map (fun n -> remove_interfere n node.name) updated_graph
-
-(* Simplify graph *)
-            (* Get list of element in graph *)
-            (* Run through list of elements *)
-                 (* If an element has fewer than k edges and is not move related or pre-colored *)
-                     (* Add node to stack *)
-                     (* Remove node from graph *)
-                     (* Continue to element using new graph  *)
-                 (* Else continue to next node *)
-            (* Check if graph has changed at all *)
 
 (* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
 let simplify (num_regs: int) (initial_graph: interfere_graph) : interfere_graph * VarStack.t =
@@ -82,5 +77,26 @@ let simplify (num_regs: int) (initial_graph: interfere_graph) : interfere_graph 
     (* Iterates over graph until finds removable node *)
 
 (* ALGORITHM FOR REGISTER ALLOCATION *)
+(* MASTER GRAPH - original interference graph that should not be modified *)
+(* WORK GRAPH - graph passed between functions as we try to reduce it *)
 
+(* Simplify graph - remove non-move-related nodes with fewer than k edges *)
+            (* Get list of element in graph *)
+            (* Run through list of elements *)
+                 (* If an element has fewer than k edges and is not move related or pre-colored *)
+                     (* Add node to stack *)
+                     (* Remove node from graph *)
+                     (* Continue to element using new graph  *)
+                 (* Else continue to next node *)
+            (* Check if graph has changed at all *)
 
+(* Coalesce move related nodes *)
+            (* Make worklist of move-related elements *)
+            (* Run through list of node, checking if each can be coalesced *)
+                (* For each move-related edge *)
+                     (* If each neighbor of the node (x) has fewer than k edges or interferes with other y *)
+                         (* Coalesce y into x - remove y and replace with x *)
+                         (* Remove move-related edge *)
+                         (* Simplify result and re-coalesce - i.e. throw away worklist *)
+                     (* Else continue to next edge *)
+            (* Once no more edges to coalesce, return working graph in current state *)
