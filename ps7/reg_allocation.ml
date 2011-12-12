@@ -3,6 +3,8 @@ open Io_types
 open I_graph
 open Stack
 
+exception Implement_Me
+
 (* Helper functions *)
  
 (* Performs a map on an inteference graph *)
@@ -38,6 +40,12 @@ let remove_interfere (node: ignode) (interfering: var) : ignode =
         (* Return updated node *)
         ignode_set_edges new_edge_set node
 
+(* Removes move related edge between node.name and move_related *)
+let remove_move (node: ignode) (move_related: var) : ignode =
+    let move_edge = { node_var = node.name; interfere_var = move_related } in
+    let new_move_set = IGMoveSet.remove move_edge node.edges in
+        ignode_set_moves new_move_set node
+
 (* Takes a node out of the graph, removing edges to it *)
 let remove_node (node: ignode) (graph: interfere_graph) : interfere_graph =
     (* Removes node from graph *)
@@ -55,7 +63,7 @@ let simplify (num_regs: int) (initial_graph: interfere_graph) : interfere_graph 
             | node::work_stack_tail ->
                   if (is_removable node num_regs)
                   then 
-                      let new_stack = VarStack.push node.name v_stack in
+                      let new_stack = VarStack.push (Single(node.name)) v_stack in
                       let new_graph = remove_node node g in
                           simplify_r new_graph new_stack work_stack_tail
                   else 
@@ -73,8 +81,28 @@ let simplify (num_regs: int) (initial_graph: interfere_graph) : interfere_graph 
                 (* Do another round of simplification *)
                 loop new_graph new_v_stack in
             loop initial_graph VarStack.empty
-                 
-    (* Iterates over graph until finds removable node *)
+
+
+
+(* Checks if two nodes can be coalesced *)
+let is_coalescable (n: ignode) (related_node: ignode) (graph: interfere_graph) : bool =
+    raise Implement_Me
+    (* Get move related edges *)
+    (* *)
+
+(* Combines the edge and move sets of two nodes *)
+let coalesce_nodes (n: ignode) (coalesced_node: ignode) : ignode =
+    raise Implement_Me
+
+(* Maps coalesced nodes into graph -  *)
+let map_coalesced (n: ignode) (coalesced_node: ignode) (g: interfere_graph) : interfere_graph =
+    raise Implement_Me
+
+
+
+let coalesce (num_regs: int) (graph: interfere_graph) (v_stack: VarStack.t) : interfere_graph * VarStack.t =
+    let move_related_list = igraph_filter_elements graph (fun n -> not (IGMoveSet.is_empty n.moves)) in
+        raise Implement_Me
 
 (* ALGORITHM FOR REGISTER ALLOCATION *)
 (* MASTER GRAPH - original interference graph that should not be modified *)

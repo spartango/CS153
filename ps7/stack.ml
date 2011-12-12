@@ -27,4 +27,6 @@ module SimpleStack (A: STACK_ARGS) : (STACK with type elt = A.t) =
         let empty = []
     end 
 
-module VarStack = SimpleStack(struct type t = var end);;
+type var_stack_element = Single of var | Coalesced of var list 
+
+module VarStack = SimpleStack(struct type t = var_stack_element end);;
