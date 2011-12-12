@@ -14,7 +14,7 @@ let node4 = build_node "n4" ["n1";"n2";"n3"]
 let test_graph1 = build_graph [node1; node2; node3; node4]
 
 let is_simplified (g: interfere_graph) (regs: int) : bool =
-    IGNodeSet.fold (fun e accum -> (not (is_removable e regs)) && accum) g true
+    IGNodeSet.fold (fun e accum -> (not (is_simplifiable e regs)) && accum) g true
 
 let mk_simplify_test_graph (g: interfere_graph) (regs: int) (exp: interfere_graph) (name: string) =
     mk_generic_equals_test IGNodeSet.equal (fun () -> let (g, stack) = simplify regs g in g) exp igraph2str name

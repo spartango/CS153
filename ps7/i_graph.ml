@@ -114,11 +114,11 @@ let get_node (v : var) (target : interfere_graph) : ignode =
   IGNodeSet.choose filtered 
 
 (* Updates graph with new copy of node *)
-let update_igraph (n: ignode) (graph: interfere_graph) : interfere_graph =
-    (* Remove node from graph - nodes compared by name *)
-    let graph1 = IGNodeSet.remove n graph in
+let update_igraph (node: ignode) (graph: interfere_graph) : interfere_graph =
+    (* Remove node from graph. Returns set of all nodes whose name is not n.name *)
+    let graph1 = IGNodeSet.filter (fun n -> n.name <> node.name) graph in
     (* Add node back into graph *)
-        IGNodeSet.add n graph1
+        IGNodeSet.add node graph1
 
 (* Helper - adds e to graph if not already present *)
 let add_var (e: var) (graph: interfere_graph) : interfere_graph = 
@@ -259,7 +259,7 @@ let build_igraph (bs: io_block list) : interfere_graph =
                         igraph_merge g1 (build_block_igraph b)) IGNodeSet.empty bs
 
 (* Gets a single element off the igraph. returns an tuple of a node and the remaining igraph or None if empty igraph *)
-let get_node (graph: interfere_graph) : (ignode * interfere_graph) option =
+let choose_node (graph: interfere_graph) : (ignode * interfere_graph) option =
     try
         let node = IGNodeSet.choose graph in
             Some (node, (IGNodeSet.remove node graph))
