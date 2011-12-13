@@ -52,21 +52,27 @@ let remove_node (node: ignode) (graph: interfere_graph) : interfere_graph =
     (* Removes all remaining interference edges to that node in the graph *)
         igraph_map (fun n -> remove_interfere n node.name) updated_graph
 
+(* Push a node onto a var stack, check to see if that node is coalesced *)
+let push_node (node: ignode) (v_stack: VarStack.t) : VarStack.t =
+    match node.coalesced with
+        | None -> VarStack.push (Single(node.name)) v_stack
+        | Some coalesced_vars -> VarStack.push (Coalesced(node.name::coalesced_vars)) v_stack
+
 (* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
 let simplify (num_regs: int) (initial_graph: interfere_graph) : interfere_graph * VarStack.t =
 
     (* Performs one round of simplification over the graph *)
-    let rec simplify_r (g: interfere_graph) (v_stack: VarStack.t) (work_stack: ignode list) : interfere_graph * VarStack.t =
-        match work_stack with 
+    let rec simplify_r (g: interfere_graph) (v_stack: VarStack.t) (worklist: ignode list) : interfere_graph * VarStack.t =
+        match worklist with 
             | [] -> (g, v_stack)
-            | node::work_stack_tail ->
-                  if (is_simplifiable node num_regs)
+            | n::worklist_tail ->
+                  if (is_simplifiable n num_regs)
                   then 
-                      let new_stack = VarStack.push (Single(node.name)) v_stack in
-                      let new_graph = remove_node node g in
-                          simplify_r new_graph new_stack work_stack_tail
+                      let new_stack = push_node n v_stack in
+                      let new_graph = remove_node n g in
+                          simplify_r new_graph new_stack worklist_tail
                   else 
-                      simplify_r g v_stack work_stack_tail in
+                      simplify_r g v_stack worklist_tail in
 
     (* Performs simplification on the grpah until it is stable *)
     let rec loop (g: interfere_graph) (v_stack: VarStack.t) : interfere_graph * VarStack.t =
@@ -79,6 +85,7 @@ let simplify (num_regs: int) (initial_graph: interfere_graph) : interfere_graph 
             else
                 (* Do another round of simplification *)
                 loop new_graph new_v_stack in
+
             loop initial_graph VarStack.empty
 
 
