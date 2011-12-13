@@ -34,6 +34,7 @@ type ignode = { name  : var         ;
                 edges : IGEdgeSet.t ;
                 moves : IGMoveSet.t ;
                 color : int option  ;
+                coalesced : (var list) option ;
               } 
 
 module IGNodeSet = Set.Make(struct 
@@ -61,6 +62,7 @@ let new_ignode (v: var) : ignode =
       edges = IGEdgeSet.empty ;
       moves = IGEdgeSet.empty ;
       color = None            ;
+      coalesced = None        ;
     }
 
 let ignode_set_edges (edgeset: IGEdgeSet.t) (n: ignode) : ignode =
@@ -68,6 +70,7 @@ let ignode_set_edges (edgeset: IGEdgeSet.t) (n: ignode) : ignode =
       edges = edgeset ;
       moves = n.moves ;
       color = n.color ;
+      coalesced = n.coalesced ;
     }
 
 let ignode_set_moves (moveset: IGMoveSet.t) (n: ignode) : ignode =
@@ -75,6 +78,7 @@ let ignode_set_moves (moveset: IGMoveSet.t) (n: ignode) : ignode =
       edges = n.edges ;
       moves = moveset ;
       color = n.color ;
+      coalesced = n.coalesced ;
     }
 
 let ignode_set_color (color: int option) (n: ignode) : ignode =
@@ -82,7 +86,16 @@ let ignode_set_color (color: int option) (n: ignode) : ignode =
       edges = n.edges ;
       moves = n.moves ;
       color = color   ;
+      coalesced = n.coalesced ;
     }
+
+let ignode_set_coalesced (coalesced: var list option) (n: ignode) : ignode =
+     { name  = n.name  ;
+      edges = n.edges ;
+      moves = n.moves ;
+      color = n.color   ;
+      coalesced = coalesced ;
+    }   
 
 (* an interference graph maps a variable x to the set of variables that
  * y such that x and y are live at the same point in time.  It's up to

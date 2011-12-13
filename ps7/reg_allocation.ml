@@ -153,6 +153,8 @@ let coalesce_nodes (node: ignode) (coalesced_node: ignode) (graph: interfere_gra
 
 
 let coalesce (num_regs: int) (graph: interfere_graph) (v_stack: VarStack.t) : interfere_graph * VarStack.t =
+    raise Implement_Me
+(*
     let move_related_list = igraph_filter_elements graph (fun n -> not (IGMoveSet.is_empty n.moves)) in
     let rec iterate_worklist (l: igedge list) : interfere_graph * VarStack.t =
         match l with
@@ -166,8 +168,9 @@ let coalesce (num_regs: int) (graph: interfere_graph) (v_stack: VarStack.t) : in
                   then 
                       (* Coalesce nodes in graph *)
                       let coalesced_graph = coalesce_nodes node potential_coalesced_node graph in
-                          raise Implement_Me
-
+                          raise Implement_Me in
+        raise Implement_Me
+*)
                           (* WE HAVE TO MARK THE NODE AS COALESCED... WE COULD CARRY AROUND AN ENVIRONMENT COALESCED NODES (NO!)
                              OR WE CAN REWORK THE DEFINITION OF NODE (UGH) *)
 
