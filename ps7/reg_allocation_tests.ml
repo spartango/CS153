@@ -48,6 +48,6 @@ let simplify_test1a = mk_verbose_expect_test (fun () -> let (g, v_stack) = (simp
 let simplify_test2 = mk_simplify_test_graph example0_igraph 4 example0_expected_4regs "Lecture example with 4 registers";;
 let simplify_test3 = mk_verbose_expect_test (fun () -> let (g, v_stack) = (simplify 3 example0_igraph) in
                                              let _ = print_endline (igraph2str g) in
-                                                  is_simplified g 3) true string_of_bool "Test completely reducable graph";;
+                                                  is_simplified g 3) true string_of_bool "Lecture example with 3 registers for reduction";;
 
 run_test_set [simplify_test1; simplify_test2; simplify_test3] "Simplify tests";;
