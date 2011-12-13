@@ -21,7 +21,7 @@ let reduction_set_igraph (graph: interfere_graph) (rs: reduction_state) : reduct
     }
 let reduction_set_var_stack (v_stack : VarStack.t) (rs: reduction_state) : reduction_state =
     {
-        reduce_igraph = rs.igraph;
+        reduce_igraph = rs.reduce_igraph;
         var_stack = v_stack
     }
 let initial_reduction_state (graph: interfere_graph) : reduction_state =
@@ -106,11 +106,11 @@ let simplify (num_regs: int) (initial_state: reduction_state) : reduction_state 
                       let new_graph = remove_node n reduce_state.reduce_igraph in
                           simplify_r (mk_reduction_state new_graph new_stack) worklist_tail
                   else 
-                      simplify_r g v_stack worklist_tail in
+                      simplify_r reduce_state worklist_tail in
 
     (* Performs simplification on the grpah until it is stable *)
     let rec loop (reduce_state: reduction_state) : reduction_state =
-        let worklist = IGNodeSet.elements reduce_state.reduce_graph in
+        let worklist = IGNodeSet.elements reduce_state.reduce_igraph in
         let new_state = simplify_r reduce_state worklist in
             if new_state.reduce_igraph = reduce_state.reduce_igraph
             then 
@@ -125,8 +125,10 @@ let simplify (num_regs: int) (initial_state: reduction_state) : reduction_state 
 
 
 (* Checks if two nodes can be coalesced - Will node coalesce nodes that are both move and interfere related*)
-let are_coalescable (graph: interfere_graph) (num_regs: int) (node: ignode) (related_node: ignode) : bool =
-    if IGEdgeSet.mem {node_var = node.name; interfere_var = related_node.name} node.edges
+let are_coalescable (graph: interfere_graph) (num_regs: int) (node_v: var) (related_var: var) : bool =
+    (* Get node out of graph *)
+    let node = get_node node_v graph in
+    if IGEdgeSet.mem {node_var = node_v; interfere_var = related_var} node.edges
         then false
         else 
             IGEdgeSet.for_all 
@@ -134,7 +136,7 @@ let are_coalescable (graph: interfere_graph) (num_regs: int) (node: ignode) (rel
                      (* Look up interfering var in graph *)
                      let n = get_node (e.interfere_var) graph in
                          (* Return true if node has fewer than k edges or interferes with related_node *)
-                         ((count_edges n < num_regs) || IGEdgeSet.mem {node_var = n.name; interfere_var = related_node.name} n.edges)) 
+                         ((count_edges n < num_regs) || IGEdgeSet.mem {node_var = n.name; interfere_var = related_var} n.edges)) 
                 node.edges
 
 (* Maps coalesced nodes into graph -  updates references in other nodes. Does not remove coalesced_node from graph *)
@@ -194,36 +196,30 @@ let coalesce_nodes (var: var) (coalesced_var: var) (master_graph: interfere_grap
     (* Map coalescing into graph *)
         map_coalesced var coalesced_var graph
     
-
-
-
-let rec coalesce (num_regs: int) (initial_state: reduction_state : reduction_state =
-    let move_related_list = igraph_filter_elements initial_state.reduce_igraph (fun n -> not (IGMoveSet.is_empty n.moves)) in
+let rec coalesce (num_regs: int) (initial_state: reduction_state) : reduction_state =
+    let move_related_list : ignode list = igraph_filter_elements initial_state.reduce_igraph (fun n -> not (IGMoveSet.is_empty n.moves)) in
+    (* List of all the move related edges in the graph *)
     let move_edge_list = List.fold_left
-        (fun node accum_list -> (IGNodeSet.elements node)::accum_list) 
+        (fun accum_list node -> (IGMoveSet.elements node.moves) @ accum_list) 
         [] 
         move_related_list in
                                              
-    let rec iterate_worklist (edgelist: igedge list) : reduction_state =
+    let rec loop_worklist (edgelist: igedge list) : reduction_state =
         match edgelist with
             (* Empty list means no nodes in work list could be coaleasced *)
-            | [] -> reduction_state
+            | [] -> initial_state
             | edge::edgelist_tail ->
-                  (* Get nodes out of graph *)
-                  let node = get_node edge.node_var initial_state.reduce_graph in
-                  let potential_coalesced_node = get_node edge.interfere_var initial_state.reduce_graph in
-                  if (are_coalescable node potential_coalesced_node)
+                  if (are_coalescable initial_state.reduce_igraph num_regs edge.node_var edge.interfere_var)
                   then 
                       (* Coalesce nodes in graph *)
-                      let coalesced_graph = coalesce_nodes node potential_coalesced_node graph in
-                      (* Re-simplify graph and start coalescing from beginning *)
+                      let coalesced_graph = coalesce_nodes edge.node_var edge.interfere_var initial_state.reduce_igraph in
+                      (* Re-simplify graph and coalesce new graph from the beginning *)
                           coalesce num_regs (simplify num_regs (reduction_set_igraph coalesced_graph initial_state))
                   else 
                       (* Nodes are not coalesable, so move to next node in list *)
-                      iterate_worklist edgelist_tail 
+                      loop_worklist edgelist_tail 
     in
-        iterate_worklist move_edge_list
-   
+        loop_worklist move_edge_list
 
 (* ALGORITHM FOR REGISTER ALLOCATION *)
 (* MASTER GRAPH - original interference graph that should not be modified *)
