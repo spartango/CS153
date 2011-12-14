@@ -50,12 +50,26 @@ let color2str (c: int option) : string =
         | Some i -> (string_of_int i)
         | None -> "None"
 
+let coalesced2str (c: var list option) : string =
+    match c with 
+        | Some vs -> List.fold_left (fun s v -> s ^ " " ^ v) "" vs
+        | None -> "None"
+
+let equal_coalesced (c1: var list option) (c2: var list option) : bool =
+    match (c1,c2) with
+        | (None, None) -> true
+        | (Some(vs1), Some(vs2)) ->
+              equal_lists vs1 vs2 String.compare (=)
+        | (_,_) -> false
+
 let ignode2str (i: ignode) : string = 
     "{" ^ 
         (format_string "\tName:\t "  Bright Cyan)^ i.name ^"\n" ^
         (format_string "\tEdges:\t " Bright Cyan) ^ (igedgeset2str i.edges) ^ "\n" ^
         (format_string "\tMoves:\t " Bright Cyan) ^ (igedgeset2str i.moves) ^ "\n" ^
-        (format_string "\tColor:\t " Bright Cyan) ^ (color2str i.color) ^ "\n}\n"
+        (format_string "\tColor:\t " Bright Cyan) ^ (color2str i.color) ^ "\n" ^
+        (format_string "\tCoalesced:\t " Bright Cyan) ^ (coalesced2str i.coalesced) ^ "\n" ^
+        "\n}\n"
 
 let new_ignode (v: var) : ignode =
     { name  = v               ;
@@ -120,7 +134,8 @@ let equal_nodes (n1: ignode) (n2: ignode) : bool =
     n1.name = n2.name &&
     IGEdgeSet.equal n1.edges n2.edges &&
     IGMoveSet.equal n1.moves n2.moves &&
-    n1.color = n2.color
+    n1.color = n2.color &&
+    equal_coalesced n1.coalesced n2.coalesced
 
 let get_node (v : var) (target : interfere_graph) : ignode = 
   let filtered = IGNodeSet.filter (fun node -> node.name = v) target in

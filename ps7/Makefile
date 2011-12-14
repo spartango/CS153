@@ -2,7 +2,7 @@
 # enough to recompile at will.
 
 # change to a different ocamlc if you prefer (e.g., ocamlopt)
-COMPILER=ocamlc
+COMPILER=ocamlc -g
  
 all: clean cish cfg
 

@@ -3,6 +3,16 @@ open Io_types
 open I_graph
 open Stack
 
+(* Debug tools *)
+let print_graph (g: interfere_graph) (l: string) : unit =
+    print_endline (l ^ ":\n" ^ (igraph2str g))
+
+let print_var (v: var) (l: string) : unit =
+    print_endline (l ^ ": " ^ v ^ "\n")
+
+let print_node (n: ignode) (l: string) : unit =
+    print_endline (l ^ ":\n" ^ (ignode2str n))
+
 (* Container for passing around a graph and the var stack associated with it *)
 type reduction_state = {reduce_igraph : interfere_graph; var_stack : VarStack.t}
 
@@ -66,7 +76,7 @@ let remove_interfere (node: ignode) (interfering: var) : ignode =
 (* Removes move related edge between node.name and move_related *)
 let remove_move (node: ignode) (move_related: var) : ignode =
     let move_edge = { node_var = node.name; interfere_var = move_related } in
-    let new_move_set = IGMoveSet.remove move_edge node.edges in
+    let new_move_set = IGMoveSet.remove move_edge node.moves in
         ignode_set_moves new_move_set node
 
 (* Takes a node out of the graph, removing edges to it *)
@@ -139,42 +149,45 @@ let are_coalescable (graph: interfere_graph) (num_regs: int) (node_v: var) (rela
                          ((count_edges n < num_regs) || IGEdgeSet.mem {node_var = n.name; interfere_var = related_var} n.edges)) 
                 node.edges
 
-(* Maps coalesced nodes into graph -  updates references in other nodes. Does not remove coalesced_node from graph *)
-let map_coalesced (node: var) (coalesced_node: var) (graph: interfere_graph) : interfere_graph =
-    (* Updates an edge so its interfere_var points to node.name *)
-    let mk_updated_edge (n_var: var) : igedge = {node_var = n_var; interfere_var = node } in
-    let update_if_coalesced_edge (n: ignode) : ignode  =
-        let old_edge = {node_var = n.name; interfere_var = coalesced_node} in
-            if IGEdgeSet.mem old_edge n.edges
-            then 
-                let updated_edges = IGEdgeSet.add (mk_updated_edge n.name) (IGEdgeSet.remove old_edge n.edges) in
-                    (* Remove old edge and replace with updated edge *)
-                    ignode_set_edges updated_edges n 
-            else 
-                n 
-    in
-    let update_if_coalesced_move (n: ignode) : ignode =
-        let old_edge = {node_var = n.name; interfere_var = coalesced_node} in
-            if IGEdgeSet.mem old_edge n.moves
-            then 
-                let updated_edges = IGEdgeSet.add (mk_updated_edge n.name) (IGEdgeSet.remove old_edge n.moves) in
-                    (* Remove old edge and replace with updated edge *)
-                    ignode_set_moves updated_edges n 
-            else        
-                n
-    in
-        igraph_map (fun n -> update_if_coalesced_move (update_if_coalesced_edge n)) graph
+(* Replaces old_edge in s with new_edge if old exists *)
+let update_edge_set (s: IGEdgeSet.t) (old_edge: igedge) (new_edge: igedge): IGEdgeSet.t =
+    (* Check if old_edge is part of set *)
+    let _ = print_endline (igedge2str old_edge) in
+    if IGEdgeSet.mem old_edge s
+    then 
+        (* Remove old_edge from set and add new_edge *)
+        let pruned_s = IGEdgeSet.remove old_edge s in
+        let _ = print_endline (igedgeset2str pruned_s) in
+            IGEdgeSet.add new_edge pruned_s 
+    else 
+        (* Returns set unchanged *)
+        s
 
-(* Merges edge set and move set *)
+
+(* Replaces old_var with new_var where it occurs in the nodes of graph *)
+let replace_var (old_var: var) (new_var: var) (graph: interfere_graph) : interfere_graph =
+    
+    let update_node (node: ignode) : ignode =
+        (* Check if node had a move to eliminated and replace *)
+        (* What the old edge would have looked like, if it existed *)
+        let old_edge = {node_var = node.name; interfere_var = old_var} in
+        let new_edge = {node_var = node.name; interfere_var = new_var} in
+        (* Update the edge and move sets *)
+        let updated_edges = update_edge_set node.edges old_edge new_edge in
+        let updated_moves = update_edge_set node.moves old_edge new_edge in
+            ignode_set_moves updated_moves (ignode_set_edges updated_edges node) 
+    in
+        igraph_map update_node graph
+
+(* Merges combined_node into node *)
 let combine_nodes (node: ignode) (combined_node: ignode) : ignode =
-    (* Sets node var in an edge to node.name *)
-    let update_edge (e: igedge) : igedge = 
-        {node_var = node.name; interfere_var = e.interfere_var} in 
-   (* Updates edges in merged and adds them to s *)
-    let update_merge_sets (s : IGEdgeSet.t) (merged: IGEdgeSet.t) : IGEdgeSet.t =
+    (* Changes the node_var to node.name *)
+    let new_edge (old_edge : igedge) : igedge =
+        {node_var = node.name; interfere_var = old_edge.interfere_var} in 
+    let update_merge_sets (base_set : IGEdgeSet.t) (set_to_add: IGEdgeSet.t) : IGEdgeSet.t =
         IGEdgeSet.fold 
-            (fun edge combined -> IGEdgeSet.add (update_edge edge) combined) 
-            merged s
+            (fun edge combined -> IGEdgeSet.add (new_edge edge) combined) 
+            set_to_add base_set
     in
     (* For each edge in combined_node, set node_var to new node var and add to node's edge set *)
     let combined_edges = update_merge_sets node.edges combined_node.edges in
@@ -193,8 +206,8 @@ let coalesce_nodes (var: var) (coalesced_var: var) (master_graph: interfere_grap
     (* Combine nodes, removing move related edges *)
     let combined_node = combine_nodes node coalesced_node in
     let graph = update_igraph combined_node graph in
-    (* Map coalescing into graph *)
-        map_coalesced var coalesced_var graph
+    (* Replace occurances of coalesced_node with node in the graph *)
+        replace_var coalesced_var var graph
     
 let rec coalesce (num_regs: int) (initial_state: reduction_state) : reduction_state =
     let move_related_list : ignode list = igraph_filter_elements initial_state.reduce_igraph (fun n -> not (IGMoveSet.is_empty n.moves)) in

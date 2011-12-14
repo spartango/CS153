@@ -262,3 +262,27 @@ let example0_block2 =
     Move( Reg(Mips.R2), Var("u1"));
     Return ;
   ]
+
+(* This is the example from the Appel book *)
+let example1_block0 =
+    [ Label("f");
+      Move(Var("c"), Reg(Mips.R3));
+      Move(Var("a"), Reg(Mips.R1));
+      Move(Var("b"), Reg(Mips.R2));
+      Move(Var("d"), Int(0));
+      Move(Var("e"), Var("a"));
+    ]
+
+let example1_block1 =
+    [ Label("loop");
+      Arith((Var("d"),Var("e"), Plus, Var("b")));
+      Arith((Var("e"),Var("e"), Minus, Int(1)));
+      If(Var("e"), Gt, Int(0), "loop", "end");
+    ]
+
+let example1_block2 =
+    [ Label("end");
+      Move(Reg(Mips.R1), Var("d"));
+      Move(Reg(Mips.R3), Var("c"));
+      Return
+    ]

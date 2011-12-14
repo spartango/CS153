@@ -13,6 +13,8 @@ let node4 = build_node "n4" ["n1";"n2";"n3"]
 
 let test_graph1 = build_graph [node1; node2; node3; node4]
 
+
+
 let is_simplified (regs: int) (g: interfere_graph) : bool =
     IGNodeSet.fold (fun e accum -> (not (is_simplifiable e regs)) && accum) g true
 
@@ -45,12 +47,25 @@ let example0_expected_4regs =
     let j = ignode_set_moves (IGMoveSet.singleton {node_var = "j"; interfere_var = "b"}) (build_node "j" ["d"]) in
         build_graph [b;c;d;j] 
 
-
 let simplify_test1 = mk_simplify_test_graph test_graph1 4 IGNodeSet.empty "Test completely reducable graph";;
 let simplify_test1a = mk_verbose_expect_test (test_is_simplified 4 test_graph1) true string_of_bool "Test completely reducable graph";;
 let simplify_test2 = mk_simplify_test_graph example0_igraph 4 example0_expected_4regs "Lecture example with 4 registers";;
 let simplify_test3 = mk_verbose_expect_test (test_is_simplified 3 test_graph1) true string_of_bool "Lecture example with 3 registers for reduction";;
 
+let mk_coalesce_test_graph (g: interfere_graph) (regs: int) (exp: interfere_graph) (name: string) =
+    mk_generic_equals_test IGNodeSet.equal (fun () -> extract_igraph (coalesce regs (initial_reduction_state g))) exp igraph2str name
+
+let move_node1 = ignode_set_moves (IGMoveSet.singleton {node_var = "a"; interfere_var = "b"}) (build_node "a" [])
+let move_node2 = ignode_set_moves (IGMoveSet.singleton {node_var = "b"; interfere_var = "a"}) (build_node "b" ["c"])
+let move_node3 = build_node "c" ["b"]
+
+let test_graph2 = build_graph [move_node1; move_node2; move_node3]
+
+let coalesce_test1 = mk_coalesce_test_graph test_graph2 4 IGNodeSet.empty "Coalesable graph";;
+
+
 let _ = print_endline (igraph2str (extract_igraph (coalesce 3 (simplify 3 (initial_reduction_state example0_igraph)))));
 
+
 run_test_set [simplify_test1; simplify_test2; simplify_test3] "Simplify tests";;
+run_test_set [coalesce_test1;] "Coalesce tests";;
