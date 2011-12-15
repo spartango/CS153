@@ -40,15 +40,21 @@ let get_rw (i: inst) : io_inst =
     let set_of_ops (os: operand list) : VarSet.t =
         List.fold_left (fun a e -> match e with 
                             | Var x -> VarSet.add x a
+                            | Reg r -> VarSet.add (Mips.reg2string r) a
                             | _ -> a) VarSet.empty os 
     in 
     
     (* Builds a new io_inst record with reads rs and writes ws *)
     let set_rw (rs: operand list) (ws: operand list) = 
         io_inst_set_read (set_of_ops rs) (io_inst_set_write (set_of_ops ws) (new_io_inst i)) in
+    let set_move_if_not_int (dest: operand) (src: operand) (inst: io_inst) : io_inst =
+        match (dest,src) with
+            (* If it is an int - i.e. x := 5 - then return inst without a move set *)
+            | (_, Int(i)) -> inst
+            | (d, s) -> io_inst_set_move [(op2string d, op2string s)] inst
+    in
     match i with
-        | Move(Var(dest), Var(src)) -> io_inst_set_move [(dest, src)] (set_rw [Var(src)] [Var(dest)])
-        | Move(dest, src) -> set_rw [src] [dest]
+        | Move(dest, src) -> set_move_if_not_int dest src (set_rw [src] [dest])
         | Arith(dest, s1, arthop, s2) ->
               set_rw [s1; s2] [dest]
         | Load(dest, adr, i) ->
@@ -100,7 +106,7 @@ let inst_gen_out (target : io_inst) (next_ins : InSet.t) : io_inst =
 
 let block_gen_in (target : io_block) : io_block =
   io_block_set_in 
-    (gen_in target.block_out ((fun l -> let first_inst = List.hd l in first_inst.inst_in) target.block_insts) target.master_write)
+    (gen_in target.block_out target.block_in target.master_write)
     target
 
 let block_gen_out (blocks : io_block list) (target : io_block) : io_block =

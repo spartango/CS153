@@ -259,7 +259,6 @@ let example0_block2 =
   [ Label("L2");
     Arith( Var("u"), Var("d"), Plus, Var("k"));
     Arith( Var("u1"), Var("j"), Plus, Int(2));
-    Move( Reg(Mips.R2), Var("u1"));
     Return ;
   ]
 
