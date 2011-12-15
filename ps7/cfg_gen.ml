@@ -100,7 +100,7 @@ let inst_gen_out (target : io_inst) (next_ins : InSet.t) : io_inst =
 
 let block_gen_in (target : io_block) : io_block =
   io_block_set_in 
-    (gen_in target.block_out target.block_in target.master_write)
+    (gen_in target.block_out ((fun l -> let first_inst = List.hd l in first_inst.inst_in) target.block_insts) target.master_write)
     target
 
 let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
