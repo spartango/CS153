@@ -165,7 +165,6 @@ let update_edge_set (s: IGEdgeSet.t) (old_edge: igedge) (new_edge: igedge): IGEd
     then 
         (* Remove old_edge from set and add new_edge *)
         let pruned_s = IGEdgeSet.remove old_edge s in
-        let _ = print_endline (igedgeset2str pruned_s) in
             IGEdgeSet.add new_edge pruned_s 
     else 
         (* Returns set unchanged *)

@@ -5,6 +5,7 @@ open I_graph
 open Cfg_gen
 open Test_ioblocks
 open Reg_allocation
+open Io_types
 
 let node1 = build_node "n1" ["n2";"n4"]
 let node2 = build_node "n2" ["n1";"n3";"n4"]
@@ -35,9 +36,11 @@ let build_interfere_graph (f : func) : interfere_graph =
     (* See cfg_gen.ml for build_io_block *)    
     let initial_io_blocks = List.map build_io_block f in
     let io_set_built_blocks = block_gen_io initial_io_blocks in
-    (* let _ = List.map (fun b -> print_endline (ioblock2str true false b)) initial_io_blocks in *)
+    let _ = List.map (fun b -> print_endline (ioblock2str true false b)) io_set_built_blocks in
     (* See i_graph.ml for implementation *)
         build_igraph io_set_built_blocks
+
+
 
 let example0_igraph = (build_interfere_graph [example0_block0; example0_block1; example0_block2;])
 let example0_expected_4regs =
@@ -46,6 +49,8 @@ let example0_expected_4regs =
     let d = ignode_set_moves (IGMoveSet.singleton {node_var = "d"; interfere_var = "c"}) (build_node "d" ["j";"b"]) in
     let j = ignode_set_moves (IGMoveSet.singleton {node_var = "j"; interfere_var = "b"}) (build_node "j" ["d"]) in
         build_graph [b;c;d;j] 
+
+let _ = print_endline (igraph2str example0_igraph);;
 
 let simplify_test1 = mk_simplify_test_graph test_graph1 4 IGNodeSet.empty "Test completely reducable graph";;
 let simplify_test1a = mk_verbose_expect_test (test_is_simplified 4 test_graph1) true string_of_bool "Test completely reducable graph";;
@@ -64,8 +69,8 @@ let test_graph2 = build_graph [move_node1; move_node2; move_node3]
 let coalesce_test1 = mk_coalesce_test_graph test_graph2 4 IGNodeSet.empty "Coalesable graph";;
 
 
-let _ = print_endline (igraph2str (extract_igraph (coalesce (simplify (initial_reduction_state example0_igraph 3)))));
-
+(*let _ = print_endline (igraph2str (extract_igraph (coalesce (simplify (initial_reduction_state example0_igraph 3)))));;*)
+let _ = print_endline (igraph2str (build_interfere_graph [example1_block1; example1_block2; example1_block0]));;
 
 run_test_set [simplify_test1; simplify_test2; simplify_test3] "Simplify tests";;
 run_test_set [coalesce_test1;] "Coalesce tests";;

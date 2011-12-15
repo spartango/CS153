@@ -82,8 +82,8 @@ let gen_in (out_set : OutSet.t)
            (read    : ReadSet.t) 
            (write   : WriteSet.t) : InSet.t =
   let o_sub = (VarSet.inter (VarSet.diff out_set write) out_set) in
-  let r_sub = (VarSet.inter (VarSet.diff read write) read) in
-  (VarSet.union r_sub o_sub)
+  (* let r_sub = (VarSet.inter (VarSet.diff read write) read) in *)
+  (VarSet.union read o_sub)
 
 let gen_out (child_in_sets : InSet.t list) : OutSet.t = 
   List.fold_left VarSet.union VarSet.empty child_in_sets
@@ -100,7 +100,7 @@ let inst_gen_out (target : io_inst) (next_ins : InSet.t) : io_inst =
 
 let block_gen_in (target : io_block) : io_block =
   io_block_set_in 
-    (gen_in target.block_out target.master_read target.master_write)
+    (gen_in target.block_out target.block_in target.master_write)
     target
 
 let block_gen_out (blocks : io_block list) (target : io_block) : io_block =
@@ -173,6 +173,8 @@ let build_io_block (b: block) : io_block =
              (io_block_set_write master_write io_block2)) in
         (* Build In/Outs for each instruction *)
     let complete_io_insts = inst_gen_io rw_io_insts in
+    let first_inst_in_set = (fun l -> let first_inst = List.hd l in first_inst.inst_in) complete_io_insts in
+    let io_block4 = io_block_set_in first_inst_in_set io_block3 in
         (* Place modified io_insts into block and return *)
-        io_block_set_insts complete_io_insts io_block3
+        io_block_set_insts complete_io_insts io_block4
             

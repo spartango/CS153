@@ -271,11 +271,12 @@ let example1_block0 =
       Move(Var("b"), Reg(Mips.R2));
       Move(Var("d"), Int(0));
       Move(Var("e"), Var("a"));
+      Jump("loop");
     ]
 
 let example1_block1 =
     [ Label("loop");
-      Arith((Var("d"),Var("e"), Plus, Var("b")));
+      Arith((Var("d"),Var("d"), Plus, Var("b")));
       Arith((Var("e"),Var("e"), Minus, Int(1)));
       If(Var("e"), Gt, Int(0), "loop", "end");
     ]
