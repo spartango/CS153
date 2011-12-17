@@ -61,7 +61,7 @@ reg_allocation_tests: cfg cish mips test_files
 
 cfg_to_mips_tests: cfg cish mips test_files
 	$(COMPILER) -c cfg_to_mips_tests.ml
-	$(COMPILER) -o cfg_to_mips_tests utility.cmo pretty_print.cmo test_framework.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo test_ioblocks.cmo i_graph.cmo stack.cmo reg_allocation.cmo  cfg_to_mips_tests.cmo
+	$(COMPILER) -o cfg_to_mips_tests utility.cmo pretty_print.cmo test_framework.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo test_ioblocks.cmo i_graph.cmo stack.cmo reg_allocation.cmo cfg_to_mips.cmo cfg_to_mips_tests.cmo
 	./cfg_to_mips_tests
 
 test: cfg_gen_tests i_graph_tests io_tests reg_allocation_tests
