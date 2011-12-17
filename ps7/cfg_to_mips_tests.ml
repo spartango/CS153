@@ -204,8 +204,27 @@ let ifii12_mips = [M.J("f2")]
 let return_cfg = Return
 let return_mips = [M.Jr(M.R31)]
 
+(* Finally, translate the ouptut of reg_alloc to Mips instructions *)
+let cfg_to_mips (f : func ) : Mips.inst list = 
+    List.fold_right 
+        (fun b accumulated_mips -> (block_to_mips b) @ accumulated_mips)
+        f
+        []
+
 let mk_to_mips_inst_test (raw_cfg: inst) (expected: Mips.inst list) (name: string) =
     mk_verbose_expect_test (fun () -> inst_to_mips raw_cfg) expected (fun mips_list -> String.concat "" (List.map Mips.inst2string mips_list)) name
+
+let mk_to_mips_block_test (raw_cfg: block) (expected: Mips.inst list) (name: string) =
+    mk_verbose_expect_test (fun () -> List.concat (List.map inst_to_mips raw_cfg)) expected (fun mips_list -> String.concat "" (List.map Mips.inst2string mips_list)) name
+
+let mk_to_mips_func_test (raw_cfg: func) (expected: Mips.inst list) (name: string) =
+    mk_verbose_expect_test 
+        (fun () -> List.concat 
+             (List.concat
+                  (List.map 
+                       (fun l ->
+                            List.map inst_to_mips l) raw_cfg)))
+        expected (fun mips_list -> String.concat "" (List.map Mips.inst2string mips_list)) name
 
 let inst_test1  = mk_to_mips_inst_test label_cfg label_mips "Label to mips";;
 let inst_test2  = mk_to_mips_inst_test move1_cfg move1_mips "Move reg to reg";;
@@ -306,4 +325,22 @@ run_test_set [if_test1;
               if_test29;
               if_test30;
              ] "CFG IF to Mips tests"
+
+let block1_cfg = [label_cfg; add1_cfg; sub1_cfg; ifrr1_cfg]
+let block1_mips = label_mips @ add1_mips @ sub1_mips @ ifrr1_mips
+
+let block2_cfg = [label_cfg; add2_cfg; div2_cfg; return_cfg]
+let block2_mips = label_mips @ add2_mips @ div2_mips @ return_mips
+
+let block_test1 = mk_to_mips_block_test block1_cfg block1_mips "Block1 test";;
+let block_test2 = mk_to_mips_block_test block2_cfg block2_mips "Block2 test";;
+
+run_test_set [block_test1; block_test2] "Block level tests";;
+
+let prog1_cfg = [block1_cfg; block2_cfg]
+let prog1_mips = block1_mips @ block2_mips
+
+let prog_test1 = mk_to_mips_func_test prog1_cfg prog1_mips "Program 1 test";;
+
+run_test_set [prog_test1] "Program level tests"
 
