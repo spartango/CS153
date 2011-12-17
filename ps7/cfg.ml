@@ -3,6 +3,7 @@ open I_graph
 open Io_types
 open Cfg_gen
 open Reg_allocation
+open Utility
 exception Implement_Me
 exception FatalError
 
@@ -90,6 +91,8 @@ let reg_alloc (f : func) : func =
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
 let cfg_to_mips (f : func ) : Mips.inst list = 
     raise Implement_Me
+
+
 
 (* Helpers *)
 

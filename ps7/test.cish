@@ -1,18 +1,9 @@
 main() {
-        j = 5;
-        k = 2;
-        g = *(j+12);
-         h = k - 1;
-         f = g * h;
-           e = *(j+8);
-             m = *(j+16);
-             b = *(f+0);
-              c = e + 8;
-              d  = c;
-               k = m + 4;
-              j = b;  
+        z = 5;
+        y = f();
+        return (z+y);   
+}
 
-              u = d + k;
-              u1 = j +2;
-              return u1;    
+f(){
+        return 5;
 }
