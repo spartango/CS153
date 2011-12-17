@@ -3,7 +3,7 @@ open I_graph
 open Io_types
 open Cfg_gen
 open Reg_allocation
-open Utility
+open Cfg_to_mips
 exception Implement_Me
 exception FatalError
 
@@ -17,6 +17,7 @@ exception FatalError
 let build_interfere_graph (f : func) : interfere_graph =
     (* See cfg_gen.ml for build_io_block *)    
     let initial_io_blocks = List.map build_io_block f in
+        (* let _ = List.map (fun b -> print_endline (ioblock2str true false b)) initial_io_blocks in*)
     let io_set_built_blocks = block_gen_io initial_io_blocks in
     (* See i_graph.ml for implementation *)
         build_igraph io_set_built_blocks
@@ -38,12 +39,6 @@ let parse_file () =
 let create_blocks prog = 
     List.map fn2blocks prog
 
-let _ =
-    let prog = parse_file () in
-    let blocks = create_blocks prog in
-    let _ = print_endline (prog2string blocks) in
-    let igraphs = List.map build_interfere_graph blocks in
-        List.map (fun ig -> print_endline (igraph2str ig)) igraphs
 
 
 
@@ -91,11 +86,21 @@ let reg_alloc (f : func) : func =
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
 let cfg_to_mips (f : func ) : Mips.inst list = 
     List.fold_right 
-        (fun b accumulated_mips -> (block_to_mips) @ accumulated_mips)
+        (fun b accumulated_mips -> (block_to_mips b) @ accumulated_mips)
         f
         []
 
 
+let _ =
+    let prog = parse_file () in
+    let blocks = create_blocks prog in
+    let _ = print_endline (prog2string blocks) in
+    let igraphs = List.map build_interfere_graph blocks in
+        List.map (fun ig -> print_endline (igraph2str ig)) igraphs
+    (*let mips_code = List.flatten (List.map (fun f -> cfg_to_mips f) blocks) in
+    let _ = List.map (fun ig -> print_endline (igraph2str ig)) igraphs in
+        print_endline ("MIPS Code:\n\n" ^ (Mips.mips2str mips_code))*)
+        
 
 (* Helpers *)
 

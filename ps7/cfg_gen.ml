@@ -41,6 +41,7 @@ let get_rw (i: inst) : io_inst =
         List.fold_left (fun a e -> match e with 
                             | Var x -> VarSet.add x a
                             | Reg r -> VarSet.add (Mips.reg2string r) a
+                            (*| Lab l -> VarSet.add l a*)
                             | _ -> a) VarSet.empty os 
     in 
     
@@ -51,6 +52,7 @@ let get_rw (i: inst) : io_inst =
         match (dest,src) with
             (* If it is an int - i.e. x := 5 - then return inst without a move set *)
             | (_, Int(i)) -> inst
+            | (_, Lab(l)) -> inst
             | (d, s) -> io_inst_set_move [(op2string d, op2string s)] inst
     in
     match i with

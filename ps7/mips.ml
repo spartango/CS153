@@ -164,3 +164,5 @@ let inst2string(i:inst):string =
   | Sw (r1,r2,w) -> i2as "sw" (r1,r2,w)
   | Label x -> x ^ ":" 
       
+let mips2str (p: inst list) : string =
+    String.concat "" (List.map (fun x -> (inst2string x) ^ "\n") p)

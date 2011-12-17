@@ -1,9 +1,6 @@
 main() {
-        z = 5;
-        y = f();
-        return (z+y);   
-}
-
-f(){
-        return 5;
+        if(5 > 4){
+        return 4;}
+else{
+        return 5;}  
 }

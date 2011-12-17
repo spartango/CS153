@@ -45,12 +45,20 @@ let inst_to_mips (i: inst) : Mips.inst list =
         | Label l ->
               [Mips.Label(l)]
         | Move(dest,src) ->
+              (* Use addition if src is a register, Li if src is an int *)
+              (match src with
+                  | Reg(r) -> 
+                        [Mips.Add(
+                             to_mips_reg(dest),
+                             r,
+                             Mips.Immed(Int32.zero)
+                         )]
+                  | Int(n) ->
+                        [Mips.Li(to_mips_reg(dest), Int32.of_int n)]
+                  | _ -> raise Invalid_operand)
+
               (* Use addition of zero as substitute for move *)
-              [Mips.Add(
-                   to_mips_reg(dest),
-                   to_mips_reg(src),
-                   Mips.Immed(Int32.zero)
-                  )]
+              
         | Arith(dest, src1, operation, src2) ->
               let mk_arith (d: Mips.reg) (r1: Mips.reg) (r2: Mips.reg) : Mips.inst =
                   (match operation with
@@ -83,10 +91,15 @@ let inst_to_mips (i: inst) : Mips.inst list =
                   to_mips_reg(dest_mem),
                   Int32.of_int offset)]
         | Call(f) ->
-              (* Jump to label f. Put return address in $ra/$31.
+              (* Jump to f. f can be a label or a regsiter
+               *  Put return address in $ra/$31.
                * Calling convention handled in conversion to cfg. 
                * Assumes f returns result to $2 - again, not dealt with*)
-              [Mips.Jal(to_mips_label f)]
+              (match f with
+                  | Lab(l) -> [Mips.Jal(l)]
+                  | Reg(r) -> [Mips.Jalr(r, Mips.R31)]
+                  | _ -> raise Invalid_operand)
+              
         | Jump(l) ->
               [Mips.J(l)]
         (* Check this implementation. I believe this is legal because we are
@@ -94,27 +107,40 @@ let inst_to_mips (i: inst) : Mips.inst list =
            accept an immediate or a register for the second argument *)
         | If(src1, comparison, src2, label1, label2) ->
               (* if (comparison src1 src2), jump label1 else jump label2 *)
+              let true_branch = Mips.J(label1) in
               let false_branch = Mips.J(label2) in
                   (* Creates the test instruction, branching if true *)
-              let test (r1: Mips.reg) (comp: compareop) (r2: Mips.reg) (l: label) = 
-                  match comp with
-                      | Eq ->  Mips.Beq(r1, r2, l)
-                      | Neq -> Mips.Bne(r1, r2, l)
-                      | Lt ->  Mips.Blt(r1, r2, l)
-                      | Lte -> Mips.Ble(r1, r2, l)
-                      | Gt ->  Mips.Bgt(r1, r2, l)
-                      | Gte -> Mips.Bge(r1, r2, l) in
-              let build_test (r1: Mips.reg) (c: compareop) (op2: operand) (l: label) =
-                  (match op2 with 
-                      | Reg(r2) ->
-                            [(test r1 c r2 l)]
-                      | Int(i) ->
-                            (* Load i into $t1 *)
-                            let load_inst = Mips.Li(Mips.R1, Int32.of_int i) in
-                                load_inst::[(test r1 c Mips.R1 l)]
-                      | _ -> raise Invalid_operand)
-              in
-                  (build_test (to_mips_reg src1) comparison src2 label1) @ [false_branch]
+              let load_inst (i: int) : Mips.inst = 
+                  Mips.Li(Mips.R1, Int32.of_int i) in
+              let test (r1: Mips.reg) (r2: Mips.reg) = 
+                  (match comparison with
+                      | Eq ->  Mips.Beq(r1, r2, label1)
+                      | Neq -> Mips.Bne(r1, r2, label1)
+                      | Lt ->  Mips.Blt(r1, r2, label1)
+                      | Lte -> Mips.Ble(r1, r2, label1)
+                      | Gt ->  Mips.Bgt(r1, r2, label1)
+                      | Gte -> Mips.Bge(r1, r2, label1)) in
+                 (match (src1, src2) with
+                      | (Reg(r1), Reg(r2)) ->
+                             [test r1 r2; false_branch]
+                      | (Int(i), Reg(r2)) ->
+                            [load_inst i; test Mips.R1 r2; false_branch]
+                      | (Reg(r1), Int(i2)) ->
+                             [load_inst i2; test r1 Mips.R1; false_branch]
+                      | (Int(i1), Int(i2)) ->
+                            let optimize (comp_op: int -> int -> bool) : Mips.inst list =
+                                if comp_op i1 i2
+                                then [true_branch]
+                                else [false_branch] in
+                            (* This is a hacked optimization *)
+                            (match comparison with 
+                                 | Eq -> optimize  (=)                           
+                                 | Neq -> optimize (<>)
+                                 | Lt -> optimize  (<)
+                                 | Lte -> optimize (<=)
+                                 | Gt -> optimize  (>)
+                                 | Gte -> optimize (>=))
+                      | (_,_) -> raise Invalid_operand)
         | Return ->
               (* Jump to register in return slot $R31 *)
               [Mips.Jr(Mips.R31)]
