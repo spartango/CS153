@@ -71,7 +71,8 @@ let is_colored (node: ignode) : bool =
         | Some i -> true
 
 (* Determines whether it is is safe to remove a given element from the graph *)
-let is_simplifiable (n: ignode) (num_regs: int) : bool = ((count_edges n) < num_regs) && (not (is_move_related n)) && (not (is_colored n))
+let is_simplifiable (n: ignode) (num_regs: int) : bool = 
+    ((count_edges n) < num_regs) && (not (is_move_related n)) && (not (is_colored n))
 
 (* Unmarks interfering as interfering with node. *)
 (* Makes no change to node if does not already interfere with interfereing *)
@@ -158,7 +159,7 @@ let are_coalescable (graph: interfere_graph) (num_regs: int) (node_v: var) (rela
                          ((count_edges n < num_regs) || IGEdgeSet.mem {node_var = n.name; interfere_var = related_var} n.edges)) 
                 node.edges
 
-(* Replaces old_edge in s with new_edge if old exists *)
+(* Replaces old_edge in set with new_edge if old exists *)
 let update_edge_set (s: IGEdgeSet.t) (old_edge: igedge) (new_edge: igedge): IGEdgeSet.t =
     (* Check if old_edge is part of set *)
     if IGEdgeSet.mem old_edge s
@@ -265,6 +266,33 @@ let simple_freeze_picker (g: interfere_graph) (l: igedge list) : igedge =
     List.hd l 
 
 let freeze = generic_freeze simple_freeze_picker
+
+(* Spill functions *)
+
+(* Push a node onto a var stack, check to see if that node is coalesced *)
+let push_spill_node (node: ignode) (v_stack: VarStack.t) : VarStack.t =
+    VarStack.push (Spill(node.name)) v_stack
+
+
+(* Mark a node for spilling *)
+let rec mark_spill (spill_picker : interfere_graph -> (ignode * interfere_graph)) (initial_state: reduction_state) : reduction_state =
+    if IGNodeSet.empty = initial_state.reduce_igraph
+    then 
+        initial_state
+    else 
+        (* Pick an node to remove *)         (* Remove node from graph *)
+        let (target_node, new_graph) = spill_picker initial_state.reduce_igraph in
+        let new_stack = push_spill_node target_node initial_state.var_stack     in
+        let new_state = (reduction_set_var_stack new_stack initial_state)       in
+        let new_state = (reduction_set_igraph new_graph new_stack)              in
+            (* Re-simplify, re-coalesce, and re-freeze *)
+            mark_spill (freeze (coalesce (simplify new_state)))
+
+
+(* Coloring functions *)
+
+
+
 (* ALGORITHM FOR REGISTER ALLOCATION *)
 (* MASTER GRAPH - original interference graph that should not be modified *)
 (* WORK GRAPH - graph passed between functions as we try to reduce it *)
