@@ -30,8 +30,9 @@ cfg: mips cish
 	$(COMPILER) -c i_graph.ml
 	$(COMPILER) -c stack.ml
 	$(COMPILER) -c reg_allocation.ml
+	$(COMPILER) -c cfg_to_mips.ml
 	$(COMPILER) -c cfg.ml
-	$(COMPILER) -o ps7_cfg pretty_print.cmo utility.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo i_graph.cmo stack.cmo reg_allocation.cmo cfg.cmo
+	$(COMPILER) -o ps7_cfg pretty_print.cmo utility.cmo cish_ast.cmo cish_lex.cmo cish_parse.cmo word32.cmo mips.cmo cfg_ast.cmo io_types.cmo cfg_gen.cmo i_graph.cmo stack.cmo reg_allocation.cmo cfg_to_mips.ml cfg.cmo
 
 test_files:
 	$(COMPILER) -c pretty_print.ml
