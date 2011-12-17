@@ -6,21 +6,6 @@ open Word32
 exception Invalid_operand
 
 (* Implements translation to mips at block level *)
-(*
-  Label of label
-| Move of operand * operand                     (* x := y *)
-| Arith of operand * operand * arithop * operand (* x := y + z *)
-| Load of operand * operand * int               (* x := *(y+i) *)
-| Store of operand * int * operand              (* *(x+i) := y *)
-| Call of operand                               (* invoke f--result in R2 *)
-| Jump of label  (* j L *)
-| If of operand * compareop * operand * label * label
-      (* if x < y then goto L1 else goto L2 *)
-| Return  (* return to caller -- result assumed in R2 *)
-
-type compareop = Eq | Neq | Lt | Lte | Gt | Gte
-type arithop = Plus | Minus | Times | Div 
-    *)
 
 (* Gets a register out of an operand when the operand can only be a register *)
 let to_mips_reg (o: operand) : Mips.reg =
