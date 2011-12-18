@@ -283,10 +283,12 @@ let rec mark_spill (spill_picker : interfere_graph -> (ignode * interfere_graph)
 exception NoColors
 
 let get_neighbor_colors (target : ignode) (graph : interfere_graph) = 
-    
+
 
 let apply_color (color : int) (target : ignode) (state : reduction_state) =
-
+    let new_node  = ignode_set_color Some(color) target        in
+    let new_graph = update_igraph new_node state.reduce_igraph in
+    reduction_set_igraph new_graph
 
 let color_single (node : ignode) (state : reduction_state) =
     (*  Calculate available colors *)
