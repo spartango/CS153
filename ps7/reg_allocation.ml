@@ -264,20 +264,27 @@ let freeze = generic_freeze simple_freeze_picker
 (* Spill functions *)
 
 (* Mark a node for spilling *)
-let rec mark_spill (spill_picker : interfere_graph -> (ignode * interfere_graph)) (initial_state: reduction_state) : reduction_state =
+let rec mark_spill (initial_state: reduction_state) : reduction_state =
+    let spill_picker (target : interfere_graph) : (ignode * interfere_graph) option =
+        choose_node target
+    in
     if IGNodeSet.empty = initial_state.reduce_igraph
     then 
         initial_state
     else 
         (* Pick an node to remove *)         (* Remove node from graph *)
-        let (target_node, new_graph) = spill_picker initial_state.reduce_igraph in
-        let new_stack = push_spill_node target_node initial_state.var_stack     in
-        let new_state = (reduction_set_var_stack new_stack initial_state)       in
-        let new_state = (reduction_set_igraph new_graph new_stack)              in
-            (* Re-simplify, re-coalesce, and re-freeze *)
-            mark_spill (freeze (coalesce (simplify new_state)))
+        let picked = spill_picker initial_state.reduce_igraph in
+        match picked with 
+        | None                           -> initial_state
+        | Some((target_node, new_graph)) -> 
+            let new_stack = push_spill_node target_node initial_state.var_stack     in
+            let new_state = (reduction_set_var_stack new_stack initial_state)       in
+            let new_state = (reduction_set_igraph new_graph new_state)              in
+                (* Re-simplify, re-coalesce, and re-freeze *)
+                mark_spill (freeze (coalesce (simplify new_state)))
 
-let spill =
+let spill state =
+    state
 
 (* Coloring functions *)
 
@@ -301,24 +308,30 @@ let get_available_colors (neighbors : ignode list)
                     | None -> get_a_cols tl rem_regs
                     | Some(color) -> get_a_cols tl 
                                          (List.filter 
-                                              (fun elt -> !(elt = color))
+                                              (fun elt -> not (elt = color))
                                          rem_regs))
+    in
+    get_a_cols neighbors registers
     
 
 let apply_color (color : int) (target : ignode) (state : reduction_state) =
-    let new_node  = ignode_set_color Some(color) target        in
+    let new_node  = ignode_set_color (Some(color)) target      in
     let new_graph = update_igraph new_node state.reduce_igraph in
     reduction_set_igraph new_graph
 
 let color_single (node : ignode) (state : reduction_state) =
     (*  Calculate available colors *)
-    let available_colors = get_available_colors node (get_neighbors node) (gen_register_list state.register_count) in
+    let available_colors = get_available_colors 
+                                                (get_neighbors node state.reduce_igraph) 
+                                                (gen_register_list state.register_count) in
     match available_colors with
     | []     -> raise NoColors
     | hd::tl -> (apply_color hd node state)
 
 let color_with_spill (node : ignode) (state : reduction_state) =
-    let available_colors = get_available_colors node (get_neighbors node) (gen_register_list state.register_count) in
+    let available_colors = get_available_colors 
+                                                (get_neighbors node state.reduce_igraph) 
+                                                (gen_register_list state.register_count) in
     match available_colors with
     | []     -> (spill state)
     | hd::tl -> (apply_color hd node state)
