@@ -106,12 +106,6 @@ let remove_move_edge (var1: var) (var2: var) (graph: interfere_graph) : interfer
     (* Return updated graph *)
         update_igraph updated_node1 (update_igraph updated_node2 graph)
 
-(* Push a node onto a var stack, check to see if that node is coalesced *)
-let push_node (node: ignode) (v_stack: VarStack.t) : VarStack.t =
-    match node.coalesced with
-        | None -> VarStack.push (Single(node.name)) v_stack
-        | Some coalesced_vars -> VarStack.push (Coalesced(node.name::coalesced_vars)) v_stack
-
 (* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
 let simplify (initial_state: reduction_state) : reduction_state =
 
@@ -269,11 +263,6 @@ let freeze = generic_freeze simple_freeze_picker
 
 (* Spill functions *)
 
-(* Push a node onto a var stack, check to see if that node is coalesced *)
-let push_spill_node (node: ignode) (v_stack: VarStack.t) : VarStack.t =
-    VarStack.push (Spill(node.name)) v_stack
-
-
 (* Mark a node for spilling *)
 let rec mark_spill (spill_picker : interfere_graph -> (ignode * interfere_graph)) (initial_state: reduction_state) : reduction_state =
     if IGNodeSet.empty = initial_state.reduce_igraph
@@ -291,6 +280,31 @@ let rec mark_spill (spill_picker : interfere_graph -> (ignode * interfere_graph)
 
 (* Coloring functions *)
 
+(* Coloring: *)
+let rec color_graph (initial_state: reduction_state) : reduction_state =
+    
+    let color_single (node : ignode) =
+        (*  Calculate available colors *)
+        let available_colors = get_neighbor_colors node
+
+    let color_with_spill (node : ignode) =
+
+    (* Pop stack *)
+    try 
+        let target_var = pop_var_stack initial_state.var_stack =
+        match target_var with
+        | Single(var_name)          -> color_single (get_node var_name)
+        | Coalesced(var_list)       -> color_single (get_node_alias var_list)
+        | Spill(var_name)           -> color_with_spill (get_node var_name)
+        | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list)
+
+    with Empty -> 
+        inital_state
+
+(* Grab the actual node*)
+(*  Calculate available colors *)
+(*  Choose from available colors *)
+(*  If no available colors & spill node, spill *)
 
 
 (* ALGORITHM FOR REGISTER ALLOCATION *)
