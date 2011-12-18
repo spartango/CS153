@@ -282,18 +282,24 @@ let rec mark_spill (spill_picker : interfere_graph -> (ignode * interfere_graph)
 
 exception NoColors
 
+let get_neighbor_colors (target : ignode) (graph : interfere_graph) = 
+    
+
+let apply_color (color : int) (target : ignode) (state : reduction_state) =
+
+
 let color_single (node : ignode) (state : reduction_state) =
     (*  Calculate available colors *)
     let available_colors = get_neighbor_colors node in
     match available_colors with
     | []     -> raise NoColors
-    | hd::tl -> 
+    | hd::tl -> (apply_color hd node state)
 
 let color_with_spill (node : ignode) (state : reduction_state) =
     let available_colors = get_neighbor_colors node in
     match available_colors with
-    | []     -> color_graph (spill state)
-    | hd::tl -> 
+    | []     -> (spill state)
+    | hd::tl -> (apply_color hd node state)
 
 (* Coloring: *)
 let rec color_graph (initial_state: reduction_state) : reduction_state =
