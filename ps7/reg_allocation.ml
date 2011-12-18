@@ -291,10 +291,19 @@ let gen_register_list (register_count : int) : int list =
     in 
     gen_r_list register_count [] 
 
-let rec get_available_colors (target : ignode) 
-                         (neighbors : ignode list) 
+let get_available_colors (neighbors : ignode list) 
                          (registers : int list) : int list = 
-
+    let rec get_a_cols rem_neighbors rem_regs =
+        match rem_neighbors with 
+        | []     -> rem_regs
+        | hd::tl -> let ocolor = hd.color in
+                    (match ocolor with 
+                    | None -> get_a_cols tl rem_regs
+                    | Some(color) -> get_a_cols tl 
+                                         (List.filter 
+                                              (fun elt -> !(elt = color))
+                                         rem_regs))
+    
 
 let apply_color (color : int) (target : ignode) (state : reduction_state) =
     let new_node  = ignode_set_color Some(color) target        in
