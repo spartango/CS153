@@ -280,24 +280,33 @@ let rec mark_spill (spill_picker : interfere_graph -> (ignode * interfere_graph)
 
 (* Coloring functions *)
 
+exception NoColors
+
+let color_single (node : ignode) (state : reduction_state) =
+    (*  Calculate available colors *)
+    let available_colors = get_neighbor_colors node in
+    match available_colors with
+    | []     -> raise NoColors
+    | hd::tl -> 
+
+let color_with_spill (node : ignode) (state : reduction_state) =
+    let available_colors = get_neighbor_colors node in
+    match available_colors with
+    | []     -> color_graph (spill state)
+    | hd::tl -> 
+
 (* Coloring: *)
 let rec color_graph (initial_state: reduction_state) : reduction_state =
-    
-    let color_single (node : ignode) =
-        (*  Calculate available colors *)
-        let available_colors = get_neighbor_colors node
-
-    let color_with_spill (node : ignode) =
-
     (* Pop stack *)
     try 
-        let target_var = pop_var_stack initial_state.var_stack =
-        match target_var with
-        | Single(var_name)          -> color_single (get_node var_name)
-        | Coalesced(var_list)       -> color_single (get_node_alias var_list)
-        | Spill(var_name)           -> color_with_spill (get_node var_name)
-        | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list)
-
+        let (target_var, new_state) = pop_var_stack initial_state.var_stack in
+        let colored_state = 
+            match target_var with
+            | Single(var_name)          -> color_single (get_node var_name) new_state
+            | Coalesced(var_list)       -> color_single (get_node_alias var_list) new_state
+            | Spill(var_name)           -> color_with_spill (get_node var_name) new_state
+            | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list) new_state
+        in color_graph colored_state
     with Empty -> 
         inital_state
 
