@@ -277,12 +277,23 @@ let rec mark_spill (spill_picker : interfere_graph -> (ignode * interfere_graph)
             (* Re-simplify, re-coalesce, and re-freeze *)
             mark_spill (freeze (coalesce (simplify new_state)))
 
+let spill =
 
 (* Coloring functions *)
 
 exception NoColors
 
-let get_neighbor_colors (target : ignode) (graph : interfere_graph) = 
+let gen_register_list (register_count : int) : int list =
+    let rec gen_r_list count_left accumulated = 
+        if count_left < 0 
+        then accumulated 
+        else gen_r_list (count_left - 1) (count_left::accumulated)
+    in 
+    gen_r_list register_count [] 
+
+let rec get_available_colors (target : ignode) 
+                         (neighbors : ignode list) 
+                         (registers : int list) : int list = 
 
 
 let apply_color (color : int) (target : ignode) (state : reduction_state) =
@@ -292,13 +303,13 @@ let apply_color (color : int) (target : ignode) (state : reduction_state) =
 
 let color_single (node : ignode) (state : reduction_state) =
     (*  Calculate available colors *)
-    let available_colors = get_neighbor_colors node in
+    let available_colors = get_available_colors node (get_neighbors node) (gen_register_list state.register_count) in
     match available_colors with
     | []     -> raise NoColors
     | hd::tl -> (apply_color hd node state)
 
 let color_with_spill (node : ignode) (state : reduction_state) =
-    let available_colors = get_neighbor_colors node in
+    let available_colors = get_available_colors node (get_neighbors node) (gen_register_list state.register_count) in
     match available_colors with
     | []     -> (spill state)
     | hd::tl -> (apply_color hd node state)
