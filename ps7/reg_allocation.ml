@@ -298,15 +298,30 @@ let rec mark_spill (initial_state: reduction_state) : reduction_state =
                 (* Re-simplify, re-coalesce, and re-freeze *)
                 mark_spill (freeze (coalesce (simplify new_state)))
 
+let op_contains_var var_name op =
+    match op with
+    | Var(name) -> var_name = name
+    | _ -> false
+
 let contains_var_read var_name t_inst =
     match t_inst with 
     | Move(_, op)           -> (op_contains_var var_name op)
     | Arith(_, op, _,  op2) -> (op_contains_var var_name op) || (op_contains_var var_name op2)
     | Load(_, op, _)        -> (op_contains_var var_name op)
-    | Store(_, _, op)       -> (op_contains_var var_name op)
+    | Store(op, _, op2)     -> (op_contains_var var_name op) || (op_contains_var var_name op2)
     | Call(op)              -> (op_contains_var var_name op)
     | Jump(_)               -> false
     | If(op, _, op2, _, _)  -> (op_contains_var var_name op) || (op_contains_var var_name op2)
+
+let contains_var_write var_name t_inst =
+    match t_inst with 
+    | Move(op, _)           -> (op_contains_var var_name op)
+    | Arith(op, _, _, _)    -> (op_contains_var var_name op) 
+    | Load(op, _, _)        -> (op_contains_var var_name op)
+    | Store(_, _, _)        -> false
+    | Call(_)               -> false
+    | Jump(_)               -> false
+    | If(_, _, _, _, _)     -> false
 
 let spill node state = 
     let var_name = node.name         in
