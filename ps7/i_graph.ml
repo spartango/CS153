@@ -288,13 +288,26 @@ let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph 
     IGNodeSet.fold (fun node g -> IGNodeSet.add (f node) g) graph IGNodeSet.empty
 
 
+let is_register_name name =
+  ((String.index name '$') = 0)
+
 let precolor_nodes graph =
   igraph_map (fun node -> 
     try
-      if((String.index node.name '$') = 0) then 
+      if is_register_name node.name then 
         let color = (int_of_string (String.sub node.name  1 ((String.length node.name) -1))) -2 in
         ignode_set_color (Some(color)) node
-      else node
+      else 
+        match node.coalesced with 
+        | Some(coalesced) ->
+          let register_names = (List.filter is_register_name coalesced) in
+          if not (register_names = []) 
+          then 
+            let t_name = List.hd register_names in
+            let color = (int_of_string (String.sub t_name  1 ((String.length t_name) -1))) -2 in
+            ignode_set_color (Some(color)) node
+          else node
+        | None -> node
     with Not_found -> node
   ) graph
 

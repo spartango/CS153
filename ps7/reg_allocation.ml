@@ -515,7 +515,7 @@ let build_index (r: reduction_state) : Mips.reg VarMap.t =
                                 | Some coal ->
                                       let reg = lookup_color node.name index in
                                           List.fold_left (fun accum n ->
-                                                              VarMap.add n reg accum) index coal
+                                                              VarMap.add n reg accum)) index coal
                                 
 
 exception Node_not_in_graph
