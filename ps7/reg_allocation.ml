@@ -515,7 +515,6 @@ let lookup_color (v: var) (graph: interfere_graph) : int =
                       raise Uncolored_node
             | Some(color) -> color
 
-
 exception Node_not_in_graph
 
 let lookup_assigned_reg (v: var) (index: Mips.reg VarMap.t) : Mips.reg =
