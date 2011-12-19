@@ -14,7 +14,7 @@ let print_node (n: ignode) (l: string) : unit =
     print_endline (l ^ ":\n" ^ (ignode2str n))
 
 (* Container for passing around a graph and the var stack associated with it *)
-type reduction_state = {reduce_igraph : interfere_graph; var_stack : VarStack.t; register_count : int}
+type reduction_state = {reduce_igraph : interfere_graph; var_stack : VarStack.t; register_count : int; initial_func : func;}
 
 (* Makes a new reduction state with *)
 let mk_reduction_state (g: interfere_graph) (v_stack: VarStack.t) (regs: int) (f: func) : reduction_state = 
@@ -22,16 +22,18 @@ let mk_reduction_state (g: interfere_graph) (v_stack: VarStack.t) (regs: int) (f
         reduce_igraph = g;
         var_stack = v_stack;
         register_count = regs;
-        intial_func; = f;
+        initial_func = f;
     }
 
 let empty_reduction_state = mk_reduction_state IGNodeSet.empty VarStack.empty 0
+;;
+
 let reduction_set_igraph (graph: interfere_graph) (rs: reduction_state) : reduction_state =
     {
         reduce_igraph = graph;
         var_stack = rs.var_stack;
         register_count = rs.register_count;
-        initial_func = rs.intial_func;
+        initial_func = rs.initial_func;
     }
 let reduction_set_var_stack (v_stack : VarStack.t) (rs: reduction_state) : reduction_state =
     {
@@ -56,8 +58,8 @@ let reduction_set_initial_func (f : func) (rs: reduction_state) : reduction_stat
         initial_func = f;
     }
 
-let initial_reduction_state (graph: interfere_graph) (regs: int) (f: funciton) : reduction_state =
-    reduction_set_initial_func f (reduction_set_register_count regs (reduction_set_igraph graph empty_reduction_state))
+let initial_reduction_state (graph: interfere_graph) (regs: int) (f: func) : reduction_state =
+    (reduction_set_register_count regs (reduction_set_igraph graph (empty_reduction_state f)))
 
 exception Implement_Me
 
@@ -131,7 +133,7 @@ let simplify (initial_state: reduction_state) : reduction_state =
                   then 
                       let new_stack = push_node n reduce_state.var_stack in
                       let new_graph = remove_node n reduce_state.reduce_igraph in
-                          simplify_r (mk_reduction_state new_graph new_stack initial_state.register_count) worklist_tail
+                          simplify_r (mk_reduction_state new_graph new_stack initial_state.register_count initial_state.initial_func) worklist_tail
                   else 
                       simplify_r reduce_state worklist_tail in
 
