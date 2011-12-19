@@ -46,3 +46,18 @@ let push_node (node: ignode) (v_stack: VarStack.t) : VarStack.t =
 
 let pop_var_stack v_stack =
     VarStack.pop v_stack
+
+let stack_to_string v_stack =
+    List.fold_left (fun accum target_var ->
+        let item =
+        match target_var with
+        | Single(var_name)          -> var_name
+        | Coalesced(var_list)       -> List.fold_left (fun a elt -> (a ^ "&" ^ elt)) "" var_list
+        | Spill(var_name)           -> var_name
+        | Spill_Coalesced(var_list) -> List.fold_left (fun a elt -> (a ^ "&" ^ elt)) "" var_list
+        in (accum ^ " " ^ item)    
+    ) "" v_stack
+
+
+
+
