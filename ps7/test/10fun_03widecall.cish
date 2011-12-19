@@ -1,0 +1,6 @@
+f(a,b,c,d,e) {
+  return a * a + b * b + c * c + d * d + e * e;
+}
+main() {
+ return f(1,2,3,4,5) + f(6,7,8,9,10);
+}

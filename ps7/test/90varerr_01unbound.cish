@@ -1,0 +1,4 @@
+main() {
+  y = 3;
+  return y;
+}
