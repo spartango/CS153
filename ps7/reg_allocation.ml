@@ -227,7 +227,13 @@ let combine_nodes (node: ignode) (combined_node: ignode) : ignode =
     (* For each edge in combined_node, set node_var to new node var and add to node's edge set *)
     let combined_edges = update_merge_sets node.edges combined_node.edges in
     let combined_moves = update_merge_sets node.moves combined_node.moves in
-        ignode_set_moves combined_moves (ignode_set_edges combined_edges node)
+    let combined_coalesced =
+        match (node.coalesced, combined_node.coalesced) with
+        | (None, None) -> Some([combined_node.name])
+        | (Some(c), None) -> Some(combined_node.name::c)
+        | (None, Some(c)) -> Some(combined_node.name::c)
+        | (Some(c1), Some(c2)) -> Some(combined_node.name::(c1 @ c2)) in
+        ignode_set_coalesced combined_coalesced (ignode_set_moves combined_moves (ignode_set_edges combined_edges node))
 
 (* Merges contects of the node for coalesced_var into node of var and places in graph, removes move related edge, and removes coalesced node from graph *)
 let coalesce_nodes (var: var) (coalesced_var: var) (master_graph: interfere_graph) : interfere_graph =
@@ -264,6 +270,7 @@ let rec coalesce (initial_state: reduction_state) : reduction_state =
             | edge::edgelist_tail ->
                   if (are_coalescable initial_state.reduce_igraph initial_state.register_count edge.node_var edge.interfere_var)
                   then 
+                      let _ = print_endline ("Coalesced" ^ edge.node_var ^ " " ^ edge.interfere_var) in
                       (* Coalesce nodes in graph *)
                       let coalesced_graph = coalesce_nodes edge.node_var edge.interfere_var initial_state.reduce_igraph in
                       (* Re-simplify graph and coalesce new graph from the beginning *)
@@ -272,8 +279,12 @@ let rec coalesce (initial_state: reduction_state) : reduction_state =
                       (* Nodes are not coalesable, so move to next node in list *)
                       loop_worklist edgelist_tail 
     in
-    (* Does not matter what output of loop_worklist is, as if it reaches this point, is simply initial_state.reduce_igraph *)
+    let coalesced_state = loop_worklist move_edge_list in
+    let _ = print_graph coalesced_state.reduce_igraph "Coalesced graph" in
+        coalesced_state
 
+    (* Does not matter what output of loop_worklist is, as if it reaches this point, is simply initial_state.reduce_igraph *)
+(*
     let rec loop_move_interfere_related (edgelist: igedge list) (coalesced_state: reduction_state) : reduction_state =
         match edgelist with
             | [] -> coalesced_state (* No both move related and interfere related edges to remove *)
@@ -297,7 +308,7 @@ let rec coalesce (initial_state: reduction_state) : reduction_state =
     let coalesced_state = loop_worklist move_edge_list in
     let coalesced_move_edge_list = get_move_related_edges coalesced_state.reduce_igraph in
         loop_move_interfere_related coalesced_move_edge_list coalesced_state
-                              
+*)
                                           
 let rec generic_freeze (freeze_picker : interfere_graph -> igedge list -> igedge) (initial_state: reduction_state) : reduction_state =
     let move_edge_list = get_move_related_edges initial_state.reduce_igraph in
@@ -459,6 +470,7 @@ let color_with_spill (node : ignode) (state : reduction_state) =
 
 (* Coloring: *)
 let rec color_graph (initial_state: reduction_state) : reduction_state =
+    let _ = print_graph initial_state.reduce_igraph "Reduced Igraph" in
     (* Pop stack *)
     let popped = pop_var_stack initial_state.var_stack in
     match popped with
@@ -489,7 +501,6 @@ let build_index (r: reduction_state) : Mips.reg VarMap.t =
     then 
         raise Exceed_max_regs
     else
-        let _ = print_endline (igraph2str r.colored_igraph) in
         IGNodeSet.fold (fun node index ->
                             let color = lookup_color node.name r.colored_igraph in
                             (* Register will be color number + 2 *)
