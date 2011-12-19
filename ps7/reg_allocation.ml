@@ -301,7 +301,7 @@ let rec mark_spill (initial_state: reduction_state) : reduction_state =
 let op_contains_var var_name op =
     match op with
     | Var(name) -> var_name = name
-    | _ -> false
+    | _         -> false
 
 let contains_var_read var_name t_inst =
     match t_inst with 
@@ -323,24 +323,28 @@ let contains_var_write var_name t_inst =
     | Jump(_)               -> false
     | If(_, _, _, _, _)     -> false
 
+let spill_offset = ref 0;;
+
 let spill node state = 
     let var_name = node.name         in
     let fn_body  = node.initial_func in
     (* Trawl through the blocks *)
     List.map 
         (fun t_block ->
-            (* Trawl through the instructions *)
+            (* Trawl through the instructions; HOTSPOT OOO *)
             List.fold_left 
-                (fun t_inst ->
+                (fun insts t_inst ->
                     if (contains_var_read var_name t_inst) 
                     then
                     (* If theres a read of the var *)
                     (* Append a load ahead of it*) 
+                    insts @ [Load(Var(var_name), fp, Int(var_offset)); t_inst]
                     else if (contains_var_write var_name t_inst)
                     then 
-
-                    else
                     (* If theres a write, Append a store after it*)
+                    insts @ [t_inst; Store(fp, Int(var_offset), Var(var_name)) ]
+                    else insts @ [t_inst]
+
                 )
         )
 
