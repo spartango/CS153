@@ -2,6 +2,7 @@ open Cfg_ast
 open Io_types
 open I_graph
 open Stack
+open Utility
 
 (* Debug tools *)
 let print_graph (g: interfere_graph) (l: string) : unit =
@@ -160,7 +161,9 @@ let are_coalescable (graph: interfere_graph) (num_regs: int) (node_v: var) (rela
     let related_node = get_node related_var graph in
     (* Do not coalesce if two nodes interfere or the other node is colored *)
     if IGEdgeSet.mem {node_var = node_v; interfere_var = related_var} node.edges || (is_colored related_node)
-        then false
+    then
+        let _ = print_endline "Not coalesable" in
+            false
         else 
             IGEdgeSet.for_all 
                 (fun e -> 
@@ -240,7 +243,7 @@ let get_move_related_edges (graph: interfere_graph) : igedge list =
 let rec coalesce (initial_state: reduction_state) : reduction_state =
 
     let move_edge_list = get_move_related_edges initial_state.reduce_igraph in
-                                             
+
     let rec loop_worklist (edgelist: igedge list) : reduction_state =
         match edgelist with
             (* Empty list means no nodes in work list could be coaleasced *)
@@ -256,8 +259,33 @@ let rec coalesce (initial_state: reduction_state) : reduction_state =
                       (* Nodes are not coalesable, so move to next node in list *)
                       loop_worklist edgelist_tail 
     in
-        loop_worklist move_edge_list
+    (* Does not matter what output of loop_worklist is, as if it reaches this point, is simply initial_state.reduce_igraph *)
 
+    let rec loop_move_interfere_related (edgelist: igedge list) (coalesced_state: reduction_state) : reduction_state =
+        match edgelist with
+            | [] -> coalesced_state (* No both move related and interfere related edges to remove *)
+            | edge::edgelist_tail ->
+                  (* Get node out of graph *)
+                  let node = get_node edge.node_var coalesced_state.reduce_igraph in
+                      (* Check if nodes are both move and interfere_related *)
+                      if IGEdgeSet.mem {node_var = node.name; interfere_var = edge.interfere_var} node.edges 
+                      then 
+                          (* Get move related node *)
+                          let move_related = get_node edge.interfere_var coalesced_state.reduce_igraph in
+                              (* Remove interference edge from graph *)
+                          let node = remove_interfere node edge.interfere_var in
+                          let move_related = remove_interfere move_related edge.node_var in
+                          (* Update graph *)
+                          let updated_igraph = update_igraph node (update_igraph move_related coalesced_state.reduce_igraph) in
+                              coalesce (simplify (reduction_set_igraph updated_igraph coalesced_state))
+                      else 
+                          loop_move_interfere_related edgelist_tail coalesced_state in
+       
+    let coalesced_state = loop_worklist move_edge_list in
+    let coalesced_move_edge_list = get_move_related_edges coalesced_state.reduce_igraph in
+        loop_move_interfere_related coalesced_move_edge_list coalesced_state
+                              
+                                          
 let rec generic_freeze (freeze_picker : interfere_graph -> igedge list -> igedge) (initial_state: reduction_state) : reduction_state =
     let move_edge_list = get_move_related_edges initial_state.reduce_igraph in
         if move_edge_list = []
@@ -368,6 +396,19 @@ let rec color_graph (initial_state: reduction_state) : reduction_state =
         | Spill(var_name)           -> color_with_spill (get_node var_name new_state.reduce_igraph) new_state
         | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list new_state.reduce_igraph) new_state)
     in color_graph colored_state
+
+
+
+
+let build_index (r: reduction_state) : Mips.reg VarMap.t =
+    raise Implement_Me
+
+
+let rec rewrite_code (f: func) (colored_state: reduction_state) : func =
+    (* Build index of colors to registers - reserve $0, $1, $26 - $31 *)
+    raise Implement_Me
+
+
 
 (* Grab the actual node*)
 (*  Calculate available colors *)

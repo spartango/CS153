@@ -34,3 +34,5 @@ module RInstList = RevList(struct type element = Mips.inst end)
 
 (* Sugar for appending a list to an rlist *)
 let (<@) (a: RInstList.rlist) (b: Mips.inst list) = RInstList.app_list a b
+
+module VarMap = Map.Make(struct type t = String.t    let compare = String.compare end)
