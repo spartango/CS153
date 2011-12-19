@@ -354,12 +354,19 @@ let contains_var_write var_name t_inst =
     | If(_, _, _, _, _)     -> false
 
 let spill_offset = ref 0;;
+ (* let spill_map    = ref VarMap.empty;; *)
 
 let spill node state = 
-    let var_name = node.name         in
-    let fn_body  = node.initial_func in
+    let var_name        = node.name                  in
+    let fn_body         = node.initial_func          in
+    (* Allocate an offset *)       
+    let var_offset      = spill_offset               in
+    let !(spill_offset) = !(spill_offset) + 1        in
+    let first_block = (List.hd fn_body)              in
+    let first_block = Arith(sp, sp, Plus, 4)         in
+    let new_blocks  = first_block::(List.tl fn_body) in
     (* Trawl through the blocks *)
-    List.map 
+    let new_blocks = List.map 
         (fun t_block ->
             (* Trawl through the instructions; HOTSPOT OOO *)
             List.fold_left 
@@ -374,9 +381,12 @@ let spill node state =
                     (* If theres a write, Append a store after it*)
                     insts @ [t_inst; Store(fp, Int(var_offset), Var(var_name)) ]
                     else insts @ [t_inst]
-
                 )
+                []
+                new_blocks
         )
+    in
+    state.
 
 
 (* Coloring functions *)
