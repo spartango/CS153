@@ -277,10 +277,8 @@ let rec coalesce (initial_state: reduction_state) : reduction_state =
                       (* Nodes are not coalesable, so move to next node in list *)
                       loop_worklist edgelist_tail 
     in
-        loop_worklist move_edge_list
 
     (* Does not matter what output of loop_worklist is, as if it reaches this point, is simply initial_state.reduce_igraph *)
-(*
     let rec loop_move_interfere_related (edgelist: igedge list) (coalesced_state: reduction_state) : reduction_state =
         match edgelist with
             | [] -> coalesced_state (* No both move related and interfere related edges to remove *)
@@ -304,7 +302,7 @@ let rec coalesce (initial_state: reduction_state) : reduction_state =
     let coalesced_state = loop_worklist move_edge_list in
     let coalesced_move_edge_list = get_move_related_edges coalesced_state.reduce_igraph in
         loop_move_interfere_related coalesced_move_edge_list coalesced_state
-*)
+
                                           
 let rec generic_freeze (freeze_picker : interfere_graph -> igedge list -> igedge) (initial_state: reduction_state) : reduction_state =
     let move_edge_list = get_move_related_edges initial_state.reduce_igraph in
