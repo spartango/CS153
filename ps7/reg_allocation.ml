@@ -18,22 +18,24 @@ let print_node (n: ignode) (l: string) : unit =
     print_endline (l ^ ":\n" ^ (ignode2str n))
 
 (* Container for passing around a graph and the var stack associated with it *)
-type reduction_state = {reduce_igraph : interfere_graph; var_stack : VarStack.t; register_count : int; initial_func : func;}
+type reduction_state = {colored_igraph: interfere_graph; reduce_igraph : interfere_graph; var_stack : VarStack.t; register_count : int; initial_func : func;}
 
 (* Makes a new reduction state with *)
-let mk_reduction_state (g: interfere_graph) (v_stack: VarStack.t) (regs: int) (f: func) : reduction_state = 
+let mk_reduction_state (initial_g: interfere_graph) (reduce_g: interfere_graph) (v_stack: VarStack.t) (regs: int) (f: func) : reduction_state = 
     {
-        reduce_igraph = g;
+        colored_igraph = initial_g;
+        reduce_igraph = reduce_g;
         var_stack = v_stack;
         register_count = regs;
         initial_func = f;
     }
 
-let empty_reduction_state = mk_reduction_state IGNodeSet.empty VarStack.empty 0 []
+let empty_reduction_state = mk_reduction_state IGNodeSet.empty IGNodeSet.empty VarStack.empty 0 []
 ;;
 
 let reduction_set_igraph (graph: interfere_graph) (rs: reduction_state) : reduction_state =
     {
+        colored_igraph = rs.colored_igraph;
         reduce_igraph = graph;
         var_stack = rs.var_stack;
         register_count = rs.register_count;
@@ -41,6 +43,7 @@ let reduction_set_igraph (graph: interfere_graph) (rs: reduction_state) : reduct
     }
 let reduction_set_var_stack (v_stack : VarStack.t) (rs: reduction_state) : reduction_state =
     {
+        colored_igraph = rs.colored_igraph;
         reduce_igraph = rs.reduce_igraph;
         var_stack = v_stack;
         register_count = rs.register_count;
@@ -48,6 +51,7 @@ let reduction_set_var_stack (v_stack : VarStack.t) (rs: reduction_state) : reduc
     }
 let reduction_set_register_count (regs : int) (rs: reduction_state) : reduction_state =
     {
+        colored_igraph = rs.colored_igraph;
         reduce_igraph = rs.reduce_igraph;
         var_stack = rs.var_stack;
         register_count = regs;
@@ -56,14 +60,24 @@ let reduction_set_register_count (regs : int) (rs: reduction_state) : reduction_
 
 let reduction_set_initial_func (f : func) (rs: reduction_state) : reduction_state =
     {
+        colored_igraph = rs.colored_igraph;
         reduce_igraph = rs.reduce_igraph;
         var_stack = rs.var_stack;
         register_count = rs.register_count;
         initial_func = f;
     }
 
+let reduction_set_colored_igraph (g: interfere_graph) (rs: reduction_state): reduction_state =
+    {
+        colored_igraph = g;
+        reduce_igraph = rs.reduce_igraph;
+        var_stack = rs.var_stack;
+        register_count = rs.register_count;
+        initial_func = rs.initial_func;
+    }
+
 let initial_reduction_state (graph: interfere_graph) (regs: int) (f: func) : reduction_state =
-    reduction_set_initial_func f (reduction_set_register_count regs (reduction_set_igraph graph empty_reduction_state))
+    reduction_set_initial_func f (reduction_set_register_count regs (reduction_set_igraph graph (reduction_set_colored_igraph graph empty_reduction_state)))
 
 exception Implement_Me
 
@@ -137,7 +151,8 @@ let simplify (initial_state: reduction_state) : reduction_state =
                   then 
                       let new_stack = push_node n reduce_state.var_stack in
                       let new_graph = remove_node n reduce_state.reduce_igraph in
-                          simplify_r (mk_reduction_state new_graph new_stack initial_state.register_count initial_state.initial_func) worklist_tail
+                          simplify_r (
+                              reduction_set_igraph new_graph (reduction_set_var_stack new_stack reduce_state)) worklist_tail
                   else 
                       simplify_r reduce_state worklist_tail in
 
@@ -459,7 +474,9 @@ let rec color_graph (initial_state: reduction_state) : reduction_state =
         (match target_var with
         | Single(var_name)          -> (color_single (get_node var_name new_state.reduce_igraph) new_state)
         | Coalesced(var_list)       -> color_single (get_node_alias var_list new_state.reduce_igraph) new_state
-        | Spill(var_name)           -> color_with_spill (get_node var_name new_state.reduce_igraph) new_state
+        | Spill(var_name)           -> 
+              let _ = print_endline var_name in
+color_with_spill (get_node var_name new_state.reduce_igraph) new_state
         | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list new_state.reduce_igraph) new_state)
     in color_graph colored_state
 

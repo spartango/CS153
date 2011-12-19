@@ -276,7 +276,6 @@ let make_move_edges (ms: move_related list) (graph: interfere_graph) : interfere
                         let (var1, var2) = mv in
                         let node1 = get_node var1 g in
                         let move1 = { interfere_var = var2; node_var = var1 } in
-                        let _ = print_endline var2 in
                         let node2 = get_node var2 g in
                         let move2 = { interfere_var = var1; node_var = var2 } in
                         let node1_updated = ignode_set_moves (IGMoveSet.add move1 node1.moves) node1 in
