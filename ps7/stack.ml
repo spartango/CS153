@@ -1,4 +1,5 @@
 open Cfg_ast
+open I_graph
 
 module type STACK =
     sig 
@@ -27,7 +28,7 @@ module SimpleStack (A: STACK_ARGS) : (STACK with type elt = A.t) =
         let empty = []
     end 
 
-type var_stack_element = Single of var | Coalesced of var list | Spill of var | Spill_Coalesced of var
+type var_stack_element = Single of var | Coalesced of var list | Spill of var | Spill_Coalesced of var list
 
 module VarStack = SimpleStack(struct type t = var_stack_element end);;
 
@@ -42,3 +43,6 @@ let push_node (node: ignode) (v_stack: VarStack.t) : VarStack.t =
     match node.coalesced with
         | None -> VarStack.push (Single(node.name)) v_stack
         | Some coalesced_vars -> VarStack.push (Coalesced(node.name::coalesced_vars)) v_stack
+
+let pop_var_stack v_stack =
+    VarStack.pop v_stack

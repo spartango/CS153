@@ -111,10 +111,6 @@ let ignode_set_coalesced (coalesced: var list option) (n: ignode) : ignode =
       coalesced = coalesced ;
     }   
 
-
-let get_neighbors (target : ignode) (graph : interfere_graph) : ignode list = 
-  List.map (fun edge -> get_node (edge.interfere_var) graph) (IGEdgeSet.elements target.edges)
-
 (* an interference graph maps a variable x to the set of variables that
  * y such that x and y are live at the same point in time.  It's up to
  * you how you want to represent the graph.  I've just put in a dummy
@@ -144,6 +140,12 @@ let equal_nodes (n1: ignode) (n2: ignode) : bool =
 let get_node (v : var) (target : interfere_graph) : ignode = 
   let filtered = IGNodeSet.filter (fun node -> node.name = v) target in
   IGNodeSet.choose filtered 
+
+let rec get_node_alias (v : var list) (target : interfere_graph) : ignode = 
+  match v with 
+  | []     -> raise Not_found
+  | hd::tl -> try get_node hd target with Not_found -> get_node_alias tl target
+  
 
 (* Updates graph with new copy of node *)
 let update_igraph (node: ignode) (graph: interfere_graph) : interfere_graph =
@@ -300,6 +302,9 @@ let choose_node (graph: interfere_graph) : (ignode * interfere_graph) option =
             Some (node, (IGNodeSet.remove node graph))
     with
             Not_found -> None
+
+let get_neighbors target graph : ignode list = 
+  List.map (fun edge -> get_node (edge.interfere_var) graph) (IGEdgeSet.elements target.edges)
 
 (*
 let equal_edge_set

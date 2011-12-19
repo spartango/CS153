@@ -314,12 +314,12 @@ let get_available_colors (neighbors : ignode list)
     get_a_cols neighbors registers
     
 
-let apply_color (color : int) (target : ignode) (state : reduction_state) =
+let apply_color (color : int) (target : ignode) (state : reduction_state) : reduction_state =
     let new_node  = ignode_set_color (Some(color)) target      in
     let new_graph = update_igraph new_node state.reduce_igraph in
-    reduction_set_igraph new_graph
+    reduction_set_igraph new_graph state
 
-let color_single (node : ignode) (state : reduction_state) =
+let color_single (node : ignode) (state : reduction_state) : reduction_state =
     (*  Calculate available colors *)
     let available_colors = get_available_colors 
                                                 (get_neighbors node state.reduce_igraph) 
@@ -339,17 +339,18 @@ let color_with_spill (node : ignode) (state : reduction_state) =
 (* Coloring: *)
 let rec color_graph (initial_state: reduction_state) : reduction_state =
     (* Pop stack *)
-    try 
-        let (target_var, new_state) = pop_var_stack initial_state.var_stack in
-        let colored_state = 
-            match target_var with
-            | Single(var_name)          -> color_single (get_node var_name) new_state
-            | Coalesced(var_list)       -> color_single (get_node_alias var_list) new_state
-            | Spill(var_name)           -> color_with_spill (get_node var_name) new_state
-            | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list) new_state
-        in color_graph colored_state
-    with Empty -> 
-        inital_state
+    let popped = pop_var_stack initial_state.var_stack in
+    match popped with
+    | None                           -> initial_state
+    | Some((target_var, new_stack))  -> 
+    let new_state = reduction_set_var_stack new_stack initial_state in
+    let colored_state = 
+        (match target_var with
+        | Single(var_name)          -> (color_single (get_node var_name new_state.reduce_igraph) new_state)
+        | Coalesced(var_list)       -> color_single (get_node_alias var_list new_state.reduce_igraph) new_state
+        | Spill(var_name)           -> color_with_spill (get_node var_name new_state.reduce_igraph) new_state
+        | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list new_state.reduce_igraph) new_state)
+    in color_graph colored_state
 
 (* Grab the actual node*)
 (*  Calculate available colors *)
