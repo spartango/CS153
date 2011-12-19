@@ -25,7 +25,7 @@ let mk_reduction_state (g: interfere_graph) (v_stack: VarStack.t) (regs: int) (f
         initial_func = f;
     }
 
-let empty_reduction_state = mk_reduction_state IGNodeSet.empty VarStack.empty 0
+let empty_reduction_state = mk_reduction_state IGNodeSet.empty VarStack.empty 0 []
 ;;
 
 let reduction_set_igraph (graph: interfere_graph) (rs: reduction_state) : reduction_state =
@@ -59,7 +59,7 @@ let reduction_set_initial_func (f : func) (rs: reduction_state) : reduction_stat
     }
 
 let initial_reduction_state (graph: interfere_graph) (regs: int) (f: func) : reduction_state =
-    (reduction_set_register_count regs (reduction_set_igraph graph (empty_reduction_state f)))
+    reduction_set_initial_func f (reduction_set_register_count regs (reduction_set_igraph graph empty_reduction_state))
 
 exception Implement_Me
 

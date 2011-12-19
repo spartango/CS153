@@ -306,15 +306,11 @@ let choose_node (graph: interfere_graph) : (ignode * interfere_graph) option =
 let get_neighbors target graph : ignode list = 
   List.map (fun edge -> get_node (edge.interfere_var) graph) (IGEdgeSet.elements target.edges)
 
-(*
-let equal_edge_set
-
-let rec equal_igraph (g1: interfere_graph) (g2: interfere_graph) : bool =
-    match (get_node g1, get_node g2) with
-        | (None, None) ->
-              true
-        | (Some(n1, g1_remainder), Some(n2, g2_remainder)) ->
-              if (n1.name = n2.name &&
-                     IGVarSet.
-                       
-*)
+(* Function to build interfere_graph from a list of blocks *)
+let build_interfere_graph (f : func) : interfere_graph =
+    (* See cfg_gen.ml for build_io_block *)    
+    let initial_io_blocks = List.map build_io_block f in
+        (* let _ = List.map (fun b -> print_endline (ioblock2str true false b)) initial_io_blocks in*)
+    let io_set_built_blocks = block_gen_io initial_io_blocks in
+    (* See i_graph.ml for implementation *)
+        build_igraph io_set_built_blocks

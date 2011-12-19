@@ -185,4 +185,3 @@ let build_io_block (b: block) : io_block =
     let io_block4 = io_block_set_in first_inst_in_set io_block3 in
         (* Place modified io_insts into block and return *)
         io_block_set_insts complete_io_insts io_block4
-            
