@@ -157,7 +157,9 @@ let simplify (initial_state: reduction_state) : reduction_state =
 let are_coalescable (graph: interfere_graph) (num_regs: int) (node_v: var) (related_var: var) : bool =
     (* Get node out of graph *)
     let node = get_node node_v graph in
-    if IGEdgeSet.mem {node_var = node_v; interfere_var = related_var} node.edges
+    let related_node = get_node related_var graph in
+    (* Do not coalesce if two nodes interfere or the other node is colored *)
+    if IGEdgeSet.mem {node_var = node_v; interfere_var = related_var} node.edges || (is_colored related_node)
         then false
         else 
             IGEdgeSet.for_all 
