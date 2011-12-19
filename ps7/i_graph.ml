@@ -291,9 +291,9 @@ let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph 
 let precolor_nodes graph =
   igraph_map (fun node -> 
     try
-      if((String.index '$' node.name) = 0) then 
+      if((String.index node.name '$') = 0) then 
         let color = (int_of_string (String.sub node.name  1 ((String.length node.name) -1))) -2 in
-        ignode_set_color color node
+        ignode_set_color (Some(color)) node
       else node
     with Not_found -> node
   ) graph

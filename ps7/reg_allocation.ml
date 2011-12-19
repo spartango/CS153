@@ -438,13 +438,13 @@ let get_available_colors (neighbors : ignode list)
 
 let apply_color (color : int) (target : ignode) (state : reduction_state) : reduction_state =
     let new_node  = ignode_set_color (Some(color)) target      in
-    let new_graph = update_igraph new_node state.colored_graph in
+    let new_graph = update_igraph new_node state.colored_igraph in
     reduction_set_igraph new_graph state
 
 let color_single (node : ignode) (state : reduction_state) : reduction_state =
     (*  Calculate available colors *)
     let available_colors = get_available_colors 
-                                                (get_neighbors node state.colored_graph) 
+                                                (get_neighbors node state.colored_igraph) 
                                                 (gen_register_list state.register_count) in
     match available_colors with
     | []     -> raise NoColors
@@ -452,7 +452,7 @@ let color_single (node : ignode) (state : reduction_state) : reduction_state =
 
 let color_with_spill (node : ignode) (state : reduction_state) =
     let available_colors = get_available_colors 
-                                                (get_neighbors node state.colored_graph) 
+                                                (get_neighbors node state.colored_igraph) 
                                                 (gen_register_list state.register_count) in
     match available_colors with
     | []     -> (spill node state)
@@ -468,10 +468,10 @@ let rec color_graph (initial_state: reduction_state) : reduction_state =
     let new_state = reduction_set_var_stack new_stack initial_state in
     let colored_state = 
         (match target_var with
-        | Single(var_name)          -> (color_single (get_node var_name new_state.colored_graph) new_state)
-        | Coalesced(var_list)       -> color_single (get_node_alias var_list new_state.colored_graph) new_state
-        | Spill(var_name)           -> color_with_spill (get_node var_name new_state.colored_graph) new_state
-        | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list new_state.colored_graph) new_state)
+        | Single(var_name)          -> (color_single (get_node var_name new_state.colored_igraph) new_state)
+        | Coalesced(var_list)       -> color_single (get_node_alias var_list new_state.colored_igraph) new_state
+        | Spill(var_name)           -> color_with_spill (get_node var_name new_state.colored_igraph) new_state
+        | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list new_state.colored_igraph) new_state)
     in color_graph colored_state
 
 let lookup_color (v: var) (graph: interfere_graph) : int =
