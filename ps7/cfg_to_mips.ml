@@ -51,19 +51,24 @@ let inst_to_mips (i: inst) : Mips.inst list =
                       | Minus -> Mips.Sub(d, r1, r2)
                       | Times -> Mips.Mul(d, r1, r2)
                       | Div   -> Mips.Div(d, r1, r2)) in
+             (* let _ = print_endline (op2string src2) in *)
                   (* Split if src2 is a regsiter or an immediate *)
-                  (match src2 with
-                      | Reg(r) -> 
-                            [(mk_arith 
-                                  (to_mips_reg dest) 
-                                  (to_mips_reg src1) 
-                                  r)]
-                      | Int(i) ->
+                  (match (src1, src2) with
+                      | (Reg(r1), Reg(r2)) -> 
+                            [(mk_arith (to_mips_reg dest) r1 r2)]
+                      | (Int(i), Reg(r2)) ->
                             let load_inst = Mips.Li(Mips.R1, Int32.of_int i) in
-                                load_inst::[(mk_arith 
-                                                (to_mips_reg dest)
-                                                (to_mips_reg src1)
-                                                Mips.R1)]
+                                load_inst::[(mk_arith (to_mips_reg dest) Mips.R1 r2)]
+                      | (Reg(r1), Int(i)) ->
+                             let load_inst = Mips.Li(Mips.R1, Int32.of_int i) in
+                                 load_inst::[(mk_arith (to_mips_reg dest) r1 Mips.R1)]
+                      | (Int(i1), Int(i2)) ->
+                             (let d = to_mips_reg dest in
+                             match operation with
+                                 | Plus -> [Mips.Li(d, Int32.of_int (i1 + i2))]
+                                 | Minus -> [Mips.Li(d, Int32.of_int (i1 - i2))]
+                                 | Times -> [Mips.Li(d, Int32.of_int (i1 * i2))]
+                                 | Div -> [Mips.Li(d, Int32.of_int (i1 / i2))])
                       | _ -> raise Invalid_operand)
         | Load(dest_reg, src_mem, offset) ->
               [Mips.Lw(

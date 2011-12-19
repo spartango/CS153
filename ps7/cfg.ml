@@ -70,6 +70,7 @@ let reg_alloc (f : func) : func =
 
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
 let cfg_to_mips (f : func ) : Mips.inst list = 
+    let _ = print_endline (fun2string f) in
     List.fold_right 
         (fun b accumulated_mips -> (block_to_mips b) @ accumulated_mips)
         f
