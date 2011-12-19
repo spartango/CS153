@@ -227,13 +227,14 @@ let combine_nodes (node: ignode) (combined_node: ignode) : ignode =
     (* For each edge in combined_node, set node_var to new node var and add to node's edge set *)
     let combined_edges = update_merge_sets node.edges combined_node.edges in
     let combined_moves = update_merge_sets node.moves combined_node.moves in
+    let combined_color = if not (node.color = None) then node.color else combined_node.color in
     let combined_coalesced =
         match (node.coalesced, combined_node.coalesced) with
         | (None, None) -> Some([combined_node.name])
         | (Some(c), None) -> Some(combined_node.name::c)
         | (None, Some(c)) -> Some(combined_node.name::c)
         | (Some(c1), Some(c2)) -> Some(combined_node.name::(c1 @ c2)) in
-        ignode_set_coalesced combined_coalesced (ignode_set_moves combined_moves (ignode_set_edges combined_edges node))
+        ignode_set_color combined_color (ignode_set_coalesced combined_coalesced (ignode_set_moves combined_moves (ignode_set_edges combined_edges node)))
 
 (* Merges contects of the node for coalesced_var into node of var and places in graph, removes move related edge, and removes coalesced node from graph *)
 let coalesce_nodes (var: var) (coalesced_var: var) (master_graph: interfere_graph) : interfere_graph =
