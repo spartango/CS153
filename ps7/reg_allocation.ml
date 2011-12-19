@@ -137,7 +137,6 @@ let remove_move_edge (var1: var) (var2: var) (graph: interfere_graph) : interfer
 
 (* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
 let simplify (initial_state: reduction_state) : reduction_state =
-    let _ = print_endline "Simplify" in
     (* Performs one round of simplification over the graph *)
     let rec simplify_r (reduce_state: reduction_state) (worklist: ignode list) : reduction_state =
         match worklist with 
@@ -278,9 +277,7 @@ let rec coalesce (initial_state: reduction_state) : reduction_state =
                       (* Nodes are not coalesable, so move to next node in list *)
                       loop_worklist edgelist_tail 
     in
-    let coalesced_state = loop_worklist move_edge_list in
-    let _ = print_graph coalesced_state.reduce_igraph "Coalesced graph" in
-        coalesced_state
+        loop_worklist move_edge_list
 
     (* Does not matter what output of loop_worklist is, as if it reaches this point, is simply initial_state.reduce_igraph *)
 (*
@@ -511,7 +508,6 @@ let lookup_color (v: var) (graph: interfere_graph) : int =
     let node = get_node v graph in
         match node.color with
             | None ->
-                  let _ = print_endline v in
                       raise Uncolored_node
             | Some(color) -> color
 
@@ -522,13 +518,11 @@ let lookup_assigned_reg (v: var) (index: Mips.reg VarMap.t) : Mips.reg =
        VarMap.find v index
    with
            _ ->
-               let _ = print_endline v in
 
                    raise Node_not_in_graph
 
 (* Assume we have no more than than 24 register to mess with *)
 let build_index (r: reduction_state) : Mips.reg VarMap.t =
-    let _ = print_graph r.colored_igraph "Colored Igraph" in
     if r.register_count > 24
     then 
         raise Exceed_max_regs
