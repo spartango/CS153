@@ -19,24 +19,6 @@ let build_interfere_graph (f: func) : interfere_graph =
     I_graph.build_interfere_graph f
 
 
-(* This magic is used to glue the generated lexer and parser together.
- * Expect one command-line argument, a file to parse.
- * You do not need to understand this interaction with the system. *)
-let parse_file () =
-  let argv = Sys.argv in
-  let _ = 
-    if Array.length argv != 2
-    then (prerr_string ("usage: " ^ argv.(0) ^ " [file-to-parse]\n");
-    exit 1) in
-  let ch = open_in argv.(1) in
-  Cish_parse.program Cish_lex.lexer (Lexing.from_channel ch)
-
-let create_blocks prog = 
-    List.map fn2blocks prog
-
-
-
-
 (*
   Build io_blocks for each block: func -> io_block list
       For each block:
@@ -75,8 +57,16 @@ let create_blocks prog =
    function that doesn't use any variables (except for function
    names.)
 *)
+let regs = ref 0
+
 let reg_alloc (f : func) : func = 
-    raise Implement_Me
+    let igraph = build_interfere_graph f in
+    let reduced_state = mark_spill 
+        (freeze (coalesce (simplify 
+                               (initial_reduction_state igraph !regs f)))) in
+    let colored_state = color_graph reduced_state in
+    let colored_code = rewrite_code colored_state in
+        colored_code                            
 
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
 let cfg_to_mips (f : func ) : Mips.inst list = 
@@ -86,21 +76,31 @@ let cfg_to_mips (f : func ) : Mips.inst list =
         []
 
 
+(* Executable will take file and return register allocated mips *)
+
+(* This magic is used to glue the generated lexer and parser together.
+ * Expect one command-line argument, a file to parse.
+ * You do not need to understand this interaction with the system. *)
+let parse_file () =
+  let argv = Sys.argv in
+  let _ = 
+    if Array.length argv != 2
+    then (prerr_string ("usage: " ^ argv.(0) ^ " [file-to-parse]\n");
+    exit 1) in
+  let ch = open_in argv.(1) in
+  Cish_parse.program Cish_lex.lexer (Lexing.from_channel ch)
+
+let create_blocks prog = 
+    List.map fn2blocks prog
+
 let _ =
+    (* Cish program - list of Cish functions *)
     let prog = parse_file () in
-    let blocks = create_blocks prog in
-    let _ = print_endline (prog2string blocks) in
-    let igraphs = List.map build_interfere_graph blocks in
-        List.map (fun ig -> print_endline (igraph2str ig)) igraphs
-    (*let mips_code = List.flatten (List.map (fun f -> cfg_to_mips f) blocks) in
-    let _ = List.map (fun ig -> print_endline (igraph2str ig)) igraphs in
-        print_endline ("MIPS Code:\n\n" ^ (Mips.mips2str mips_code))*)
-        
-
-(* Helpers *)
-
-(* High level *)
-(* Removes*)
+    let reg_allocated_functions = 
+        List.map (fun cish_func -> reg_alloc (fn2blocks cish_func)) prog in
+    let mips_functions = List.map cfg_to_mips reg_allocated_functions in
+    let mips_prog = List.flatten mips_functions in
+        print_endline (Mips.mips2str mips_prog)
 
 
 

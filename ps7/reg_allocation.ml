@@ -4,6 +4,9 @@ open I_graph
 open Stack
 open Utility
 
+exception Exceed_max_regs
+exception Uncolored_node
+
 (* Debug tools *)
 let print_graph (g: interfere_graph) (l: string) : unit =
     print_endline (l ^ ":\n" ^ (igraph2str g))
@@ -313,7 +316,7 @@ let rec mark_spill (initial_state: reduction_state) : reduction_state =
     let spill_picker (target : interfere_graph) : (ignode * interfere_graph) option =
         choose_node target
     in
-    if IGNodeSet.empty = initial_state.reduce_igraph
+    if IGNodeSet.empty = initial_state.reduce_igraph || IGNodeSet.for_all (fun n -> is_colored n) initial_state.reduce_igraph
     then 
         initial_state
     else 
@@ -460,18 +463,83 @@ let rec color_graph (initial_state: reduction_state) : reduction_state =
         | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list new_state.reduce_igraph) new_state)
     in color_graph colored_state
 
+let lookup_color (v: var) (graph: interfere_graph) : int =
+    let node = get_node v graph in
+        match node.color with
+            | None -> raise Uncolored_node
+            | Some(color) -> color
 
-
-
+(* Assume we have no more than than 24 register to mess with *)
 let build_index (r: reduction_state) : Mips.reg VarMap.t =
-    raise Implement_Me
+    if r.register_count > 24
+    then 
+        raise Exceed_max_regs
+    else
+        IGNodeSet.fold (fun node index ->
+                            let color = lookup_color node.name r.reduce_igraph in
+                            (* Register will be color number + 2 *)
+                            let reg = Mips.str2reg ("$" ^ string_of_int (color + 2)) in
+                                VarMap.add node.name reg index)
+            r.reduce_igraph 
+            VarMap.empty
 
+exception Node_not_in_graph
 
-let rec rewrite_code (f: func) (colored_state: reduction_state) : func =
+let lookup_assigned_reg (v: var) (index: Mips.reg VarMap.t) : Mips.reg =
+   try
+       VarMap.find v index
+   with
+           _ -> raise Node_not_in_graph
+
+(* Rewrite all vars with their assigned register *)
+let rewrite_operand (o: operand) (index: Mips.reg VarMap.t) : operand =
+    match o with
+        (* Return the register x is assigned to *)
+        | Var x -> Reg(lookup_assigned_reg x index)
+        | Int i -> Int(i)
+        | Reg r -> Reg(r)
+        | Lab l -> Lab(l)                 
+
+let rewrite_inst (i: inst) (index: Mips.reg VarMap.t) : inst =
+    let rewrite = (fun o -> rewrite_operand o index) in
+    match i with
+        | Label l -> Label l
+        (* Be conservative *)
+        | Move (o1, o2) ->
+              Move(rewrite o1, rewrite o2)
+        | Arith(o1, o2, c, o3) -> 
+              Arith(rewrite o1, rewrite o2, c, rewrite o3)
+        | Load(o1, o2, i) ->
+              Load(rewrite o1, rewrite o2, i)
+        | Store(o1, i, o2) ->
+              Store(rewrite o1, i, rewrite o2)
+        | Call(o) ->
+              Call (rewrite o)
+        | Jump(l) ->
+              Jump(l)
+        | If(o1, c, o2, l1, l2) ->
+              If(rewrite o1, c, rewrite o2, l1, l2)
+        | Return ->
+              Return
+
+let rewrite_block (b: block) (index: Mips.reg VarMap.t) : block =
+    List.fold_right (fun i accumulated ->
+                         match i with
+                             (* Remove stupid moves! *)
+                             | Move (o1, o2) ->
+                                   let r1 = rewrite_operand o1 index in
+                                   let r2 = rewrite_operand o2 index in
+                                       if r1 = r2
+                                       then accumulated
+                                       else (Move(r1, r2))::accumulated
+                             | _ -> (rewrite_inst i index)::accumulated)
+        b
+        []
+                                   
+let rewrite_code (colored_state: reduction_state) : func =
     (* Build index of colors to registers - reserve $0, $1, $26 - $31 *)
-    raise Implement_Me
-
-
+    let var_index = build_index colored_state in
+        List.map (fun b -> rewrite_block b var_index) colored_state.initial_func
 
 (* Grab the actual node*)
 (*  Calculate available colors *)
