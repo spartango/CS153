@@ -283,6 +283,21 @@ let make_move_edges (ms: move_related list) (graph: interfere_graph) : interfere
                             update_igraph node1_updated (update_igraph node2_updated g)) 
         graph ms
 
+(* Performs a map on an inteference graph *)
+let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph =
+    IGNodeSet.fold (fun node g -> IGNodeSet.add (f node) g) graph IGNodeSet.empty
+
+
+let precolor_nodes graph =
+  igraph_map (fun node -> 
+    try
+      if((String.index '$' node.name) = 0) then 
+        let color = (int_of_string (String.sub node.name  1 ((String.length node.name) -1))) -2 in
+        ignode_set_color color node
+      else node
+    with Not_found -> node
+  ) graph
+
 let build_block_igraph (b: io_block) : interfere_graph =
     (* inst_gen_io_base is a more general version of inst_gen_io that allows you to specify the base out set *)
     let updated_insts = inst_gen_io_base b.block_out b.insts in
@@ -315,19 +330,4 @@ let build_interfere_graph (f : func) : interfere_graph =
     let io_set_built_blocks = block_gen_io initial_io_blocks in
     (* See i_graph.ml for implementation *)
         build_igraph io_set_built_blocks
-
-(* Performs a map on an inteference graph *)
-let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph =
-    IGNodeSet.fold (fun node g -> IGNodeSet.add (f node) g) graph IGNodeSet.empty
-
-
-let precolor_nodes graph =
-  igraph_map (fun node -> 
-    try
-      if((String.index '$' node.name) = 0) then 
-        let color = (int_of_string (String.sub node.name  1 ((String.length node.name) -1))) -2 in
-        ignode_set_color color node
-      else node
-    with Not_found -> node
-  ) graph
 
