@@ -26,19 +26,12 @@ let test_is_simplified (num_regs: int) (g: interfere_graph) : unit -> bool =
     (fun () -> 
          is_simplified 
              num_regs
-             (extract_igraph (simplify (initial_reduction_state g num_regs))))
+             (extract_igraph (simplify (initial_reduction_state g num_regs []))))
 
 
 let mk_simplify_test_graph (g: interfere_graph) (regs: int) (exp: interfere_graph) (name: string) =
-    mk_generic_equals_test IGNodeSet.equal (fun () -> let s = simplify (initial_reduction_state g regs) in s.reduce_igraph) exp igraph2str name
+    mk_generic_equals_test IGNodeSet.equal (fun () -> let s = simplify (initial_reduction_state g regs []) in s.reduce_igraph) exp igraph2str name
 
-let build_interfere_graph (f : func) : interfere_graph =
-    (* See cfg_gen.ml for build_io_block *)    
-    let initial_io_blocks = List.map build_io_block f in
-    let io_set_built_blocks = block_gen_io initial_io_blocks in
-    let _ = List.map (fun b -> print_endline (ioblock2str true false b)) io_set_built_blocks in
-    (* See i_graph.ml for implementation *)
-        build_igraph io_set_built_blocks
 
 
 
@@ -58,7 +51,7 @@ let simplify_test2 = mk_simplify_test_graph example0_igraph 4 example0_expected_
 let simplify_test3 = mk_verbose_expect_test (test_is_simplified 3 test_graph1) true string_of_bool "Lecture example with 3 registers for reduction";;
 
 let mk_coalesce_test_graph (g: interfere_graph) (regs: int) (exp: interfere_graph) (name: string) =
-    mk_generic_equals_test IGNodeSet.equal (fun () -> extract_igraph (coalesce (initial_reduction_state g regs))) exp igraph2str name
+    mk_generic_equals_test IGNodeSet.equal (fun () -> extract_igraph (coalesce (initial_reduction_state g regs []))) exp igraph2str name
 
 let move_node1 = ignode_set_moves (IGMoveSet.singleton {node_var = "a"; interfere_var = "b"}) (build_node "a" [])
 let move_node2 = ignode_set_moves (IGMoveSet.singleton {node_var = "b"; interfere_var = "a"}) (build_node "b" ["c"])

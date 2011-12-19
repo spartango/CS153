@@ -14,14 +14,9 @@ exception FatalError
  * interference graph for that function.  This will require that
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
-let build_interfere_graph (f : func) : interfere_graph =
-    (* See cfg_gen.ml for build_io_block *)    
-    let initial_io_blocks = List.map build_io_block f in
-        (* let _ = List.map (fun b -> print_endline (ioblock2str true false b)) initial_io_blocks in*)
-    let io_set_built_blocks = block_gen_io initial_io_blocks in
-    (* See i_graph.ml for implementation *)
-        build_igraph io_set_built_blocks
 
+let build_interfere_graph (f: func) : interfere_graph =
+    I_graph.build_interfere_graph f
 
 
 (* This magic is used to glue the generated lexer and parser together.
