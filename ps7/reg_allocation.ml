@@ -369,7 +369,9 @@ let spill node state =
     let var_offset      = !spill_offset                        in
     let _ = (spill_offset := !(spill_offset) + 4)              in
     let first_block = (List.hd fn_body)                        in
-    let first_block = Arith(sp, sp, Plus, Int(4))::first_block in
+    let label_inst  = (List.hd first_block)                    in
+    let first_block = Arith(sp, sp, Plus, Int(4))::(List.tl first_block) in
+    let first_block = label_inst::first_block in
     let new_blocks  = first_block::(List.tl fn_body)           in
     (* Trawl through the blocks *)
     let new_blocks = List.map 
