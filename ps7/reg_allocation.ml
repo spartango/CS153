@@ -137,7 +137,7 @@ let remove_move_edge (var1: var) (var2: var) (graph: interfere_graph) : interfer
 
 (* Reduces graph until all non-move-related/non-pre-colored nodes have more than number_registers edges *)
 let simplify (initial_state: reduction_state) : reduction_state =
-
+    let _ = print_endline "Simplify" in
     (* Performs one round of simplification over the graph *)
     let rec simplify_r (reduce_state: reduction_state) (worklist: ignode list) : reduction_state =
         match worklist with 
@@ -176,16 +176,15 @@ let are_coalescable (graph: interfere_graph) (num_regs: int) (node_v: var) (rela
     (* Do not coalesce if two nodes interfere or the other node is colored *)
     if IGEdgeSet.mem {node_var = node_v; interfere_var = related_var} node.edges || (is_colored related_node)
     then
-        let _ = print_endline "Not coalesable" in
             false
-        else 
-            IGEdgeSet.for_all 
-                (fun e -> 
-                     (* Look up interfering var in graph *)
-                     let n = get_node (e.interfere_var) graph in
-                         (* Return true if node has fewer than k edges or interferes with related_node *)
-                         ((count_edges n < num_regs) || IGEdgeSet.mem {node_var = n.name; interfere_var = related_var} n.edges)) 
-                node.edges
+    else 
+        IGEdgeSet.for_all 
+            (fun e -> 
+                 (* Look up interfering var in graph *)
+                 let n = get_node (e.interfere_var) graph in
+                     (* Return true if node has fewer than k edges or interferes with related_node *)
+                     ((count_edges n < num_regs) || IGEdgeSet.mem {node_var = n.name; interfere_var = related_var} n.edges)) 
+            node.edges
 
 (* Replaces old_edge in set with new_edge if old exists *)
 let update_edge_set (s: IGEdgeSet.t) (old_edge: igedge) (new_edge: igedge): IGEdgeSet.t =
@@ -439,7 +438,7 @@ let get_available_colors (neighbors : ignode list)
 let apply_color (color : int) (target : ignode) (state : reduction_state) : reduction_state =
     let new_node  = ignode_set_color (Some(color)) target      in
     let new_graph = update_igraph new_node state.colored_igraph in
-    reduction_set_igraph new_graph state
+        reduction_set_colored_igraph new_graph state
 
 let color_single (node : ignode) (state : reduction_state) : reduction_state =
     (*  Calculate available colors *)
@@ -468,7 +467,9 @@ let rec color_graph (initial_state: reduction_state) : reduction_state =
     let new_state = reduction_set_var_stack new_stack initial_state in
     let colored_state = 
         (match target_var with
-        | Single(var_name)          -> (color_single (get_node var_name new_state.colored_igraph) new_state)
+        | Single(var_name)          -> 
+              let _ = print_endline var_name in
+(color_single (get_node var_name new_state.colored_igraph) new_state)
         | Coalesced(var_list)       -> color_single (get_node_alias var_list new_state.colored_igraph) new_state
         | Spill(var_name)           -> color_with_spill (get_node var_name new_state.colored_igraph) new_state
         | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list new_state.colored_igraph) new_state)
@@ -477,7 +478,9 @@ let rec color_graph (initial_state: reduction_state) : reduction_state =
 let lookup_color (v: var) (graph: interfere_graph) : int =
     let node = get_node v graph in
         match node.color with
-            | None -> raise Uncolored_node
+            | None ->
+                  let _ = print_endline v in
+                      raise Uncolored_node
             | Some(color) -> color
 
 (* Assume we have no more than than 24 register to mess with *)
@@ -486,12 +489,14 @@ let build_index (r: reduction_state) : Mips.reg VarMap.t =
     then 
         raise Exceed_max_regs
     else
+        let _ = print_endline (igraph2str r.colored_igraph) in
         IGNodeSet.fold (fun node index ->
-                            let color = lookup_color node.name r.reduce_igraph in
+                            let color = lookup_color node.name r.colored_igraph in
                             (* Register will be color number + 2 *)
                             let reg = Mips.str2reg ("$" ^ string_of_int (color + 2)) in
+                            let _ = print_endline (Mips.reg2string reg) in
                                 VarMap.add node.name reg index)
-            r.reduce_igraph 
+            r.colored_igraph
             VarMap.empty
 
 exception Node_not_in_graph
@@ -500,7 +505,10 @@ let lookup_assigned_reg (v: var) (index: Mips.reg VarMap.t) : Mips.reg =
    try
        VarMap.find v index
    with
-           _ -> raise Node_not_in_graph
+           _ ->
+               let _ = print_endline v in
+
+                   raise Node_not_in_graph
 
 (* Rewrite all vars with their assigned register *)
 let rewrite_operand (o: operand) (index: Mips.reg VarMap.t) : operand =

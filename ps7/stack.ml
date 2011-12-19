@@ -41,7 +41,9 @@ let push_spill_node (node: ignode) (v_stack: VarStack.t) : VarStack.t =
 (* Push a node onto a var stack, check to see if that node is coalesced *)
 let push_node (node: ignode) (v_stack: VarStack.t) : VarStack.t =
     match node.coalesced with
-        | None -> VarStack.push (Single(node.name)) v_stack
+        | None ->
+              let _ = print_endline node.name in
+ VarStack.push (Single(node.name)) v_stack
         | Some coalesced_vars -> VarStack.push (Coalesced(node.name::coalesced_vars)) v_stack
 
 let pop_var_stack v_stack =
