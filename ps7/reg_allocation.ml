@@ -270,7 +270,6 @@ let rec coalesce (initial_state: reduction_state) : reduction_state =
             | edge::edgelist_tail ->
                   if (are_coalescable initial_state.reduce_igraph initial_state.register_count edge.node_var edge.interfere_var)
                   then 
-                      let _ = print_endline ("Coalesced" ^ edge.node_var ^ " " ^ edge.interfere_var) in
                       (* Coalesce nodes in graph *)
                       let coalesced_graph = coalesce_nodes edge.node_var edge.interfere_var initial_state.reduce_igraph in
                       (* Re-simplify graph and coalesce new graph from the beginning *)
@@ -501,14 +500,22 @@ let build_index (r: reduction_state) : Mips.reg VarMap.t =
     then 
         raise Exceed_max_regs
     else
-        IGNodeSet.fold (fun node index ->
+        let pass1 = IGNodeSet.fold (fun node index ->
                             let color = lookup_color node.name r.colored_igraph in
                             (* Register will be color number + 2 *)
                             let reg = Mips.str2reg ("$" ^ string_of_int (color + 2)) in
                             let _ = print_endline (Mips.reg2string reg) in
                                 VarMap.add node.name reg index)
             r.colored_igraph
-            VarMap.empty
+                            VarMap.empty in
+        IGNodeSet.fold (fun node index ->
+                            match node.coalesced with
+                                | None -> index
+                                | Some coal ->
+                                      let reg = lookup_color node.name index in
+                                          List.fold_left (fun accum n ->
+                                                              VarMap.add n reg accum) index coal
+                                
 
 exception Node_not_in_graph
 
