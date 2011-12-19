@@ -288,7 +288,9 @@ let build_block_igraph (b: io_block) : interfere_graph =
     (* inst_gen_io_base is a more general version of inst_gen_io that allows you to specify the base out set *)
     let updated_insts = inst_gen_io_base b.block_out b.insts in
     let igraph1 = List.fold_left add_inst_interferes IGNodeSet.empty updated_insts in
-        make_move_edges b.block_move igraph1
+    let igraph2 = make_move_edges b.block_move igraph1 in
+      precolor_nodes igraph2
+      
         
 
 let build_igraph (bs: io_block list) : interfere_graph =
