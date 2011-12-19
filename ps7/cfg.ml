@@ -75,9 +75,16 @@ let create_blocks prog =
    function that doesn't use any variables (except for function
    names.)
 *)
+let regs = ref 0
+
 let reg_alloc (f : func) : func = 
-    let reduced_state = mark_spill (freeze (coalesce (simplify 
-    raise Implement_Me
+    let igraph = build_interfere_graph func in
+    let reduced_state = mark_spill 
+        (freeze (coalesce (simplify 
+                               (initial_reduction_state igraph regs f)))) in
+    let colored_state = color_graph reduced_state in
+    let colored_code = rewrite_code coloredd_state in
+        colored_code                            
 
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
 let cfg_to_mips (f : func ) : Mips.inst list = 

@@ -476,30 +476,30 @@ let build_index (r: reduction_state) : Mips.reg VarMap.t =
         IGNodeSet.fold (fun node index ->
                             let color = lookup_color node.name r.reduce_igraph in
                             (* Register will be color number + 2 *)
-                            let reg = str2reg ("$" ^ str_of_int (color + 2)) in
+                            let reg = Mips.str2reg ("$" ^ string_of_int (color + 2)) in
                                 VarMap.add node.name reg index)
             r.reduce_igraph 
             VarMap.empty
 
 exception Node_not_in_graph
 
-let lookup_assigned_reg (v: var) (index: VarMap.t) : Mips.reg =
+let lookup_assigned_reg (v: var) (index: Mips.reg VarMap.t) : Mips.reg =
    try
        VarMap.find v index
    with
            _ -> raise Node_not_in_graph
 
 (* Rewrite all vars with their assigned register *)
-let rewrite_operand (o: operand) (index: VarMap.t) : operand =
+let rewrite_operand (o: operand) (index: Mips.reg VarMap.t) : operand =
     match o with
         (* Return the register x is assigned to *)
-        | Var x -> lookup_assigned_reg x index
-        | Int i -> i
-        | Reg r -> r
-        | Lab l -> l                 
+        | Var x -> Reg(lookup_assigned_reg x index)
+        | Int i -> Int(i)
+        | Reg r -> Reg(r)
+        | Lab l -> Lab(l)                 
 
-Let Rewrite_inst (i: inst) (index: VarMap.t) : i =
-    let rewrite = (fun o -> rewrite o index) in
+let rewrite_inst (i: inst) (index: Mips.reg VarMap.t) : inst =
+    let rewrite = (fun o -> rewrite_operand o index) in
     match i with
         | Label l -> Label l
         (* Be conservative *)
@@ -520,7 +520,7 @@ Let Rewrite_inst (i: inst) (index: VarMap.t) : i =
         | Return ->
               Return
 
-let rewrite_block (b: block) (index: VarMap.t) : i =
+let rewrite_block (b: block) (index: Mips.reg VarMap.t) : block =
     List.fold_right (fun i accumulated ->
                          match i with
                              (* Remove stupid moves! *)
@@ -534,10 +534,10 @@ let rewrite_block (b: block) (index: VarMap.t) : i =
         b
         []
                                    
-let rewrite_code (f: func) (colored_state: reduction_state) : func =
+let rewrite_code (colored_state: reduction_state) : func =
     (* Build index of colors to registers - reserve $0, $1, $26 - $31 *)
     let var_index = build_index colored_state in
-        List.map (fun b -> rewrite_block b var_index) func
+        List.map (fun b -> rewrite_block b var_index) colored_state.initial_func
 
 (* Grab the actual node*)
 (*  Calculate available colors *)
