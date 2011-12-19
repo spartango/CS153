@@ -342,6 +342,8 @@ let contains_var_read var_name t_inst =
     | Call(op)              -> (op_contains_var var_name op)
     | Jump(_)               -> false
     | If(op, _, op2, _, _)  -> (op_contains_var var_name op) || (op_contains_var var_name op2)
+    | Label(_)              -> false
+    | Return                -> false
 
 let contains_var_write var_name t_inst =
     match t_inst with 
@@ -352,19 +354,20 @@ let contains_var_write var_name t_inst =
     | Call(_)               -> false
     | Jump(_)               -> false
     | If(_, _, _, _, _)     -> false
-
+    | Label(_)              -> false
+    | Return                -> false
 let spill_offset = ref 0;;
  (* let spill_map    = ref VarMap.empty;; *)
 
 let spill node state = 
-    let var_name        = node.name                  in
-    let fn_body         = node.initial_func          in
-    (* Allocate an offset *)       
-    let var_offset      = spill_offset               in
-    let !(spill_offset) = !(spill_offset) + 1        in
-    let first_block = (List.hd fn_body)              in
-    let first_block = Arith(sp, sp, Plus, 4)         in
-    let new_blocks  = first_block::(List.tl fn_body) in
+    let var_name        = node.name                            in
+    let fn_body         = state.initial_func                   in
+    (* Allocate an offset *)              
+    let var_offset      = !spill_offset                        in
+    let _ = (spill_offset := !(spill_offset) + 4)              in
+    let first_block = (List.hd fn_body)                        in
+    let first_block = Arith(sp, sp, Plus, Int(4))::first_block in
+    let new_blocks  = first_block::(List.tl fn_body)           in
     (* Trawl through the blocks *)
     let new_blocks = List.map 
         (fun t_block ->
@@ -375,18 +378,18 @@ let spill node state =
                     then
                     (* If theres a read of the var *)
                     (* Append a load ahead of it*) 
-                    insts @ [Load(Var(var_name), fp, Int(var_offset)); t_inst]
+                    insts @ [Load(Var(var_name), fp, var_offset); t_inst]
                     else if (contains_var_write var_name t_inst)
                     then 
                     (* If theres a write, Append a store after it*)
-                    insts @ [t_inst; Store(fp, Int(var_offset), Var(var_name)) ]
+                    insts @ [t_inst; Store(fp, var_offset, Var(var_name)) ]
                     else insts @ [t_inst]
                 )
                 []
-                new_blocks
-        )
+                t_block
+        ) new_blocks
     in
-    state.
+    reduction_set_initial_func new_blocks state
 
 
 (* Coloring functions *)
