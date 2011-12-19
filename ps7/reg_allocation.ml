@@ -227,14 +227,13 @@ let combine_nodes (node: ignode) (combined_node: ignode) : ignode =
     (* For each edge in combined_node, set node_var to new node var and add to node's edge set *)
     let combined_edges = update_merge_sets node.edges combined_node.edges in
     let combined_moves = update_merge_sets node.moves combined_node.moves in
-    let combined_color = if not (node.color = None) then node.color else combined_node.color in
     let combined_coalesced =
         match (node.coalesced, combined_node.coalesced) with
         | (None, None) -> Some([combined_node.name])
         | (Some(c), None) -> Some(combined_node.name::c)
         | (None, Some(c)) -> Some(combined_node.name::c)
         | (Some(c1), Some(c2)) -> Some(combined_node.name::(c1 @ c2)) in
-        ignode_set_color combined_color (ignode_set_coalesced combined_coalesced (ignode_set_moves combined_moves (ignode_set_edges combined_edges node)))
+        ignode_set_coalesced combined_coalesced (ignode_set_moves combined_moves (ignode_set_edges combined_edges node))
 
 (* Merges contects of the node for coalesced_var into node of var and places in graph, removes move related edge, and removes coalesced node from graph *)
 let coalesce_nodes (var: var) (coalesced_var: var) (master_graph: interfere_graph) : interfere_graph =
@@ -470,7 +469,6 @@ let color_with_spill (node : ignode) (state : reduction_state) =
 
 (* Coloring: *)
 let rec color_graph (initial_state: reduction_state) : reduction_state =
-    let _ = print_graph initial_state.reduce_igraph "Reduced Igraph" in
     (* Pop stack *)
     let popped = pop_var_stack initial_state.var_stack in
     match popped with
@@ -480,12 +478,34 @@ let rec color_graph (initial_state: reduction_state) : reduction_state =
     let colored_state = 
         (match target_var with
         | Single(var_name)          -> 
-              let _ = print_endline var_name in
 (color_single (get_node var_name new_state.colored_igraph) new_state)
         | Coalesced(var_list)       -> color_single (get_node_alias var_list new_state.colored_igraph) new_state
         | Spill(var_name)           -> color_with_spill (get_node var_name new_state.colored_igraph) new_state
         | Spill_Coalesced(var_list) -> color_with_spill (get_node_alias var_list new_state.colored_igraph) new_state)
     in color_graph colored_state
+
+let propogate_precolored (state: reduction_state) : reduction_state =
+    reduction_set_colored_igraph (IGNodeSet.fold (fun node colored_graph ->
+                        match node.coalesced with
+                            | None -> colored_graph
+                            | Some (coalesced_nodes) ->
+                                  List.fold_left 
+                                      (fun accumulated uncolored_node_var ->
+                                           let uncolored_node = get_node uncolored_node_var colored_graph in
+                                               (* Set uncolored node color *)
+                                               match uncolored_node.color with
+                                                   | None ->
+                                                         (* set color of node coalesced with *)
+                                                         let uncolored_node = ignode_set_color node.color uncolored_node in
+                                                             (* Put now colored node into graph *)
+                                                             update_igraph uncolored_node colored_graph
+                                                   | Some(c) -> colored_graph)
+                                      colored_graph
+                                      coalesced_nodes)
+        state.reduce_igraph
+        state.colored_igraph) state
+                            
+
 
 let lookup_color (v: var) (graph: interfere_graph) : int =
     let node = get_node v graph in
@@ -495,28 +515,6 @@ let lookup_color (v: var) (graph: interfere_graph) : int =
                       raise Uncolored_node
             | Some(color) -> color
 
-(* Assume we have no more than than 24 register to mess with *)
-let build_index (r: reduction_state) : Mips.reg VarMap.t =
-    if r.register_count > 24
-    then 
-        raise Exceed_max_regs
-    else
-        let pass1 = IGNodeSet.fold (fun node index ->
-                            let color = lookup_color node.name r.colored_igraph in
-                            (* Register will be color number + 2 *)
-                            let reg = Mips.str2reg ("$" ^ string_of_int (color + 2)) in
-                            let _ = print_endline (Mips.reg2string reg) in
-                                VarMap.add node.name reg index)
-            r.colored_igraph
-                            VarMap.empty in
-        IGNodeSet.fold (fun node index ->
-                            match node.coalesced with
-                                | None -> index
-                                | Some coal ->
-                                      let reg = lookup_color node.name index in
-                                          List.fold_left (fun accum n ->
-                                                              VarMap.add n reg accum) index coal
-                                
 
 exception Node_not_in_graph
 
@@ -528,6 +526,22 @@ let lookup_assigned_reg (v: var) (index: Mips.reg VarMap.t) : Mips.reg =
                let _ = print_endline v in
 
                    raise Node_not_in_graph
+
+(* Assume we have no more than than 24 register to mess with *)
+let build_index (r: reduction_state) : Mips.reg VarMap.t =
+    let _ = print_graph r.colored_igraph "Colored Igraph" in
+    if r.register_count > 24
+    then 
+        raise Exceed_max_regs
+    else 
+            IGNodeSet.fold 
+                (fun node index ->
+                     let color = lookup_color node.name r.colored_igraph in
+                         (* Register will be color number + 2 *)
+                     let reg = Mips.str2reg ("$" ^ string_of_int (color + 2)) in
+                         VarMap.add node.name reg index)
+                r.colored_igraph
+                VarMap.empty
 
 (* Rewrite all vars with their assigned register *)
 let rewrite_operand (o: operand) (index: Mips.reg VarMap.t) : operand =
@@ -561,6 +575,8 @@ let rewrite_inst (i: inst) (index: Mips.reg VarMap.t) : inst =
               Return
 
 let rewrite_block (b: block) (index: Mips.reg VarMap.t) : block =
+    List.map (fun i -> rewrite_inst i index) b
+(*
     List.fold_right (fun i accumulated ->
                          match i with
                              (* Remove stupid moves! *)
@@ -573,7 +589,7 @@ let rewrite_block (b: block) (index: Mips.reg VarMap.t) : block =
                              | _ -> (rewrite_inst i index)::accumulated)
         b
         []
-                                   
+*)                                  
 let rewrite_code (colored_state: reduction_state) : func =
     (* Build index of colors to registers - reserve $0, $1, $26 - $31 *)
     let var_index = build_index colored_state in

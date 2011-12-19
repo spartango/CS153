@@ -64,7 +64,7 @@ let reg_alloc (f : func) : func =
     let reduced_state = mark_spill 
         (freeze (coalesce (simplify 
                                (initial_reduction_state igraph 24 f)))) in
-    let colored_state = color_graph reduced_state in
+    let colored_state = propogate_precolored (color_graph reduced_state) in
     let colored_code = rewrite_code colored_state in
         colored_code                            
 
