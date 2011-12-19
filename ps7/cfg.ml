@@ -76,6 +76,7 @@ let create_blocks prog =
    names.)
 *)
 let reg_alloc (f : func) : func = 
+    let reduced_state = mark_spill (freeze (coalesce (simplify 
     raise Implement_Me
 
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
