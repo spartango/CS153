@@ -568,11 +568,9 @@ let rewrite_inst (i: inst) (index: Mips.reg VarMap.t) : inst =
               Return
 
 let rewrite_block (b: block) (index: Mips.reg VarMap.t) : block =
-    List.map (fun i -> rewrite_inst i index) b
-(*
     List.fold_right (fun i accumulated ->
                          match i with
-                             (* Remove stupid moves! *)
+                                 (* Remove stupid moves! *)
                              | Move (o1, o2) ->
                                    let r1 = rewrite_operand o1 index in
                                    let r2 = rewrite_operand o2 index in
@@ -582,7 +580,7 @@ let rewrite_block (b: block) (index: Mips.reg VarMap.t) : block =
                              | _ -> (rewrite_inst i index)::accumulated)
         b
         []
-*)                                  
+                                 
 let rewrite_code (colored_state: reduction_state) : func =
     (* Build index of colors to registers - reserve $0, $1, $26 - $31 *)
     let var_index = build_index colored_state in

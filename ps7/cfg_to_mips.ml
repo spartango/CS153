@@ -136,9 +136,7 @@ let inst_to_mips (i: inst) : Mips.inst list =
               [Mips.Jr(Mips.R31)]
 
 let block_to_mips (b: block) : Mips.inst list =
-    (* Take advantage of the fact that fold left reverses list *)
-    List.fold_left 
-        (fun accumulated_mips i -> (inst_to_mips i) @ accumulated_mips)
-        []
+    List.fold_right (fun instruct accumulated_mips ->
+                         (inst_to_mips instruct) @ accumulated_mips)
         b
-                        
+        []     
