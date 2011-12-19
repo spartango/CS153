@@ -17,11 +17,12 @@ let print_node (n: ignode) (l: string) : unit =
 type reduction_state = {reduce_igraph : interfere_graph; var_stack : VarStack.t; register_count : int}
 
 (* Makes a new reduction state with *)
-let mk_reduction_state (g: interfere_graph) (v_stack: VarStack.t) (regs: int) : reduction_state = 
+let mk_reduction_state (g: interfere_graph) (v_stack: VarStack.t) (regs: int) (f: func) : reduction_state = 
     {
         reduce_igraph = g;
         var_stack = v_stack;
-        register_count = regs
+        register_count = regs;
+        intial_func; = f;
     }
 
 let empty_reduction_state = mk_reduction_state IGNodeSet.empty VarStack.empty 0
@@ -29,22 +30,34 @@ let reduction_set_igraph (graph: interfere_graph) (rs: reduction_state) : reduct
     {
         reduce_igraph = graph;
         var_stack = rs.var_stack;
-        register_count = rs.register_count
+        register_count = rs.register_count;
+        initial_func = rs.intial_func;
     }
 let reduction_set_var_stack (v_stack : VarStack.t) (rs: reduction_state) : reduction_state =
     {
         reduce_igraph = rs.reduce_igraph;
         var_stack = v_stack;
         register_count = rs.register_count;
+        initial_func = rs.initial_func;
     }
 let reduction_set_register_count (regs : int) (rs: reduction_state) : reduction_state =
     {
         reduce_igraph = rs.reduce_igraph;
         var_stack = rs.var_stack;
         register_count = regs;
+        initial_func = rs.initial_func;
     }
-let initial_reduction_state (graph: interfere_graph) (regs: int) : reduction_state =
-    reduction_set_register_count regs (reduction_set_igraph graph empty_reduction_state)
+
+let reduction_set_initial_func (f : func) (rs: reduction_state) : reduction_state =
+    {
+        reduce_igraph = rs.reduce_igraph;
+        var_stack = rs.var_stack;
+        register_count = rs.register_count;
+        initial_func = f;
+    }
+
+let initial_reduction_state (graph: interfere_graph) (regs: int) (f: funciton) : reduction_state =
+    reduction_set_initial_func f (reduction_set_register_count regs (reduction_set_igraph graph empty_reduction_state))
 
 exception Implement_Me
 
