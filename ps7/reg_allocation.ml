@@ -68,10 +68,6 @@ let initial_reduction_state (graph: interfere_graph) (regs: int) (f: func) : red
 exception Implement_Me
 
 (* Helper functions *)
- 
-(* Performs a map on an inteference graph *)
-let igraph_map (f: ignode -> ignode) (graph: interfere_graph) : interfere_graph =
-    IGNodeSet.fold (fun node g -> IGNodeSet.add (f node) g) graph IGNodeSet.empty
 
 (* Returns a list of the nodes that satisfy p *)
 let igraph_filter_elements (g: interfere_graph) (p: ignode -> bool) : ignode list =
