@@ -1,0 +1,10 @@
+f(x) {
+  if (x > 0) {
+    return x * x + f(x - 1);
+  } else {
+    return 0;
+  }
+}
+main() {
+  return f(10);
+}

@@ -1,0 +1,6 @@
+main() {
+  let x = 15;
+  let y = 0;
+  return x || y;
+}
+

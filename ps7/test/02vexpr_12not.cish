@@ -1,0 +1,5 @@
+main() {
+  let x = 12;
+  return !x;
+}
+
